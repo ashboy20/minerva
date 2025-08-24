@@ -1,0 +1,12 @@
+[project]
+name = "new-backend"
+version = "0.1.0"
+description = "FastAPI backend for Minerva API client"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+    "sqlmodel>=0.0.24",
+]
