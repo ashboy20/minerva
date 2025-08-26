@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/renderer/components/ui/card';
 import { Badge } from '@/renderer/components/ui/badge';
+import { MethodText } from '@/renderer/components/common-ui/MethodText';
 
 interface Row {
 	id: number;
@@ -39,10 +40,10 @@ export function EndpointList({ endpoints, onEndpointClick }: EndpointListProps) 
 							>
 								<div className="flex items-center justify-between">
 									<span className="text-sm font-medium">
-										{endpoint.name}
+										{endpoint.summary}
 									</span>
 									<Badge variant="secondary" className="text-xs">
-										{endpoint.method}
+										<MethodText method={endpoint.method} />
 									</Badge>
 								</div>
 								<p className="text-xs text-muted-foreground mt-1">

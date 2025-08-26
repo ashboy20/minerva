@@ -20,6 +20,7 @@ import { PlayIcon, BookmarkIcon } from '@radix-ui/react-icons';
 import { TableForm } from '@/renderer/components/views/apiClient/components/InputTable';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
 import { HTTP_METHODS } from '@/data/apiClient';
+import { Case, Endpoint } from '@/types/backend/endpoint-management/endpoint';
 
 interface Row {
 	id: number;
@@ -29,12 +30,8 @@ interface Row {
 }
 
 interface RequestSectionProps {
-	method: string;
-	url: string;
-	params: Row[];
-	headers: Row[];
-	body: string;
-	authType: string;
+	activeEndpoint: Endpoint | null;
+	activeCase: Case | null;
 	activeTab: string;
 	loading: boolean;
 	onMethodChange: (method: string) => void;
@@ -45,13 +42,23 @@ interface RequestSectionProps {
 	onSendRequest: () => void;
 }
 
+const stringifyBody = (body: any) => {
+	if (typeof body === 'string') {
+		return body;
+	}
+	if (body === null || body === undefined) {
+		return '';
+	}
+	try {
+		return JSON.stringify(body, null, 2);
+	} catch (error) {
+		return String(body);
+	}
+};
+
 export function RequestSection({
-	method,
-	url,
-	params,
-	headers,
-	body,
-	authType,
+	activeEndpoint,
+	activeCase,
 	activeTab,
 	loading,
 	onMethodChange,
@@ -67,7 +74,10 @@ export function RequestSection({
 				<CardContent className="space-y-4 p-4 flex-1 flex flex-col">
 					{/* URL Bar */}
 					<div className="flex space-x-2">
-						<Select value={method} onValueChange={onMethodChange}>
+						<Select
+							value={activeEndpoint?.method}
+							onValueChange={onMethodChange}
+						>
 							<SelectTrigger className="w-32">
 								<SelectValue />
 							</SelectTrigger>
@@ -81,13 +91,15 @@ export function RequestSection({
 						</Select>
 						<Input
 							placeholder="Enter request URL"
-							value={url}
+							value={
+								(activeEndpoint?.base_url ?? '') + (activeEndpoint?.path ?? '')
+							}
 							onChange={(e) => onUrlChange(e.target.value)}
 							className="flex-1"
 						/>
 						<Button
 							onClick={onSendRequest}
-							disabled={loading || !url.trim()}
+							disabled={loading || !activeEndpoint?.path.trim()}
 							className="px-6"
 						>
 							{loading ? (
@@ -118,10 +130,10 @@ export function RequestSection({
 							<TabsTrigger value="tests">Tests</TabsTrigger>
 						</TabsList>
 						<TabsContent value="params" className="space-y-2 flex-1">
-							<TableForm rows={params} />
+							<TableForm rows={activeCase?.request?.query_params || []} />
 						</TabsContent>
 						<TabsContent value="headers" className="space-y-2 flex-1">
-							<TableForm rows={headers} />
+							<TableForm rows={activeCase?.request?.headers || []} />
 						</TabsContent>
 						<TabsContent
 							value="body"
@@ -129,20 +141,24 @@ export function RequestSection({
 						>
 							<Textarea
 								placeholder="Enter request body (JSON, XML, etc.)"
-								value={body}
+								value={stringifyBody(activeCase?.request?.body)}
 								onChange={(e) => onBodyChange(e.target.value)}
 								className="font-mono text-sm flex-1 resize-none"
-								disabled={method === 'GET' || method === 'HEAD'}
+								disabled={
+									activeEndpoint?.method === 'GET' ||
+									activeEndpoint?.method === 'HEAD'
+								}
 							/>
-							{(method === 'GET' || method === 'HEAD') && (
+							{(activeEndpoint?.method === 'GET' ||
+								activeEndpoint?.method === 'HEAD') && (
 								<p className="text-sm text-muted-foreground">
-									Body is not applicable for {method} requests
+									Body is not applicable for GET requests
 								</p>
 							)}
 						</TabsContent>
 						<TabsContent value="auth" className="flex-1 flex items-start">
 							<div className="flex flex-col gap-2 w-full">
-								<Select value={authType} onValueChange={onAuthTypeChange}>
+								<Select value="auth_type" onValueChange={onAuthTypeChange}>
 									<SelectTrigger className="w-full">
 										<SelectValue />
 									</SelectTrigger>
