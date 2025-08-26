@@ -1,4 +1,5 @@
 import argparse
+import os
 from fastapi import FastAPI
 from app.api.endpoint_management import router as endpoint_management_router
 from app.db.connection import create_db_and_tables, DATABASE_PATH, seed_data
@@ -51,4 +52,10 @@ if __name__ == "__main__":
         help="Reload the server on code changes",
     )
     args = parser.parse_args()
-    uvicorn.run("main:create_app", host=args.host, port=args.port, reload=args.reload)
+    if os.getenv("DEV_MODE") == "true":
+        uvicorn.run(
+            "main:create_app", host=args.host, port=args.port, reload=args.reload
+        )
+    else:
+        app = create_app()
+        uvicorn.run(app, host=args.host, port=args.port, reload=args.reload)
