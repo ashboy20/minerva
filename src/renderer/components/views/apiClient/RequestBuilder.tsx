@@ -7,21 +7,12 @@ import {
 import { EndpointList } from '@/renderer/components/views/apiClient/components/EndpointList';
 import { RequestSection } from '@/renderer/components/views/apiClient/components/RequestSection';
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
-import {
-	defaultParams,
-	defaultHeaders,
-	defaultUrl,
-	defaultBody,
-} from '@/data/apiClient';
 import { ipcChannels } from '@/config/ipc-channels';
-import { Button } from '@/components/ui/button';
-
-interface Row {
-	id: number;
-	keyValue: string;
-	value: string;
-	enabled: boolean;
-}
+import {
+	Case,
+	Endpoint,
+	Row,
+} from '@/types/backend/endpoint-management/endpoint';
 
 interface ApiResponse {
 	status: number;
@@ -33,46 +24,56 @@ interface ApiResponse {
 }
 
 export function RequestBuilder() {
-	const [method, setMethod] = useState('GET');
-	const [authType, setAuthType] = useState('Bearer');
-	const [url, setUrl] = useState(defaultUrl);
-	const [params, _setParams] = useState<Row[]>(defaultParams);
-	const [headers, setHeaders] = useState<Row[]>(defaultHeaders);
-	const [body, setBody] = useState(defaultBody);
 	const [response, setResponse] = useState<ApiResponse | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [activeTab, setActiveTab] = useState('headers');
-	const [endpoints, setEndpoints] = useState([]);
+	const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
 	const [_endpointsLoading, setEndpointsLoading] = useState(true);
 
-	const handleEndpointClick = (endpoint) => {
-		// Update the request form with selected endpoint data
-		setMethod(endpoint.method);
-		setUrl(endpoint.url);
+	const [activeEndpoint, setActiveEndpoint] = useState<Endpoint | null>(null);
+	const [activeCase, setActiveCase] = useState<Case | null>(null);
 
-		// Set headers if provided
-		if (endpoint.headers) {
-			setHeaders(endpoint.headers);
-		}
-
-		// Set body if provided
-		if (endpoint.body) {
-			setBody(endpoint.body);
+	const handleEndpointClick = (endpoint: Endpoint) => {
+		setActiveEndpoint(endpoint);
+		// Set the first case as active by default
+		if (endpoint.cases && endpoint.cases.length > 0) {
+			setActiveCase(endpoint.cases[0]);
 		}
 	};
 
 	const sendRequest = async () => {
+		if (!activeEndpoint || !activeCase) return;
+
 		setLoading(true);
 		const startTime = Date.now();
 
 		try {
-			// Build headers object from committed headers
+			// TODO: call request by backend side?
+			// Build headers object from the active case
 			const requestHeaders: Record<string, string> = {};
-			headers.forEach((header) => {
-				if (header.enabled && header.keyValue && header.value) {
-					requestHeaders[header.keyValue] = header.value;
-				}
-			});
+			if (activeCase.request?.headers) {
+				activeCase.request.headers.forEach((header: Row) => {
+					if (header.enabled && header.keyValue && header.value) {
+						requestHeaders[header.keyValue] = header.value;
+					}
+				});
+			}
+
+			// Build query parameters
+			const queryParams = new URLSearchParams();
+			if (activeCase.request?.query_params) {
+				activeCase.request.query_params.forEach((param: Row) => {
+					if (param.enabled && param.keyValue && param.value) {
+						queryParams.append(param.keyValue, param.value);
+					}
+				});
+			}
+
+			// Construct the full URL
+			const baseUrl = activeEndpoint.base_url + activeEndpoint.path;
+			const fullUrl = queryParams.toString()
+				? `${baseUrl}?${queryParams.toString()}`
+				: baseUrl;
 
 			// Prepare request options
 			const requestOptions: {
@@ -80,16 +81,23 @@ export function RequestBuilder() {
 				headers: Record<string, string>;
 				body?: string;
 			} = {
-				method,
+				method: activeEndpoint.method,
 				headers: requestHeaders,
 			};
 
 			// Add body for non-GET requests
-			if (method !== 'GET' && method !== 'HEAD' && body.trim()) {
-				requestOptions.body = body;
+			if (
+				activeEndpoint.method !== 'GET' &&
+				activeEndpoint.method !== 'HEAD' &&
+				activeCase.request?.body
+			) {
+				requestOptions.body =
+					typeof activeCase.request.body === 'string'
+						? activeCase.request.body
+						: JSON.stringify(activeCase.request.body);
 			}
 
-			const fetchResponse = await fetch(url, requestOptions);
+			const fetchResponse = await fetch(fullUrl, requestOptions);
 			const endTime = Date.now();
 			const responseTime = endTime - startTime;
 
@@ -145,13 +153,15 @@ export function RequestBuilder() {
 					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET,
 				);
 
-				console.log("result from the fast api")
-				console.log('result: ', result);
-				if (result && result.endpoints) {
-					setEndpoints(result.endpoints);
+				if (result && result.data && result.data.length > 0) {
+					setEndpoints(result.data);
+					setActiveEndpoint(result.data[0]);
+					if (result.data[0].cases && result.data[0].cases.length > 0) {
+						setActiveCase(result.data[0].cases[0]);
+					}
 				}
-			} catch {
-				// Fallback to empty array if fetch fails
+			} catch (error) {
+				console.error('Failed to fetch endpoints:', error);
 				setEndpoints([]);
 			} finally {
 				setEndpointsLoading(false);
@@ -160,6 +170,45 @@ export function RequestBuilder() {
 
 		fetchEndpoints();
 	}, []);
+
+	// Handler functions for RequestSection
+	const handleMethodChange = (method: string) => {
+		if (activeEndpoint) {
+			setActiveEndpoint({ ...activeEndpoint, method });
+		}
+	};
+
+	const handleUrlChange = (url: string) => {
+		if (activeEndpoint) {
+			// Parse the URL to extract base_url and path
+			try {
+				const urlObj = new URL(url);
+				const basePath = urlObj.origin;
+				const path = urlObj.pathname + urlObj.search;
+				setActiveEndpoint({ ...activeEndpoint, base_url: basePath, path });
+			} catch {
+				// If URL parsing fails, just update the path
+				setActiveEndpoint({ ...activeEndpoint, path: url });
+			}
+		}
+	};
+
+	const handleBodyChange = (body: string) => {
+		if (activeCase) {
+			setActiveCase({
+				...activeCase,
+				request: {
+					...activeCase.request,
+					body: body as any, // Allow string or object for body
+				},
+			});
+		}
+	};
+
+	const handleAuthTypeChange = (authType: string) => {
+		// This could be implemented to add/update auth headers
+		console.log('Auth type changed:', authType);
+	};
 
 	return (
 		<ResizablePanelGroup
@@ -180,18 +229,14 @@ export function RequestBuilder() {
 				<ResizablePanelGroup direction="vertical" className="h-full">
 					<ResizablePanel defaultSize={60} minSize={30}>
 						<RequestSection
-							method={method}
-							url={url}
-							params={params}
-							headers={headers}
-							body={body}
-							authType={authType}
+							activeEndpoint={activeEndpoint}
+							activeCase={activeCase}
 							activeTab={activeTab}
 							loading={loading}
-							onMethodChange={setMethod}
-							onUrlChange={setUrl}
-							onBodyChange={setBody}
-							onAuthTypeChange={setAuthType}
+							onMethodChange={handleMethodChange}
+							onUrlChange={handleUrlChange}
+							onBodyChange={handleBodyChange}
+							onAuthTypeChange={handleAuthTypeChange}
 							onActiveTabChange={setActiveTab}
 							onSendRequest={sendRequest}
 						/>

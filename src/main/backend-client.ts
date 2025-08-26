@@ -50,8 +50,6 @@ export class BackendClient {
 					status: response.status,
 				};
 			}
-
-			log.info(`API Response: ${response.status}`);
 			return {
 				data: responseData,
 				status: response.status,
