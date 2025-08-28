@@ -101,9 +101,9 @@ export const ready = async () => {
 	// Setup Tray
 	tray.initialize();
 
-	// Auto updates
+	// Auto updates - COMMENTED OUT FOR PRODUCTION
 	// eslint-disable-next-line no-new
-	new AutoUpdate();
+	// new AutoUpdate();
 
 	// Idle
 	Logger.status($init.mainIdle);

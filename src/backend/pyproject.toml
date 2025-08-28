@@ -1,5 +1,5 @@
 [project]
-name = "new-backend"
+name = "minerva-backend"
 version = "0.1.0"
 description = "FastAPI backend for Minerva API client"
 readme = "README.md"
@@ -9,4 +9,9 @@ dependencies = [
     "uvicorn[standard]>=0.24.0",
     "pydantic>=2.5.0",
     "sqlmodel>=0.0.24",
+]
+
+[project.optional-dependencies]
+build = [
+    "pyinstaller>=6.0.0",
 ]

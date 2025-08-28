@@ -1,13 +1,17 @@
 /**
  * FastAPI Backend Service Manager
  * Manages the lifecycle of the Python FastAPI backend server
+ * Uses executable in production, Python script in development
  */
 
 import { spawn, ChildProcess } from 'child_process';
 import { app } from 'electron';
 import path from 'path';
 import net from 'net';
+import fs from 'fs';
 import log from 'electron-log';
+import { is } from './util';
+import { __assets } from './paths';
 
 export class BackendService {
 	private pythonProcess: ChildProcess | null = null;
@@ -18,8 +22,23 @@ export class BackendService {
 	private isRunning: boolean = false;
 
 	constructor() {
-		// Path to the FastAPI backend
+		// Path to the FastAPI backend (development)
 		this.backendPath = path.join(__dirname, '..', 'backend');
+	}
+
+	/**
+	 * Get the backend executable path for production
+	 */
+	private getExecutablePath(): string {
+		const exeName = process.platform === 'win32' ? 'minerva-backend.exe' : 'minerva-backend';
+		
+		if (app.isPackaged) {
+			// Production: executable is in assets/backend/
+			return path.join(__assets, 'backend', exeName);
+		} else {
+			// Development: executable is in src/backend/dist/
+			return path.join(this.backendPath, 'dist', exeName);
+		}
 	}
 
 	/**
@@ -44,21 +63,70 @@ export class BackendService {
 			}
 
 			log.info('Starting FastAPI backend server...');
-			// Try to use Python from virtual environment if available
-			let pythonCmd = 'python';
-			const venvPython = path.join(this.backendPath, '.venv', 'bin', 'python');
-			try {
-				// Synchronously check if venv python exists and is executable
-				require('fs').accessSync(venvPython, require('fs').constants.X_OK);
-				pythonCmd = venvPython;
-				log.info(`Using Python from virtualenv: ${pythonCmd}`);
-			} catch (err) {
-				log.info('Could not find Python in .venv, falling back to system python');
+			
+			// Determine command and arguments based on environment
+			let command: string;
+			let args: string[];
+			let cwd: string;
+
+			if (is.prod) {
+				// Production mode: use the compiled executable
+				log.info('🚀 Production mode: Using compiled executable');
+				
+				const exePath = this.getExecutablePath();
+				log.info(`Looking for executable at: ${exePath}`);
+				
+				// Check if executable exists
+				if (!fs.existsSync(exePath)) {
+					const suggestion = app.isPackaged 
+						? 'Executable should be in assets/backend/ folder during packaging'
+						: 'Please build it first with \'make build\' in src/backend/';
+					throw new Error(`Executable not found: ${exePath}. ${suggestion}`);
+				}
+				
+				// Make sure executable has execute permissions (Unix systems)
+				if (process.platform !== 'win32') {
+					try {
+						fs.accessSync(exePath, fs.constants.X_OK);
+					} catch (err) {
+						log.warn('Setting execute permissions on backend executable...');
+						fs.chmodSync(exePath, '755');
+					}
+				}
+				
+				command = exePath;
+				args = ['--host', this.host, '--port', this.port.toString()];
+				cwd = path.dirname(exePath); // Run from executable directory
+				
+				log.info(`Using executable: ${command}`);
+				
+			} else {
+				// Development mode: use Python script
+				log.info('🛠️  Development mode: Using Python script');
+				
+				// Try to use Python from virtual environment if available
+				let pythonCmd = 'python';
+				const venvPython = path.join(this.backendPath, '.venv', 'bin', 'python');
+				try {
+					fs.accessSync(venvPython, fs.constants.X_OK);
+					pythonCmd = venvPython;
+					log.info(`Using Python from virtualenv: ${pythonCmd}`);
+				} catch (err) {
+					log.info('Could not find Python in .venv, falling back to system python');
+				}
+
+				command = pythonCmd;
+				args = ['main.py', '--host', this.host, '--port', this.port.toString()];
+				cwd = this.backendPath;
+				
+				log.info(`Using Python: ${command}`);
 			}
 
-			// Spawn Python process
-			this.pythonProcess = spawn(pythonCmd, ['main.py'], {
-				cwd: this.backendPath,
+			// Spawn the process
+			log.info(`Starting command: ${command} ${args.join(' ')}`);
+			log.info(`Working directory: ${cwd}`);
+			this.pythonProcess = spawn(command, args, {
+				cwd,
 				stdio: ['inherit', 'pipe', 'pipe'],
 			});
 
@@ -167,6 +235,26 @@ export class BackendService {
 	 */
 	getServerUrl(): string {
 		return `http://${this.host}:${this.port}`;
+	}
+
+	/**
+	 * Get information about the current backend mode
+	 */
+	getBackendInfo(): { mode: string; executable?: string; python?: string } {
+		if (is.prod) {
+			const exePath = this.getExecutablePath();
+			return {
+				mode: 'production',
+				executable: exePath
+			};
+		} else {
+			const venvPython = path.join(this.backendPath, '.venv', 'bin', 'python');
+			const pythonCmd = fs.existsSync(venvPython) ? venvPython : 'python';
+			return {
+				mode: 'development',
+				python: pythonCmd
+			};
+		}
 	}
 
 	/**
