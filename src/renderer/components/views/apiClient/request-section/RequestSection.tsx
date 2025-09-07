@@ -17,10 +17,12 @@ import {
 import { Card, CardContent } from '@/renderer/components/ui/card';
 import { Textarea } from '@/renderer/components/ui/textarea';
 import { PlayIcon, BookmarkIcon } from '@radix-ui/react-icons';
-import { TableForm } from '@/renderer/components/views/apiClient/components/InputTable';
+import { TableForm } from '@/renderer/components/views/apiClient/request-section/InputForm';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
 import { HTTP_METHODS } from '@/data/apiClient';
 import { Case, Endpoint } from '@/types/backend/endpoint-management/endpoint';
+import UrlBar from '@/renderer/components/views/apiClient/request-section/UrlBar';
+import { UrlInputField } from '@/renderer/components/views/apiClient/request-section/UrlInputField';
 
 interface Row {
 	id: number;
@@ -73,45 +75,14 @@ export function RequestSection({
 			<Card className="h-full border-none flex flex-col">
 				<CardContent className="space-y-4 p-4 flex-1 flex flex-col">
 					{/* URL Bar */}
-					<div className="flex space-x-2">
-						<Select
-							value={activeEndpoint?.method}
-							onValueChange={onMethodChange}
-						>
-							<SelectTrigger className="w-32">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								{HTTP_METHODS.map((m) => (
-									<SelectItem key={m} value={m}>
-										<MethodText method={m} />
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-						<Input
-							placeholder="Enter request URL"
-							value={
-								(activeEndpoint?.base_url ?? '') + (activeEndpoint?.path ?? '')
-							}
-							onChange={(e) => onUrlChange(e.target.value)}
-							className="flex-1"
-						/>
-						<Button
-							onClick={onSendRequest}
-							disabled={loading || !activeEndpoint?.path.trim()}
-							className="px-6"
-						>
-							{loading ? (
-								<>Sending...</>
-							) : (
-								<>
-									<PlayIcon className="w-4 h-4 mr-2" />
-									Send
-								</>
-							)}
-						</Button>
-					</div>
+					<UrlBar
+						method={activeEndpoint?.method ?? 'GET'}
+						url={(activeEndpoint?.base_url ?? '') + (activeEndpoint?.path ?? '')}
+						loading={loading}
+						onMethodChange={onMethodChange}
+						onUrlChange={onUrlChange}
+						onSendRequest={onSendRequest}
+					/>
 
 					{/* Request Configuration Tabs */}
 					<Tabs
