@@ -5,7 +5,7 @@ import {
 	ResizablePanelGroup,
 } from '@/renderer/components/ui/resizable';
 import { EndpointList } from '@/renderer/components/views/apiClient/components/EndpointList';
-import { RequestSection } from '@/renderer/components/views/apiClient/components/RequestSection';
+import { RequestSection } from '@/renderer/components/views/apiClient/request-section/RequestSection';
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
 import { ipcChannels } from '@/config/ipc-channels';
 import {

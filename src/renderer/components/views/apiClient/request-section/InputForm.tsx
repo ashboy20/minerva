@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { InputRow } from '@/renderer/components/views/apiClient/components/InputRow';
+import { InputRow } from '@/renderer/components/views/apiClient/request-section/InputRow';
 
 interface TableFormProps {
 	rows: {
@@ -15,7 +15,6 @@ export function TableForm({ rows }: TableFormProps) {
 		...rows,
 		{ row_id: rows.length + 1, keyValue: '', value: '', enabled: false },
 	];
-
 
 	const [tableRows, setTableRows] = useState(initRows());
 
