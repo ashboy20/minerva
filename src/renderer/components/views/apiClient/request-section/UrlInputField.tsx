@@ -6,11 +6,16 @@ import { defaultKeymap, historyKeymap } from '@codemirror/commands'
 // Theme using Tailwind CSS variables for consistency
 const urlHighlightTheme = EditorView.theme({
   '.cm-variable': {
-    color: 'hsl(120, 60%, 50%)',
     padding: '2px 8px',
     fontWeight: '500',
     lineHeight: '1',
     transition: 'colors 0.2s',
+  },
+  '.cm-variable-valid': {
+    color: 'hsl(120, 60%, 50%)',
+  },
+  '.cm-variable-invalid': {
+    color: 'hsl(0, 60%, 50%)',
   },
   '.cm-path-param': {
     color: 'hsl(15, 70%, 45%)', // Brown-red color
@@ -61,6 +66,12 @@ const urlHighlightTheme = EditorView.theme({
 // highlight the url and variables
 const urlInputDecorator = ViewPlugin.fromClass(class {
   decorations: DecorationSet
+  
+  // TODO: move this to utils or BE?
+  variables: Record<string, string> = {
+    'HOST': 'https://api.example.com',
+    'API_KEY': 'api-key',
+  }
 
   constructor(view: EditorView) {
     this.decorations = this.buildDecorations(view)
@@ -81,8 +92,13 @@ const urlInputDecorator = ViewPlugin.fromClass(class {
     let match
     
     while ((match = variableRegex.exec(text)) !== null) {
+      const variableName = match[0].slice(2, -2) // Remove {{ and }}
+      const isValid = this.variables[variableName] !== undefined
+      
       decorations.push(
-        Decoration.mark({ class: 'cm-variable' }).range(
+        Decoration.mark({ 
+          class: isValid ? 'cm-variable cm-variable-valid' : 'cm-variable cm-variable-invalid' 
+        }).range(
           match.index, 
           match.index + match[0].length
         )
