@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { EditorState } from '@codemirror/state'
-import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, keymap } from '@codemirror/view'
+import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, keymap, hoverTooltip } from '@codemirror/view'
 import { defaultKeymap, historyKeymap } from '@codemirror/commands'
+import { autocompletion } from '@codemirror/autocomplete'
 
 // Theme using Tailwind CSS variables for consistency
 const urlHighlightTheme = EditorView.theme({
@@ -63,15 +64,83 @@ const urlHighlightTheme = EditorView.theme({
   }
 }, { dark: true })
 
+// TODO: move this to utils or BE?
+const variables: Record<string, string> = {
+  'HOST': 'https://api.example.com',
+  'API_KEY': 'api-key',
+}
+
+// TODO: move the utils?
+function myCompletions(context: any) {
+  let word = context.matchBefore(/\{\{/);
+  if (!word) return null;
+  if (word.from == word.to && !context.explicit) return null;
+  return {
+    from: word.to,
+    options: [
+      ...Object.keys(variables).map((key) => ({
+        label: `${key}`,
+        type: 'variable',
+        apply: (view: EditorView, completion: any, from: number, to: number) => {
+          const insert = `${completion.label}}}`
+          view.dispatch({
+            changes: { from: from, to: to, insert: insert },
+            selection: { anchor: from + insert.length, head: from + insert.length }
+          })
+        }
+      })),
+    ]
+  };
+}
+
+// TODO: move to utils or somewhere else?
+// Hover tooltip function to show variable values
+const variableHover = hoverTooltip((view, pos, side) => {
+  const doc = view.state.doc
+  const line = doc.lineAt(pos)
+  const text = line.text
+
+  // Find if cursor is over a variable {{...}}
+  const variableRegex = /\{\{([^}]+)\}\}/g
+  let match
+  
+  while ((match = variableRegex.exec(text)) !== null) {
+    const start = line.from + match.index
+    const end = line.from + match.index + match[0].length
+    
+    // Check if cursor position is within this variable
+    if (pos >= start && pos <= end) {
+      const variableName = match[1]
+      const variableValue = variables[variableName]
+      
+      if (variableValue) {
+        return {
+          pos: start,
+          end: end,
+          below: true,
+          create(view) {
+            const dom = document.createElement("div")
+            dom.className = "cm-tooltip-variable"
+            dom.innerHTML = `
+              <div style="padding: 8px; background: hsl(var(--popover)); border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 0.875rem;">
+                <div style="font-weight: 600; color: hsl(var(--foreground));">Key: ${variableName}</div>
+                <div style="color: hsl(var(--muted-foreground)); margin-top: 4px;">Value: ${variableValue}</div>
+              </div>
+            `
+            return { dom }
+          }
+        }
+      }
+    }
+  }
+  
+  return null
+})
+
 // highlight the url and variables
 const urlInputDecorator = ViewPlugin.fromClass(class {
   decorations: DecorationSet
   
-  // TODO: move this to utils or BE?
-  variables: Record<string, string> = {
-    'HOST': 'https://api.example.com',
-    'API_KEY': 'api-key',
-  }
 
   constructor(view: EditorView) {
     this.decorations = this.buildDecorations(view)
@@ -93,7 +162,7 @@ const urlInputDecorator = ViewPlugin.fromClass(class {
     
     while ((match = variableRegex.exec(text)) !== null) {
       const variableName = match[0].slice(2, -2) // Remove {{ and }}
-      const isValid = this.variables[variableName] !== undefined
+      const isValid = variables[variableName] !== undefined
       
       decorations.push(
         Decoration.mark({ 
@@ -145,6 +214,10 @@ export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldPro
             keymap.of([...defaultKeymap, ...historyKeymap]),
             urlHighlightTheme,
             urlInputDecorator,
+            autocompletion({
+              override: [myCompletions],
+            }),
+            variableHover,
             // Add update listener to trigger onChange
             EditorView.updateListener.of((update) => {
               if (update.docChanged && !isInternalChange.current) {
