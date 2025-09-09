@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { EditorState } from '@codemirror/state'
 import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, keymap, hoverTooltip } from '@codemirror/view'
-import { defaultKeymap, historyKeymap } from '@codemirror/commands'
+import { defaultKeymap, historyKeymap, history } from '@codemirror/commands'
 import { autocompletion } from '@codemirror/autocomplete'
+import { drawSelection, dropCursor, Range } from '@codemirror/view'
+import { indentOnInput } from '@codemirror/language'
+import { bracketMatching } from '@codemirror/language'
 
 // Theme using Tailwind CSS variables for consistency
 const urlHighlightTheme = EditorView.theme({
@@ -32,7 +35,7 @@ const urlHighlightTheme = EditorView.theme({
   // Remove all focus borders and outlines
   '.cm-editor': {
     outline: 'none !important',
-    border: 'none !important',
+    border: 'none !important', 
   },
   '.cm-editor.cm-focused': {
     outline: 'none !important',
@@ -153,41 +156,39 @@ const urlInputDecorator = ViewPlugin.fromClass(class {
   }
 
   buildDecorations(view: EditorView) {
-    const decorations = []
     const text = view.state.doc.toString()
     
     // Highlight {{variables}}
     const variableRegex = /\{\{[^}]+\}\}/g
     let match
+    const matches: Array<{from: number, to: number, class: string}> = []
     
     while ((match = variableRegex.exec(text)) !== null) {
       const variableName = match[0].slice(2, -2) // Remove {{ and }}
       const isValid = variables[variableName] !== undefined
       
-      decorations.push(
-        Decoration.mark({ 
-          class: isValid ? 'cm-variable cm-variable-valid' : 'cm-variable cm-variable-invalid' 
-        }).range(
-          match.index, 
-          match.index + match[0].length
-        )
-      )
+      matches.push({
+        from: match.index,
+        to: match.index + match[0].length,
+        class: isValid ? 'cm-variable cm-variable-valid' : 'cm-variable cm-variable-invalid'
+      })
     }
 
     // Highlight path parameters like :id, :userId, etc.
-    const pathParamRegex = /:[a-zA-Z_][a-zA-Z0-9_]*/g
+    const pathParamRegex = /\/:[a-zA-Z_][a-zA-Z0-9_]*/g
     pathParamRegex.lastIndex = 0 // Reset regex
     
     while ((match = pathParamRegex.exec(text)) !== null) {
-      decorations.push(
-        Decoration.mark({ class: 'cm-path-param' }).range(
-          match.index,
-          match.index + match[0].length
-        )
-      )
+      matches.push({
+        from: match.index,
+        to: match.index + match[0].length,
+        class: 'cm-path-param'
+      })
     }
 
-    return Decoration.set(decorations)
+    let decorations: Range<Decoration>[] = []
+    matches.map(match => decorations.push(Decoration.mark({ class: match.class }).range(match.from, match.to)))
+    return Decoration.set(decorations, true)
   }
 }, {
   decorations: v => v.decorations
@@ -212,6 +213,15 @@ export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldPro
           extensions: [
             EditorState.allowMultipleSelections.of(true),
             keymap.of([...defaultKeymap, ...historyKeymap]),
+
+            // ADD THESE MISSING EXTENSIONS:
+            history(), // Enables undo/redo and change tracking
+            drawSelection(), // Shows text selection
+            dropCursor(), // Shows cursor when dragging
+            indentOnInput(), // Handles text input
+            bracketMatching(), // Handles bracket matching
+
+            EditorView.editable.of(true), 
             urlHighlightTheme,
             urlInputDecorator,
             autocompletion({
