@@ -58,11 +58,25 @@ const urlPathParamsSync = (
 ) => {
 	const [url, setUrl] = useState(initUrl)
 	const [pathParams, setPathParams] = useState(initPathParams)
+	const [showPathParams, setShowPathParams] = useState(false)
 
 	useEffect(() => {
 		setUrl(initUrl)
 		setPathParams(initPathParams)
 	}, [initUrl, initPathParams])
+
+	useEffect(() => {
+		// Check if URL contains path parameters (like :id, :userId, etc.)
+		const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]+/g
+		const urlHasPathParams = url && pathParamsRegex.test(url)
+		
+		// Show path params table if URL has path parameters OR if there are existing path params
+		if (urlHasPathParams || pathParams.length > 0) {
+			setShowPathParams(true)
+		} else {
+			setShowPathParams(false)
+		}
+	}, [pathParams, url])
 
 	const isUpdatingUrl = useRef(false)
 	const isUpdatingPathParams = useRef(false)
@@ -129,6 +143,7 @@ const urlPathParamsSync = (
 	return {
 		url,
 		pathParams,
+		showPathParams,
 		setUrl: handleUrlChange,
 		setPathParams: handlePathParamsChange,
 	}
@@ -150,26 +165,12 @@ export function RequestSection({
 	onSendRequest,
 }: RequestSectionProps) {
 	const constructedUrl = (activeEndpoint?.base_url || '') + (activeEndpoint?.path || '')
-	const { url, pathParams, setUrl, setPathParams } = urlPathParamsSync(
+	const { url, pathParams, showPathParams, setUrl, setPathParams } = urlPathParamsSync(
 		constructedUrl,
 		activeCase?.request?.path_params || [],
 		onUrlChange,
 		onPathParamsChange
 	)
-	const [showPathParams, setShowPathParams] = useState(false)
-
-	useEffect(() => {
-		// Check if URL contains path parameters (like :id, :userId, etc.)
-		const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]+/g
-		const urlHasPathParams = url && pathParamsRegex.test(url)
-		
-		// Show path params table if URL has path parameters OR if there are existing path params
-		if (urlHasPathParams || pathParams.length > 0) {
-			setShowPathParams(true)
-		} else {
-			setShowPathParams(false)
-		}
-	}, [pathParams, url])
 
 	return (
 		<div className="h-full p-4 overflow-y-auto">
