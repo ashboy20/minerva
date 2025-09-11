@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InputRow } from '@/renderer/components/views/apiClient/request-section/InputRow';
 
 interface TableFormProps {
@@ -7,18 +7,35 @@ interface TableFormProps {
 		keyValue: string;
 		value: string;
 		enabled: boolean;
-	}[];
+	}[], 
+	title?: string;
+	onChange: (rows: {
+		row_id: number;
+		keyValue: string;
+		value: string;
+		enabled: boolean;
+	}[]) => void;
+	isPathParamTable?: boolean;
 }
 
-export function TableForm({ rows }: TableFormProps) {
+export function TableForm({ rows, title, onChange, isPathParamTable = false }: TableFormProps) {
 	const initRows = () => [
 		...rows,
-		{ row_id: rows.length + 1, keyValue: '', value: '', enabled: false },
+		...(!isPathParamTable ? [{ row_id: rows.length + 1, keyValue: '', value: '', enabled: true }] : []),
 	];
 
 	const [tableRows, setTableRows] = useState(initRows());
 
-	const onChange = (
+	// ✅ Sync internal state when rows prop changes
+	useEffect(() => {
+		const newTableRows = [
+			...rows,
+			...(!isPathParamTable ? [{ row_id: rows.length + 1, keyValue: '', value: '', enabled: false }] : []),
+		];
+		setTableRows(newTableRows);
+	}, [rows]);
+
+	const onRowChange = (
 		row_id: number,
 		field: 'keyValue' | 'value' | 'enabled',
 		value: string | boolean,
@@ -42,7 +59,7 @@ export function TableForm({ rows }: TableFormProps) {
 			});
 
 			// Add new row if needed
-			if (shouldAddNewRow) {
+			if (shouldAddNewRow && !isPathParamTable) {
 				const maxId = Math.max(...updatedRows.map((row) => row.row_id));
 				return [
 					...updatedRows,
@@ -55,16 +72,27 @@ export function TableForm({ rows }: TableFormProps) {
 				];
 			}
 
+			// Notify parent of changes (exclude the empty last row)
+			const validRows = updatedRows.filter(row => row.keyValue || row.value);
+			onChange(validRows);
+			
 			return updatedRows;
 		});
 	};
 
-	const onDelete = (id: number) => {
-		setTableRows((prevRows) => prevRows.filter((row) => row.row_id !== id));
+	const onRowDelete = (id: number) => {
+		setTableRows((prevRows) => {
+			const filtered = prevRows.filter((row) => row.row_id !== id);
+			// Notify parent of changes (exclude the empty last row)
+			const validRows = filtered.filter(row => row.keyValue || row.value);
+			onChange(validRows);
+			return filtered;
+		});
 	};
 
 	return (
 		<div className="flex flex-col gap-2">
+			{title && <h3 className="text-sm font-medium">{title}</h3>}
 			{tableRows.map((row) => (
 				<InputRow
 					key={row.row_id}
@@ -72,8 +100,9 @@ export function TableForm({ rows }: TableFormProps) {
 					keyValue={row.keyValue}
 					value={row.value}
 					enabled={row.enabled}
-					onChange={onChange}
-					onDelete={onDelete}
+					onChange={onRowChange}
+					onDelete={onRowDelete}
+					isPathParamTable={isPathParamTable}
 				/>
 			))}
 		</div>

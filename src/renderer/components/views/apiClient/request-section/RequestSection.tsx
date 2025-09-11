@@ -1,5 +1,4 @@
-import React from 'react';
-import { Button } from '@/renderer/components/ui/button';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/renderer/components/ui/input';
 import {
 	Select,
@@ -16,20 +15,10 @@ import {
 } from '@/renderer/components/ui/tabs';
 import { Card, CardContent } from '@/renderer/components/ui/card';
 import { Textarea } from '@/renderer/components/ui/textarea';
-import { PlayIcon, BookmarkIcon } from '@radix-ui/react-icons';
 import { TableForm } from '@/renderer/components/views/apiClient/request-section/InputForm';
-import { MethodText } from '@/renderer/components/common-ui/MethodText';
-import { HTTP_METHODS } from '@/data/apiClient';
-import { Case, Endpoint } from '@/types/backend/endpoint-management/endpoint';
+import { Case, Endpoint, Row } from '@/types/backend/endpoint-management/endpoint';
 import UrlBar from '@/renderer/components/views/apiClient/request-section/UrlBar';
-import { UrlInputField } from '@/renderer/components/views/apiClient/request-section/UrlInputField';
 
-interface Row {
-	id: number;
-	keyValue: string;
-	value: string;
-	enabled: boolean;
-}
 
 interface RequestSectionProps {
 	activeEndpoint: Endpoint | null;
@@ -38,6 +27,9 @@ interface RequestSectionProps {
 	loading: boolean;
 	onMethodChange: (method: string) => void;
 	onUrlChange: (url: string) => void;
+	onPathParamsChange: (pathParams: Row[]) => void;
+	onQueryParamsChange: (queryParams: Row[]) => void;
+	onHeadersChange: (headers: Row[]) => void;
 	onBodyChange: (body: string) => void;
 	onAuthTypeChange: (authType: string) => void;
 	onActiveTabChange: (tab: string) => void;
@@ -58,6 +50,90 @@ const stringifyBody = (body: any) => {
 	}
 };
 
+const urlPathParamsSync = (
+	initUrl: string, 
+	initPathParams: Row[], 
+	onUrlChange?: (url: string) => void,
+	onPathParamsChange?: (pathParams: Row[]) => void
+) => {
+	const [url, setUrl] = useState(initUrl)
+	const [pathParams, setPathParams] = useState(initPathParams)
+
+	useEffect(() => {
+		setUrl(initUrl)
+		setPathParams(initPathParams)
+	}, [initUrl, initPathParams])
+
+	const isUpdatingUrl = useRef(false)
+	const isUpdatingPathParams = useRef(false)
+	const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]*/g
+
+	const handleUrlChange = (newUrl: string) => {
+		setUrl(newUrl)
+		onUrlChange?.(newUrl)
+		
+		const pathParamsLocated = newUrl.match(pathParamsRegex)
+		if (pathParamsLocated && !isUpdatingUrl.current) {
+			let newPathParams: Row[] = []
+			
+			pathParamsLocated.forEach(param => {
+				const paramName = param.replace(':', '')
+				if (!newPathParams.find(p => p.keyValue === paramName)) {
+					newPathParams.push({
+						row_id: newPathParams.length + 1,
+						keyValue: paramName,
+						value: '',
+						enabled: true,
+					})
+				} 
+			})
+			isUpdatingPathParams.current = true
+			setPathParams(newPathParams)
+			onPathParamsChange?.(newPathParams)
+			
+			setTimeout(() => {
+				isUpdatingPathParams.current = false
+			}, 0)
+		}
+	}
+
+	const handlePathParamsChange = (newPathParams: Row[]) => {
+		setPathParams(newPathParams)
+		onPathParamsChange?.(newPathParams)
+		
+		// Skip URL update if this change came from URL parsing
+		if (isUpdatingPathParams.current) {
+			return
+		}
+		
+		let newUrl = url
+		const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]*/g
+		const pathParamsLocated = newUrl.match(pathParamsRegex)
+		
+		if (pathParamsLocated) {
+			// Replace each path param with the new keyValue
+			pathParamsLocated.forEach((param, index) => {
+				if (newPathParams[index] && newPathParams[index].keyValue) {
+					const newParam = `:${newPathParams[index].keyValue}`
+					newUrl = newUrl.replace(param, newParam)
+				}
+			})
+			
+			isUpdatingUrl.current = true
+			setUrl(newUrl)
+			onUrlChange?.(newUrl)
+			setTimeout(() => { isUpdatingUrl.current = false }, 0)
+		}
+	}
+
+	return {
+		url,
+		pathParams,
+		setUrl: handleUrlChange,
+		setPathParams: handlePathParamsChange,
+	}
+}
+
 export function RequestSection({
 	activeEndpoint,
 	activeCase,
@@ -65,11 +141,36 @@ export function RequestSection({
 	loading,
 	onMethodChange,
 	onUrlChange,
+	onPathParamsChange,
+	onQueryParamsChange,
+	onHeadersChange,
 	onBodyChange,
 	onAuthTypeChange,
 	onActiveTabChange,
 	onSendRequest,
 }: RequestSectionProps) {
+	const constructedUrl = (activeEndpoint?.base_url || '') + (activeEndpoint?.path || '')
+	const { url, pathParams, setUrl, setPathParams } = urlPathParamsSync(
+		constructedUrl,
+		activeCase?.request?.path_params || [],
+		onUrlChange,
+		onPathParamsChange
+	)
+	const [showPathParams, setShowPathParams] = useState(false)
+
+	useEffect(() => {
+		// Check if URL contains path parameters (like :id, :userId, etc.)
+		const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]+/g
+		const urlHasPathParams = url && pathParamsRegex.test(url)
+		
+		// Show path params table if URL has path parameters OR if there are existing path params
+		if (urlHasPathParams || pathParams.length > 0) {
+			setShowPathParams(true)
+		} else {
+			setShowPathParams(false)
+		}
+	}, [pathParams, url])
+
 	return (
 		<div className="h-full p-4 overflow-y-auto">
 			<Card className="h-full border-none flex flex-col">
@@ -77,10 +178,10 @@ export function RequestSection({
 					{/* URL Bar */}
 					<UrlBar
 						method={activeEndpoint?.method ?? 'GET'}
-						url={(activeEndpoint?.base_url ?? '') + (activeEndpoint?.path ?? '')}
+						url={url}
 						loading={loading}
 						onMethodChange={onMethodChange}
-						onUrlChange={onUrlChange}
+						onUrlChange={setUrl}
 						onSendRequest={onSendRequest}
 					/>
 
@@ -88,7 +189,7 @@ export function RequestSection({
 					<Tabs
 						value={activeTab}
 						onValueChange={onActiveTabChange}
-						className="flex-1 flex flex-col"
+						className="flex-1 flex flex-col" 
 					>
 						<TabsList className="grid w-full grid-cols-6">
 							<TabsTrigger value="params">Params</TabsTrigger>
@@ -101,10 +202,18 @@ export function RequestSection({
 							<TabsTrigger value="tests">Tests</TabsTrigger>
 						</TabsList>
 						<TabsContent value="params" className="space-y-2 flex-1">
-							<TableForm rows={activeCase?.request?.query_params || []} />
+							{showPathParams && (
+							<TableForm 
+								rows={pathParams} 
+								title="Path Params" 
+								onChange={setPathParams} 
+								isPathParamTable={true}
+							/>
+							)}
+							<TableForm rows={activeCase?.request?.query_params || []} title="Query Params" onChange={onQueryParamsChange} />
 						</TabsContent>
 						<TabsContent value="headers" className="space-y-2 flex-1">
-							<TableForm rows={activeCase?.request?.headers || []} />
+							<TableForm rows={activeCase?.request?.headers || []} onChange={onHeadersChange} />
 						</TabsContent>
 						<TabsContent
 							value="body"

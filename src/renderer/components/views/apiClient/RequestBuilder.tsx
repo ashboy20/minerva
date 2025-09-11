@@ -193,6 +193,24 @@ export function RequestBuilder() {
 		}
 	};
 
+	const handlePathParamsChange = (pathParams: Row[]) => {
+		if (activeCase) {
+			setActiveCase({ ...activeCase, request: { ...activeCase.request, path_params: pathParams } });
+		}
+	};
+
+	const handleQueryParamsChange = (queryParams: Row[]) => {
+		if (activeCase) {
+			setActiveCase({ ...activeCase, request: { ...activeCase.request, query_params: queryParams } });
+		}
+	};
+
+	const handleHeadersChange = (headers: Row[]) => {
+		if (activeCase) {
+			setActiveCase({ ...activeCase, request: { ...activeCase.request, headers: headers } });
+		}
+	};
+
 	const handleBodyChange = (body: string) => {
 		if (activeCase) {
 			setActiveCase({
@@ -235,6 +253,9 @@ export function RequestBuilder() {
 							loading={loading}
 							onMethodChange={handleMethodChange}
 							onUrlChange={handleUrlChange}
+							onPathParamsChange={handlePathParamsChange}
+							onQueryParamsChange={handleQueryParamsChange}
+							onHeadersChange={handleHeadersChange}
 							onBodyChange={handleBodyChange}
 							onAuthTypeChange={handleAuthTypeChange}
 							onActiveTabChange={setActiveTab}

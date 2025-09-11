@@ -52,7 +52,7 @@ const UrlBar = ({
 
 			<Button
 				onClick={onSendRequest}
-				disabled={loading || !url.trim()}
+				disabled={loading || !url || !String(url).trim()}
 				className="px-6"
 			>
 				{loading ? (
