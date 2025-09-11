@@ -9,6 +9,7 @@ interface InputRowProps {
 	keyValue: string;
 	value: string;
 	enabled: boolean;
+	isPathParamTable?: boolean;
 	onChange: (
 		id: number,
 		field: 'keyValue' | 'value' | 'enabled',
@@ -24,6 +25,7 @@ export function InputRow({
 	enabled,
 	onChange,
 	onDelete,
+	isPathParamTable = false,
 }: InputRowProps) {
 	const handleEnable = (checked: boolean) => {
 		onChange(id, 'enabled', checked);
@@ -43,7 +45,11 @@ export function InputRow({
 
 	return (
 		<div className="flex items-center flex-row gap-2 group">
-			<Checkbox checked={enabled} onCheckedChange={handleEnable} />
+			{isPathParamTable ? (
+				<div className="w-9 h-5" />
+			) : (
+				<Checkbox checked={enabled} onCheckedChange={handleEnable} />
+			)}
 			<Input placeholder="Key" value={keyValue} onChange={handleKeyChange} />
 			<Input placeholder="Value" value={value} onChange={handleValueChange} />
 			<Button

@@ -105,7 +105,7 @@ def seed_data():
                                 "value": "application/json",
                                 "enabled": True,
                             },
-                            {   
+                            {
                                 "row_id": 2,
                                 "keyValue": "Accept",
                                 "value": "application/json",
@@ -166,7 +166,12 @@ def seed_data():
                                 "value": "1",
                                 "enabled": True,
                             },
-                            {"row_id": 2, "keyValue": "limit", "value": "10", "enabled": True},
+                            {
+                                "row_id": 2,
+                                "keyValue": "limit",
+                                "value": "10",
+                                "enabled": True,
+                            },
                         ],
                         path_params=[],
                         body=None,
@@ -191,6 +196,125 @@ def seed_data():
         session.add(posts_endpoint)
         session.commit()
         session.refresh(posts_endpoint)
+
+        # Create Get User by ID endpoint with path parameter
+        user_by_id_endpoint = Endpoint(
+            operation_id="getUserById",
+            name="Get User by ID",
+            summary="Retrieve a specific user",
+            description="Fetch a specific user by their ID from JSONPlaceholder API",
+            method="GET",
+            path="/users/:id",
+            base_url="https://jsonplaceholder.typicode.com",
+            cases=[
+                Case(
+                    name="Get specific user",
+                    description="Retrieve user with ID 1",
+                    request=Request(
+                        headers=[
+                            {
+                                "row_id": 1,
+                                "keyValue": "Accept",
+                                "value": "application/json",
+                                "enabled": True,
+                            }
+                        ],
+                        query_params=[],
+                        path_params=[
+                            {
+                                "row_id": 1,
+                                "keyValue": "id",
+                                "value": "1",
+                                "enabled": True,
+                            }
+                        ],
+                        body=None,
+                    ).dict(),
+                    response=Response(
+                        status_code=200,
+                        headers=[
+                            {
+                                "row_id": 1,
+                                "keyValue": "Content-Type",
+                                "value": "application/json",
+                                "enabled": True,
+                            }
+                        ],
+                        body={
+                            "data": '{"id": 1, "name": "Leanne Graham", "username": "Bret", "email": "Sincere@april.biz", "address": {"street": "Kulas Light", "suite": "Apt. 556", "city": "Gwenborough", "zipcode": "92998-3874", "geo": {"lat": "-37.3159", "lng": "81.1496"}}, "phone": "1-770-736-8031 x56442", "website": "hildegard.org", "company": {"name": "Romaguera-Crona", "catchPhrase": "Multi-layered client-server neural-net", "bs": "harness real-time e-markets"}}'
+                        },
+                    ).dict(),
+                ).dict()
+            ],
+        )
+        session.add(user_by_id_endpoint)
+        session.commit()
+        session.refresh(user_by_id_endpoint)
+
+        # Create Update User endpoint with path parameter
+        update_user_endpoint = Endpoint(
+            operation_id="updateUser",
+            name="Update User",
+            summary="Update a user",
+            description="Update a specific user by their ID",
+            method="PUT",
+            path="/users/:id",
+            base_url="https://jsonplaceholder.typicode.com",
+            cases=[
+                Case(
+                    name="Update user info",
+                    description="Update user with ID 1",
+                    request=Request(
+                        headers=[
+                            {
+                                "row_id": 1,
+                                "keyValue": "Content-Type",
+                                "value": "application/json",
+                                "enabled": True,
+                            },
+                            {
+                                "row_id": 2,
+                                "keyValue": "Accept",
+                                "value": "application/json",
+                                "enabled": True,
+                            },
+                        ],
+                        query_params=[],
+                        path_params=[
+                            {
+                                "row_id": 1,
+                                "keyValue": "id",
+                                "value": "1",
+                                "enabled": True,
+                            }
+                        ],
+                        body={
+                            "id": 1,
+                            "name": "Updated Name",
+                            "username": "updateduser",
+                            "email": "updated@example.com",
+                        },
+                    ).dict(),
+                    response=Response(
+                        status_code=200,
+                        headers=[
+                            {
+                                "row_id": 1,
+                                "keyValue": "Content-Type",
+                                "value": "application/json",
+                                "enabled": True,
+                            }
+                        ],
+                        body={
+                            "data": '{"id": 1, "name": "Updated Name", "username": "updateduser", "email": "updated@example.com"}'
+                        },
+                    ).dict(),
+                ).dict()
+            ],
+        )
+        session.add(update_user_endpoint)
+        session.commit()
+        session.refresh(update_user_endpoint)
 
         # Commit all changes
         session.commit()
