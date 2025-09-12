@@ -17,7 +17,7 @@ export class BackendService {
 	private pythonProcess: ChildProcess | null = null;
 	private readonly backendPath: string;
 	private readonly host: string = '0.0.0.0';
-	private readonly port: number = 50051;
+	private readonly port: number = 30000;
 	private isStarting: boolean = false;
 	private isRunning: boolean = false;
 
