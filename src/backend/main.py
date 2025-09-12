@@ -44,7 +44,7 @@ if __name__ == "__main__":
         "--host", type=str, default="0.0.0.0", help="Host to run the server on"
     )
     parser.add_argument(
-        "--port", type=int, default=50051, help="Port to run the server on"
+        "--port", type=int, default=30000, help="Port to run the server on"
     )
     parser.add_argument(
         "--reload",

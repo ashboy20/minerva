@@ -1,8 +1,8 @@
 dev:
-	DEV_MODE=true uv run python main.py --host 0.0.0.0 --port 50051 --reload
+	DEV_MODE=true uv run python main.py --host 0.0.0.0 --port 30000 --reload
 
 prod:
-	uv run python main.py --host 0.0.0.0 --port 50051
+	uv run python main.py --host 0.0.0.0 --port 30000
 
 # Build with PyInstaller (recommended)
 build:
@@ -59,10 +59,10 @@ clean:
 run-exe:
 	@if [ -f "./dist/minerva-backend" ]; then \
 		echo "🚀 Starting executable..."; \
-		./dist/minerva-backend --host 0.0.0.0 --port 50051; \
+		./dist/minerva-backend --host 0.0.0.0 --port 30000; \
 	elif [ -f "./dist/minerva-backend.exe" ]; then \
 		echo "🚀 Starting executable..."; \
-		./dist/minerva-backend.exe --host 0.0.0.0 --port 50051; \
+		./dist/minerva-backend.exe --host 0.0.0.0 --port 30000; \
 	else \
 		echo "❌ No executable found. Run 'make build' first."; \
 	fi
