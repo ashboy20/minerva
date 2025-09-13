@@ -3,6 +3,7 @@ export type Row = {
     keyValue: string;
     value: string;
     enabled: boolean;
+    disabled?: boolean;
 }
 
 export type Request = {
@@ -10,6 +11,10 @@ export type Request = {
     query_params: Row[];
     path_params: Row[];
     body: Record<string, any> | null;
+    auth: {
+        auth_type: string;
+        token: string;
+    } | null;
 }
 
 export type Response = {

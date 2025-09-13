@@ -7,6 +7,7 @@ interface TableFormProps {
 		keyValue: string;
 		value: string;
 		enabled: boolean;
+		disabled?: boolean;
 	}[], 
 	title?: string;
 	onChange: (rows: {
@@ -14,6 +15,7 @@ interface TableFormProps {
 		keyValue: string;
 		value: string;
 		enabled: boolean;
+		disabled?: boolean;
 	}[]) => void;
 	isPathParamTable?: boolean;
 }
@@ -100,6 +102,7 @@ export function TableForm({ rows, title, onChange, isPathParamTable = false }: T
 					keyValue={row.keyValue}
 					value={row.value}
 					enabled={row.enabled}
+					disabled={row.disabled}
 					onChange={onRowChange}
 					onDelete={onRowDelete}
 					isPathParamTable={isPathParamTable}
