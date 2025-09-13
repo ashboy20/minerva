@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAppSelector } from '@/store/hooks';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -32,6 +33,9 @@ export function RequestBuilder() {
 
 	const [activeEndpoint, setActiveEndpoint] = useState<Endpoint | null>(null);
 	const [activeCase, setActiveCase] = useState<Case | null>(null);
+	
+	// Get URL state from Redux
+	const { pathParams, queryParams } = useAppSelector(state => state.url);
 
 	const handleEndpointClick = (endpoint: Endpoint) => {
 		setActiveEndpoint(endpoint);
@@ -59,20 +63,18 @@ export function RequestBuilder() {
 				});
 			}
 
-			// Build query parameters
-			const queryParams = new URLSearchParams();
-			if (activeCase.request?.query_params) {
-				activeCase.request.query_params.forEach((param: Row) => {
-					if (param.enabled && param.keyValue && param.value) {
-						queryParams.append(param.keyValue, param.value);
-					}
-				});
-			}
+			// Build query parameters from Redux state
+			const queryParamsUrl = new URLSearchParams();
+			queryParams.forEach((param: Row) => {
+				if (param.enabled && param.keyValue && param.value) {
+					queryParamsUrl.append(param.keyValue, param.value);
+				}
+			});
 
 			// Construct the full URL
 			const baseUrl = activeEndpoint.base_url + activeEndpoint.path;
-			const fullUrl = queryParams.toString()
-				? `${baseUrl}?${queryParams.toString()}`
+			const fullUrl = queryParamsUrl.toString()
+				? `${baseUrl}?${queryParamsUrl.toString()}`
 				: baseUrl;
 
 			// Prepare request options
@@ -194,15 +196,15 @@ export function RequestBuilder() {
 	};
 
 	const handlePathParamsChange = (pathParams: Row[]) => {
-		if (activeCase) {
-			setActiveCase({ ...activeCase, request: { ...activeCase.request, path_params: pathParams } });
-		}
+		// Don't update activeCase - let Redux be the single source of truth
+		// The actual request will read from Redux state when sending
+		console.log('Path params updated in Redux:', pathParams);
 	};
 
 	const handleQueryParamsChange = (queryParams: Row[]) => {
-		if (activeCase) {
-			setActiveCase({ ...activeCase, request: { ...activeCase.request, query_params: queryParams } });
-		}
+		// Don't update activeCase - let Redux be the single source of truth
+		// The actual request will read from Redux state when sending
+		console.log('Query params updated in Redux:', queryParams);
 	};
 
 	const handleHeadersChange = (headers: Row[]) => {
