@@ -40,9 +40,9 @@ export function AuthSection({
 				</SelectTrigger>
 				<SelectContent>
 					<SelectItem value="Bearer">Bearer Token</SelectItem>
-					<SelectItem value="Basic">Basic Auth</SelectItem>
+					{/* <SelectItem value="Basic">Basic Auth</SelectItem>
 					<SelectItem value="API Key">API Key</SelectItem>
-					<SelectItem value="OAuth 2.0">OAuth 2.0</SelectItem>
+					<SelectItem value="OAuth 2.0">OAuth 2.0</SelectItem> */}
 					<SelectItem value="None">No Auth</SelectItem>
 				</SelectContent>
 			</Select>
