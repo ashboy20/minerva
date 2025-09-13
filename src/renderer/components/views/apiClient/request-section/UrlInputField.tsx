@@ -1,22 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, hoverTooltip } from '@codemirror/view'
 import { Range } from '@codemirror/state'
-import { createSingleLineEditor, SingleLineEditorInstance } from '@/renderer/lib/codemirror/SingleLineEditor'
+import { createSingleLineEditor, SingleLineEditorInstance, variableHighlightTheme, singleLineEditorTheme } from '@/renderer/lib/codemirror/SingleLineEditor'
 
-// Theme using Tailwind CSS variables for consistency
-const urlHighlightTheme = EditorView.theme({
-  '.cm-variable': {
-    padding: '2px 8px',
-    fontWeight: '500',
-    lineHeight: '1',
-    transition: 'colors 0.2s',
-  },
-  '.cm-variable-valid': {
-    color: 'hsl(120, 60%, 50%)',
-  },
-  '.cm-variable-invalid': {
-    color: 'hsl(0, 60%, 50%)',
-  },
+
+const urlPathParamsHighlightTheme = EditorView.theme({
   '.cm-path-param': {
     color: 'hsl(15, 70%, 45%)', // Brown-red color
     padding: '2px 6px',
@@ -24,55 +12,8 @@ const urlHighlightTheme = EditorView.theme({
     lineHeight: '1',
     transition: 'colors 0.2s',
   },
-  '.cm-cursor': {
-    borderLeft: '2px solid hsl(var(--foreground)) !important',
-    animation: 'blink 1s step-end infinite !important',
-  },
-  // Remove all focus borders and outlines
-  '.cm-editor': {
-    outline: 'none !important',
-    border: 'none !important',
-    width: '100% !important',
-    maxWidth: '100% !important',
-    overflow: 'hidden !important',
-  },
-  '.cm-editor.cm-focused': {
-    outline: 'none !important',
-    border: 'none !important',
-    boxShadow: 'none !important',
-  },
-  '.cm-content': {
-    outline: 'none !important',
-    border: 'none !important',
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-    fontSize: '0.875rem',
-    overflow: 'hidden !important',
-    whiteSpace: 'nowrap !important',
-  },
-  '.cm-content:focus': {
-    outline: 'none !important',
-    border: 'none !important',
-    boxShadow: 'none !important',
-  },
-  '.cm-scroller': {
-    outline: 'none !important',
-    border: 'none !important',
-    overflow: 'hidden !important',
-    scrollbarWidth: 'none !important',
-    msOverflowStyle: 'none !important',
-  },
-  '.cm-scroller::-webkit-scrollbar': {
-    display: 'none !important',
-  },
-  '.cm-focused .cm-scroller': {
-    outline: 'none !important',
-    border: 'none !important',
-  },
-  '@keyframes blink': {
-    '0%, 50%': { opacity: '1' },
-    '51%, 100%': { opacity: '0' },
-  }
 }, { dark: true })
+
 
 // TODO: move this to utils or BE?
 const variables: Record<string, string> = {
@@ -218,7 +159,7 @@ export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldPro
         doc: value ?? placeholder ?? 'https://api.example.com/endpoint',
         placeholder: placeholder ?? 'https://api.example.com/endpoint',
         editable: true,
-        theme: urlHighlightTheme,
+        customExtensions: [singleLineEditorTheme, variableHighlightTheme, urlPathParamsHighlightTheme],
         decorator: urlInputDecorator,
         completions: [myCompletions],
         hover: variableHover,

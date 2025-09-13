@@ -256,6 +256,21 @@ export function useSingleLineEditor(
   return editorInstanceRef.current
 }
 
+export const variableHighlightTheme = EditorView.theme({
+  '.cm-variable': {
+    padding: '2px 8px',
+    fontWeight: '500',
+    lineHeight: '1',
+    transition: 'colors 0.2s',
+  },
+  '.cm-variable-valid': {
+    color: 'hsl(120, 60%, 50%)',
+  },
+  '.cm-variable-invalid': {
+    color: 'hsl(0, 60%, 50%)',
+  },
+}, { dark: true })
+
 /**
  * Default single-line editor theme with common styling
  */
@@ -267,7 +282,9 @@ export const singleLineEditorTheme = EditorView.theme({
   // Remove all focus borders and outlines
   '.cm-editor': {
     outline: 'none !important',
-    border: 'none !important', 
+    border: 'none !important',
+    width: '100% !important',
+    maxWidth: '100% !important',
     maxHeight: '1.5rem !important', // Enforce single line height
     overflow: 'hidden !important', // Hide any overflow
   },
@@ -287,6 +304,11 @@ export const singleLineEditorTheme = EditorView.theme({
     overflow: 'hidden !important', // Hide any overflow
     whiteSpace: 'nowrap !important', // Prevent wrapping
   },
+  '.cm-content:focus': {
+    outline: 'none !important',
+    border: 'none !important',
+    boxShadow: 'none !important',
+  },
   '.cm-focused': {
     outline: 'none !important',
   },
@@ -300,8 +322,19 @@ export const singleLineEditorTheme = EditorView.theme({
   // Ensure single line by hiding overflow and preventing scrolling
   '.cm-scroller': {
     fontFamily: 'inherit',
+    outline: 'none !important',
+    border: 'none !important',
     overflow: 'hidden !important', // Hide all overflow
     maxHeight: '1.5rem !important', // Enforce single line height
+    scrollbarWidth: 'none !important',
+    msOverflowStyle: 'none !important',
+  },
+  '.cm-scroller::-webkit-scrollbar': {
+    display: 'none !important',
+  },
+  '.cm-focused .cm-scroller': {
+    outline: 'none !important',
+    border: 'none !important',
   },
   // Hide scrollbars completely
   '.cm-scrollbar': {
