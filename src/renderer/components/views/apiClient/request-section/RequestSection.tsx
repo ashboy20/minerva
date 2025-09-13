@@ -1,12 +1,4 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { Input } from '@/renderer/components/ui/input';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/renderer/components/ui/select';
 import {
 	Tabs,
 	TabsContent,
@@ -18,6 +10,7 @@ import { Textarea } from '@/renderer/components/ui/textarea';
 import { TableForm } from '@/renderer/components/views/apiClient/request-section/InputForm';
 import { Case, Endpoint, Row } from '@/types/backend/endpoint-management/endpoint';
 import UrlBar from '@/renderer/components/views/apiClient/request-section/UrlBar';
+import { AuthSection } from '@/renderer/components/views/apiClient/request-section/AuthSection';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
 	initializeUrl,
@@ -162,7 +155,7 @@ export function RequestSection({
 	return (
 		<div className="h-full p-4 overflow-y-auto">
 			<Card className="h-full border-none flex flex-col">
-				<CardContent className="space-y-4 p-4 flex-1 flex flex-col">
+				<CardContent className="space-y-4 p-4">
 					{/* URL Bar */}
 					<UrlBar
 						method={activeEndpoint?.method ?? 'GET'}
@@ -179,7 +172,7 @@ export function RequestSection({
 						onValueChange={onActiveTabChange}
 						className="flex-1 flex flex-col" 
 					>
-						<TabsList className="grid w-full grid-cols-6">
+						<TabsList className="grid w-full grid-cols-6 mb-2">
 							<TabsTrigger value="params">Params</TabsTrigger>
 							<TabsTrigger value="headers">Headers</TabsTrigger>
 							<TabsTrigger value="body">Body</TabsTrigger>
@@ -216,6 +209,7 @@ export function RequestSection({
 									activeEndpoint?.method === 'GET' ||
 									activeEndpoint?.method === 'HEAD'
 								}
+								rows={15}
 							/>
 							{(activeEndpoint?.method === 'GET' ||
 								activeEndpoint?.method === 'HEAD') && (
@@ -224,20 +218,17 @@ export function RequestSection({
 								</p>
 							)}
 						</TabsContent>
-						<TabsContent value="auth" className="flex-1 flex items-start">
-							<div className="flex flex-col gap-2 w-full">
-								<Select value="auth_type" onValueChange={onAuthTypeChange}>
-									<SelectTrigger className="w-full">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="Bearer">Bearer</SelectItem>
-									</SelectContent>
-								</Select>
-								<Input placeholder="put token here" type="password" />
-							</div>
+						<TabsContent value="auth" className="space-y-2 flex-1">
+							<AuthSection 
+								authType="Bearer"
+								token=""
+								onAuthTypeChange={onAuthTypeChange}
+							/>
 						</TabsContent>
-						{/* TODO: create content for pre-request scripts and tests */}
+						<TabsContent value="pre-request-scripts" className="space-y-2 flex-1">
+						</TabsContent>
+						<TabsContent value="tests" className="space-y-2 flex-1">
+						</TabsContent>
 					</Tabs>
 				</CardContent>
 			</Card>
