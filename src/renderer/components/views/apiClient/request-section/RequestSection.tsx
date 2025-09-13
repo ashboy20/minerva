@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/renderer/components/ui/input';
 import {
 	Select,
@@ -18,6 +18,14 @@ import { Textarea } from '@/renderer/components/ui/textarea';
 import { TableForm } from '@/renderer/components/views/apiClient/request-section/InputForm';
 import { Case, Endpoint, Row } from '@/types/backend/endpoint-management/endpoint';
 import UrlBar from '@/renderer/components/views/apiClient/request-section/UrlBar';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+	initializeUrl,
+	updateFromUrl,
+	updatePathParams,
+	updateQueryParams,
+	clearUpdateSource,
+} from '@/store/slices/urlSlice';
 
 
 interface RequestSectionProps {
@@ -50,181 +58,6 @@ const stringifyBody = (body: any) => {
 	}
 };
 
-const getQueryParamsFromUrl = (url: string) => {
-	try {
-		// Handle cases where URL might not have protocol
-		const urlToUse = url.startsWith('http') ? url : `http://localhost${url.startsWith('/') ? url : '/' + url}`;
-		const urlObj = new URL(urlToUse);
-		const params = Array.from(urlObj.searchParams.entries());
-		return params.map(([key, value], index) => ({
-			row_id: index + 1,
-			keyValue: key,
-			value: value,
-			enabled: true,
-		}));
-	} catch (error) {
-		// If URL parsing fails, return empty array
-		return [];
-	}
-}
-
-const urlPathParamsSync = (
-	initUrl: string, 
-	initPathParams: Row[],
-	initQueryParams: Row[],
-	onUrlChange?: (url: string) => void,
-	onPathParamsChange?: (pathParams: Row[]) => void,
-	onQueryParamsChange?: (queryParams: Row[]) => void
-) => {
-	const [url, setUrl] = useState(initUrl)
-	const [pathParams, setPathParams] = useState(initPathParams)
-	const [queryParams, setQueryParams] = useState(initQueryParams)
-	const [showPathParams, setShowPathParams] = useState(false)
-
-	useEffect(() => {
-		setUrl(initUrl)
-		setPathParams(initPathParams)
-		setQueryParams(initQueryParams)
-	}, [initUrl, initPathParams, initQueryParams])
-
-	useEffect(() => {
-		// Check if URL contains path parameters (like :id, :userId, etc.)
-		const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]+/g
-		const urlHasPathParams = url && pathParamsRegex.test(url)
-		
-		// Show path params table if URL has path parameters OR if there are existing path params
-		if (urlHasPathParams || pathParams.length > 0) {
-			setShowPathParams(true)
-		} else {
-			setShowPathParams(false)
-		}
-	}, [pathParams, url])
-
-	const isUpdatingUrl = useRef(false)
-	const isUpdatingPathParams = useRef(false)
-	const isUpdatingQueryParams = useRef(false)
-	const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]*/g
-
-	const handleUrlChange = (newUrl: string) => {
-		setUrl(newUrl)
-		onUrlChange?.(newUrl)
-		
-		const pathParamsLocated = newUrl.match(pathParamsRegex)
-		if (pathParamsLocated && !isUpdatingUrl.current) {
-			let newPathParams: Row[] = []
-			
-			pathParamsLocated.forEach(param => {
-				const paramName = param.replace(':', '')
-				if (!newPathParams.find(p => p.keyValue === paramName)) {
-					newPathParams.push({
-						row_id: newPathParams.length + 1,
-						keyValue: paramName,
-						value: '',
-						enabled: true,
-					})
-				} 
-			})
-			isUpdatingPathParams.current = true
-			setPathParams(newPathParams)
-			onPathParamsChange?.(newPathParams)
-			
-			setTimeout(() => {
-				isUpdatingPathParams.current = false
-			}, 0)
-		}
-
-        // Parse query parameters from URL
-        if (!isUpdatingUrl.current) {
-            let newQueryParams: Row[] = getQueryParamsFromUrl(newUrl)
-            isUpdatingQueryParams.current = true
-            setQueryParams(newQueryParams)
-            
-            setTimeout(() => {
-                isUpdatingQueryParams.current = false
-            }, 0)
-        }
-	}
-
-	const handlePathParamsChange = (newPathParams: Row[]) => {
-		setPathParams(newPathParams)
-		onPathParamsChange?.(newPathParams)
-		
-		// Skip URL update if this change came from URL parsing
-		if (isUpdatingPathParams.current) {
-			return
-		}
-		
-		let newUrl = url
-		const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]*/g
-		const pathParamsLocated = newUrl.match(pathParamsRegex)
-		
-		if (pathParamsLocated) {
-			// Replace each path param with the new keyValue
-			pathParamsLocated.forEach((param, index) => {
-				if (newPathParams[index] && newPathParams[index].keyValue) {
-					const newParam = `:${newPathParams[index].keyValue}`
-					newUrl = newUrl.replace(param, newParam)
-				}
-			})
-			
-			isUpdatingUrl.current = true
-			setUrl(newUrl)
-			onUrlChange?.(newUrl)
-			setTimeout(() => { isUpdatingUrl.current = false }, 0)
-		}
-	}
-
-	const handleQueryParamsChange = (newQueryParams: Row[]) => {		
-		// // Skip URL update if this change came from URL parsing
-		// if (isUpdatingQueryParams.current) {
-		// 	return
-		// }
-
-		// try {
-		// 	// Handle cases where URL might not have protocol
-		// 	const urlToUse = url.startsWith('http') ? url : `http://localhost${url.startsWith('/') ? url : '/' + url}`;
-		// 	let currentUrlObj = new URL(urlToUse)
-			
-		// 	// Clear existing query parameters
-		// 	currentUrlObj.searchParams.forEach((value, key) => {
-		// 		currentUrlObj.searchParams.delete(key)
-		// 	})
-			
-		// 	// Add new query parameters
-		// 	newQueryParams.forEach((param) => {
-		// 		if (param.enabled && param.keyValue && param.value) {
-		// 			currentUrlObj.searchParams.set(param.keyValue, param.value)
-		// 		}
-		// 	})
-			
-		// 	// Reconstruct the original URL format (remove the protocol/host if it was added)
-		// 	let currentUrl = currentUrlObj.toString()
-		// 	if (!url.startsWith('http')) {
-		// 		currentUrl = currentUrlObj.pathname + currentUrlObj.search + currentUrlObj.hash
-		// 	}
-			
-		// 	isUpdatingUrl.current = true
-		// 	setUrl(currentUrl)
-		// 	setQueryParams(newQueryParams)
-		// 	onQueryParamsChange?.(newQueryParams)
-			
-		// 	setTimeout(() => { isUpdatingUrl.current = false }, 0)
-		// } catch (error) {
-		// 	console.error('Error updating query parameters:', error)
-		// }
-	}
-
-	return {
-		url,
-		pathParams,
-		showPathParams,
-		queryParams,
-		setUrl: handleUrlChange,
-		setPathParams: handlePathParamsChange,
-		setQueryParams: handleQueryParamsChange
-	}
-}
-
 export function RequestSection({
 	activeEndpoint,
 	activeCase,
@@ -240,15 +73,91 @@ export function RequestSection({
 	onActiveTabChange,
 	onSendRequest,
 }: RequestSectionProps) {
-	const constructedUrl = (activeEndpoint?.base_url || '') + (activeEndpoint?.path || '')
-	const { url, pathParams, showPathParams, queryParams, setUrl, setPathParams, setQueryParams } = urlPathParamsSync(
-		constructedUrl,
-		activeCase?.request?.path_params || [],
-		activeCase?.request?.query_params || [],
-		onUrlChange,
-		onPathParamsChange,
-		onQueryParamsChange
-	)
+	const dispatch = useAppDispatch();
+	const { fullUrl, pathParams, queryParams, lastUpdateSource } = useAppSelector(state => state.url);
+
+	// Initialize URL state when endpoint/case changes
+	useEffect(() => {
+		if (activeEndpoint) {
+			const baseUrl = activeEndpoint.base_url || '';
+			const path = activeEndpoint.path || '';
+			const initialPathParams = activeCase?.request?.path_params || [];
+			const initialQueryParams = activeCase?.request?.query_params || [];
+			
+			dispatch(initializeUrl({
+				baseUrl,
+				path,
+				pathParams: initialPathParams,
+				queryParams: initialQueryParams
+			}));
+		}
+	}, [activeEndpoint, activeCase, dispatch]);
+
+	// Clean up update source after state changes (faster cleanup)
+	useEffect(() => {
+		if (lastUpdateSource) {
+			const timeout = setTimeout(() => {
+				dispatch(clearUpdateSource());
+			}, 10); // Much faster cleanup
+			return () => clearTimeout(timeout);
+		}
+	}, [lastUpdateSource, dispatch]);
+
+	// Show path params table if URL has path parameters OR if there are existing path params
+	const showPathParams = pathParams.length > 0;
+
+	const handleUrlChange = (newUrl: string) => {
+		dispatch(updateFromUrl(newUrl));
+		onUrlChange?.(newUrl);
+	};
+
+	// Debounce path params updates to prevent infinite loops
+	const pathParamsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	
+	const handlePathParamsChange = useCallback((newPathParams: Row[]) => {
+		// Clear previous timeout
+		if (pathParamsTimeoutRef.current) {
+			clearTimeout(pathParamsTimeoutRef.current);
+		}
+		
+		// Immediately update Redux (for UI responsiveness)
+		dispatch(updatePathParams(newPathParams));
+		
+		// Debounce parent callback to prevent cascading updates
+		pathParamsTimeoutRef.current = setTimeout(() => {
+			onPathParamsChange?.(newPathParams);
+		}, 50);
+	}, [dispatch, onPathParamsChange]);
+
+	// Debounce query params updates to prevent infinite loops
+	const queryParamsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	
+	const handleQueryParamsChange = useCallback((newQueryParams: Row[]) => {
+		// Clear previous timeout
+		if (queryParamsTimeoutRef.current) {
+			clearTimeout(queryParamsTimeoutRef.current);
+		}
+		
+		// Immediately update Redux (for UI responsiveness)
+		dispatch(updateQueryParams(newQueryParams));
+		
+		// Debounce parent callback to prevent cascading updates
+		queryParamsTimeoutRef.current = setTimeout(() => {
+			onQueryParamsChange?.(newQueryParams);
+		}, 50);
+	}, [dispatch, onQueryParamsChange]);
+	
+	// Cleanup timeouts on unmount
+	useEffect(() => {
+		return () => {
+			if (pathParamsTimeoutRef.current) {
+				clearTimeout(pathParamsTimeoutRef.current);
+			}
+			if (queryParamsTimeoutRef.current) {
+				clearTimeout(queryParamsTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	return (
 		<div className="h-full p-4 overflow-y-auto">
@@ -257,10 +166,10 @@ export function RequestSection({
 					{/* URL Bar */}
 					<UrlBar
 						method={activeEndpoint?.method ?? 'GET'}
-						url={url}
+						url={fullUrl}
 						loading={loading}
 						onMethodChange={onMethodChange}
-						onUrlChange={setUrl}
+						onUrlChange={handleUrlChange}
 						onSendRequest={onSendRequest}
 					/>
 
@@ -285,11 +194,11 @@ export function RequestSection({
 							<TableForm 
 								rows={pathParams} 
 								title="Path Params" 
-								onChange={setPathParams} 
+								onChange={handlePathParamsChange} 
 								isPathParamTable={true}
 							/>
 							)}
-							<TableForm rows={queryParams} title="Query Params" onChange={setQueryParams} />
+							<TableForm rows={queryParams} title="Query Params" onChange={handleQueryParamsChange} />
 						</TabsContent>
 						<TabsContent value="headers" className="space-y-2 flex-1">
 							<TableForm rows={activeCase?.request?.headers || []} onChange={onHeadersChange} />
