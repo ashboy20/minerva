@@ -1,11 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { EditorState } from '@codemirror/state'
-import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, keymap, hoverTooltip } from '@codemirror/view'
-import { defaultKeymap, historyKeymap, history } from '@codemirror/commands'
-import { autocompletion } from '@codemirror/autocomplete'
-import { drawSelection, dropCursor, Range } from '@codemirror/view'
-import { indentOnInput } from '@codemirror/language'
-import { bracketMatching } from '@codemirror/language'
+import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, hoverTooltip } from '@codemirror/view'
+import { Range } from '@codemirror/state'
+import { createSingleLineEditor, SingleLineEditorInstance } from '@/renderer/lib/codemirror/SingleLineEditor'
 
 // Theme using Tailwind CSS variables for consistency
 const urlHighlightTheme = EditorView.theme({
@@ -35,7 +31,10 @@ const urlHighlightTheme = EditorView.theme({
   // Remove all focus borders and outlines
   '.cm-editor': {
     outline: 'none !important',
-    border: 'none !important', 
+    border: 'none !important',
+    width: '100% !important',
+    maxWidth: '100% !important',
+    overflow: 'hidden !important',
   },
   '.cm-editor.cm-focused': {
     outline: 'none !important',
@@ -47,6 +46,8 @@ const urlHighlightTheme = EditorView.theme({
     border: 'none !important',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     fontSize: '0.875rem',
+    overflow: 'hidden !important',
+    whiteSpace: 'nowrap !important',
   },
   '.cm-content:focus': {
     outline: 'none !important',
@@ -56,6 +57,12 @@ const urlHighlightTheme = EditorView.theme({
   '.cm-scroller': {
     outline: 'none !important',
     border: 'none !important',
+    overflow: 'hidden !important',
+    scrollbarWidth: 'none !important',
+    msOverflowStyle: 'none !important',
+  },
+  '.cm-scroller::-webkit-scrollbar': {
+    display: 'none !important',
   },
   '.cm-focused .cm-scroller': {
     outline: 'none !important',
@@ -202,84 +209,50 @@ interface UrlInputFieldProps {
 0
 export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const editorViewRef = useRef<EditorView | null>(null)
+  const editorInstanceRef = useRef<SingleLineEditorInstance | null>(null)
   const [contentValue, setContentValue] = useState(value || '')
-  const isInternalChange = useRef(false) // Prevent infinite loops
 
   useEffect(() => {
-      if (containerRef.current) {
-        const state = EditorState.create({
-          doc: value ?? placeholder ?? 'https://api.example.com/endpoint',
-          extensions: [
-            EditorState.allowMultipleSelections.of(true),
-            keymap.of([...defaultKeymap, ...historyKeymap]),
+    if (containerRef.current) {
+      editorInstanceRef.current = createSingleLineEditor(containerRef.current, {
+        doc: value ?? placeholder ?? 'https://api.example.com/endpoint',
+        placeholder: placeholder ?? 'https://api.example.com/endpoint',
+        editable: true,
+        theme: urlHighlightTheme,
+        decorator: urlInputDecorator,
+        completions: [myCompletions],
+        hover: variableHover,
+        onChange: (newValue) => {
+          setContentValue(newValue)
+          onChange(newValue)
+        }
+      })
 
-            // ADD THESE MISSING EXTENSIONS:
-            history(), // Enables undo/redo and change tracking
-            drawSelection(), // Shows text selection
-            dropCursor(), // Shows cursor when dragging
-            indentOnInput(), // Handles text input
-            bracketMatching(), // Handles bracket matching
+      // Focus and set cursor at end
+      setTimeout(() => {
+        editorInstanceRef.current?.focus()
+      }, 100)
 
-            EditorView.editable.of(true), 
-            urlHighlightTheme,
-            urlInputDecorator,
-            autocompletion({
-              override: [myCompletions],
-            }),
-            variableHover,
-            // Add update listener to trigger onChange
-            EditorView.updateListener.of((update) => {
-              if (update.docChanged && !isInternalChange.current) {
-                const newValue = update.state.doc.toString()
-                setContentValue(newValue)
-                onChange(newValue)
-              }
-            })
-          ],
-        })
-        const view = new EditorView({
-          state,
-          parent: containerRef.current,
-        })
-
-        editorViewRef.current = view
-
-        // Focus and set cursor at end for testing
-        setTimeout(() => {
-          view.focus()
-          const length = view.state.doc.length
-          view.dispatch({
-            selection: { anchor: length, head: length }
-          })
-        }, 100)
-
-        return () => {
-          if (editorViewRef.current) {
-            editorViewRef.current.destroy()
-            editorViewRef.current = null
-          }
+      return () => {
+        if (editorInstanceRef.current) {
+          editorInstanceRef.current.destroy()
+          editorInstanceRef.current = null
         }
       }
-    }, [])
+    }
+  }, [])
 
   // Method to set content programmatically
   const setContent = useCallback((newContent: string) => {
-    if (editorViewRef.current) {
-      isInternalChange.current = true
-      const currentDoc = editorViewRef.current.state.doc
-      editorViewRef.current.dispatch({
-        changes: { from: 0, to: currentDoc.length, insert: newContent },
-        selection: { anchor: newContent.length, head: newContent.length }
-      })
-      isInternalChange.current = false
+    if (editorInstanceRef.current) {
+      editorInstanceRef.current.setContent(newContent)
     }
   }, [])
 
   // Handle value prop changes from parent (only when significantly different)
   useEffect(() => {
-    if (value !== undefined && value !== contentValue && editorViewRef.current) {
-      const currentEditorValue = editorViewRef.current.state.doc.toString()
+    if (value !== undefined && value !== contentValue && editorInstanceRef.current) {
+      const currentEditorValue = editorInstanceRef.current.getContent()
       // Only update if the value is truly different from what's in the editor
       if (value !== currentEditorValue) {
         setContentValue(value)
@@ -289,6 +262,6 @@ export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldPro
   }, [value, setContent])
 
     return (
-      <div className="h-9 w-full rounded-md border border-input pt-1 pl-2 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring" ref={containerRef}></div>
+      <div className="h-9 w-full max-w-full overflow-hidden rounded-md border border-input pt-1 pl-2 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring" ref={containerRef}></div>
     )
 }
