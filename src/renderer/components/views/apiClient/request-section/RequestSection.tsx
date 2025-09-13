@@ -263,7 +263,7 @@ export function RequestSection({
 							<TableForm rows={queryParams} title="Query Params" onChange={handleQueryParamsChange} />
 						</TabsContent>
 						<TabsContent value="headers" className="space-y-2 flex-1">
-							<TableForm rows={headers} onChange={handleHeadersChange} />
+							<TableForm rows={headers} onChange={handleHeadersChange} isHeaderTable={true} />
 						</TabsContent>
 						<TabsContent
 							value="body"

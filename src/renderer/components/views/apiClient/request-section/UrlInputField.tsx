@@ -1,22 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, hoverTooltip } from '@codemirror/view'
 import { Range } from '@codemirror/state'
-import { createSingleLineEditor, SingleLineEditorInstance } from '@/renderer/lib/codemirror/SingleLineEditor'
+import { createSingleLineEditor, SingleLineEditorInstance, variableHighlightTheme } from '@/renderer/lib/codemirror/SingleLineEditor'
+import { variableCompletions, variableHover, variables } from '@/renderer/lib/codemirror/VariableExtensions'
 
-// Theme using Tailwind CSS variables for consistency
-const urlHighlightTheme = EditorView.theme({
-  '.cm-variable': {
-    padding: '2px 8px',
-    fontWeight: '500',
-    lineHeight: '1',
-    transition: 'colors 0.2s',
-  },
-  '.cm-variable-valid': {
-    color: 'hsl(120, 60%, 50%)',
-  },
-  '.cm-variable-invalid': {
-    color: 'hsl(0, 60%, 50%)',
-  },
+const urlPathParamsHighlightTheme = EditorView.theme({
   '.cm-path-param': {
     color: 'hsl(15, 70%, 45%)', // Brown-red color
     padding: '2px 6px',
@@ -24,127 +12,6 @@ const urlHighlightTheme = EditorView.theme({
     lineHeight: '1',
     transition: 'colors 0.2s',
   },
-  '.cm-cursor': {
-    borderLeft: '2px solid hsl(var(--foreground)) !important',
-    animation: 'blink 1s step-end infinite !important',
-  },
-  // Remove all focus borders and outlines
-  '.cm-editor': {
-    outline: 'none !important',
-    border: 'none !important',
-    width: '100% !important',
-    maxWidth: '100% !important',
-    overflow: 'hidden !important',
-  },
-  '.cm-editor.cm-focused': {
-    outline: 'none !important',
-    border: 'none !important',
-    boxShadow: 'none !important',
-  },
-  '.cm-content': {
-    outline: 'none !important',
-    border: 'none !important',
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-    fontSize: '0.875rem',
-    overflow: 'hidden !important',
-    whiteSpace: 'nowrap !important',
-  },
-  '.cm-content:focus': {
-    outline: 'none !important',
-    border: 'none !important',
-    boxShadow: 'none !important',
-  },
-  '.cm-scroller': {
-    outline: 'none !important',
-    border: 'none !important',
-    overflow: 'hidden !important',
-    scrollbarWidth: 'none !important',
-    msOverflowStyle: 'none !important',
-  },
-  '.cm-scroller::-webkit-scrollbar': {
-    display: 'none !important',
-  },
-  '.cm-focused .cm-scroller': {
-    outline: 'none !important',
-    border: 'none !important',
-  },
-  '@keyframes blink': {
-    '0%, 50%': { opacity: '1' },
-    '51%, 100%': { opacity: '0' },
-  }
-}, { dark: true })
-
-// TODO: move this to utils or BE?
-const variables: Record<string, string> = {
-  'HOST': 'https://api.example.com',
-  'API_KEY': 'api-key',
-}
-
-// TODO: move the utils?
-function myCompletions(context: any) {
-  let word = context.matchBefore(/\{\{/);
-  if (!word) return null;
-  if (word.from == word.to && !context.explicit) return null;
-  return {
-    from: word.to,
-    options: [
-      ...Object.keys(variables).map((key) => ({
-        label: `${key}`,
-        type: 'variable',
-        apply: (view: EditorView, completion: any, from: number, to: number) => {
-          const insert = `${completion.label}}}`
-          view.dispatch({
-            changes: { from: from, to: to, insert: insert },
-            selection: { anchor: from + insert.length, head: from + insert.length }
-          })
-        }
-      })),
-    ]
-  };
-}
-
-// TODO: move to utils or somewhere else?
-// Hover tooltip function to show variable values
-const variableHover = hoverTooltip((view, pos, side) => {
-  const doc = view.state.doc
-  const line = doc.lineAt(pos)
-  const text = line.text
-
-  // Find if cursor is over a variable {{...}}
-  const variableRegex = /\{\{([^}]+)\}\}/g
-  let match
-  
-  while ((match = variableRegex.exec(text)) !== null) {
-    const start = line.from + match.index
-    const end = line.from + match.index + match[0].length
-    
-    // Check if cursor position is within this variable
-    if (pos >= start && pos <= end) {
-      const variableName = match[1]
-      const variableValue = variables[variableName]
-      
-      if (variableValue) {
-        return {
-          pos: start,
-          end: end,
-          below: true,
-          create(view) {
-            const dom = document.createElement("div")
-            dom.className = "cm-tooltip-variable"
-            dom.innerHTML = `
-              <div style="padding: 8px; background: hsl(var(--popover)); border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 0.875rem;">
-                <div style="font-weight: 600; color: hsl(var(--foreground));">Key: ${variableName}</div>
-                <div style="color: hsl(var(--muted-foreground)); margin-top: 4px;">Value: ${variableValue}</div>
-              </div>
-            `
-            return { dom }
-          }
-        }
-      }
-    }
-  }
-  
-  return null
 })
 
 // highlight the url and variables
@@ -218,9 +85,9 @@ export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldPro
         doc: value ?? placeholder ?? 'https://api.example.com/endpoint',
         placeholder: placeholder ?? 'https://api.example.com/endpoint',
         editable: true,
-        theme: urlHighlightTheme,
+        customExtensions: [variableHighlightTheme, urlPathParamsHighlightTheme],
         decorator: urlInputDecorator,
-        completions: [myCompletions],
+        completions: [variableCompletions],
         hover: variableHover,
         onChange: (newValue) => {
           setContentValue(newValue)

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { TrashIcon } from '@radix-ui/react-icons';
+import { createSingleLineEditor, SingleLineEditorInstance, variableHighlightTheme } from '@/renderer/lib/codemirror/SingleLineEditor';
+import { headerKeyCompletions, variableCompletions, variableHover } from '@/renderer/lib/codemirror/VariableExtensions';
 
 interface InputRowProps {
 	id: number;
@@ -11,12 +12,17 @@ interface InputRowProps {
 	enabled: boolean;
 	disabled?: boolean;
 	isPathParamTable?: boolean;
+	isHeaderTable?: boolean;
 	onChange: (
 		id: number,
 		field: 'keyValue' | 'value' | 'enabled',
 		value: string | boolean,
 	) => void;
 	onDelete: (id: number) => void;
+	keyCompletions?: Array<any>;
+	keyHovers?: Array<any>;
+	valueCompletions?: Array<any>;
+	valueHovers?: Array<any>;
 }
 
 export function InputRow({
@@ -28,22 +34,88 @@ export function InputRow({
 	onChange,
 	onDelete,
 	isPathParamTable = false,
+	isHeaderTable = false,
+	keyCompletions,
+	keyHovers,
+	valueCompletions,
+	valueHovers,
 }: InputRowProps) {
+	const keyEditorRef = useRef<HTMLDivElement>(null);
+	const valueEditorRef = useRef<HTMLDivElement>(null);
+	const keyEditorInstanceRef = useRef<SingleLineEditorInstance | null>(null);
+	const valueEditorInstanceRef = useRef<SingleLineEditorInstance | null>(null);
+
+	// Initialize editors
+	useEffect(() => {
+		if (keyEditorRef.current && !keyEditorInstanceRef.current) {
+			// Combine header completions with any provided completions for header tables
+			const effectiveKeyCompletions = isHeaderTable 
+				? [headerKeyCompletions, ...(keyCompletions || [])]
+				: keyCompletions;
+
+			keyEditorInstanceRef.current = createSingleLineEditor(keyEditorRef.current, {
+				doc: keyValue,
+				placeholder: 'Key',
+				editable: !disabled,
+				completions: effectiveKeyCompletions,
+				hover: keyHovers,
+				onChange: (newValue) => {
+					if (!disabled) {
+						onChange(id, 'keyValue', newValue);
+					}
+				}
+			});
+		}
+
+		if (valueEditorRef.current && !valueEditorInstanceRef.current) {
+			// Add variable completions and hover to all value fields (headers, query params, path params)
+			const effectiveValueCompletions = [variableCompletions, ...(valueCompletions || [])];
+			// Use variable hover as default, but allow override if provided
+			const effectiveValueHover = valueHovers && valueHovers.length > 0 ? valueHovers[0] : variableHover;
+
+			valueEditorInstanceRef.current = createSingleLineEditor(valueEditorRef.current, {
+				doc: value,
+				placeholder: 'Value',
+				editable: !disabled,
+				completions: effectiveValueCompletions,
+				hover: effectiveValueHover,
+				customExtensions: [variableHighlightTheme],
+				onChange: (newValue) => {
+					if (!disabled) {
+						onChange(id, 'value', newValue);
+					}
+				}
+			});
+		}
+
+		return () => {
+			if (keyEditorInstanceRef.current) {
+				keyEditorInstanceRef.current.destroy();
+				keyEditorInstanceRef.current = null;
+			}
+			if (valueEditorInstanceRef.current) {
+				valueEditorInstanceRef.current.destroy();
+				valueEditorInstanceRef.current = null;
+			}
+		};
+	}, []);
+
+	// Update editor content when props change
+	useEffect(() => {
+		if (keyEditorInstanceRef.current && keyEditorInstanceRef.current.getContent() !== keyValue) {
+			keyEditorInstanceRef.current.setContent(keyValue);
+		}
+	}, [keyValue]);
+
+	useEffect(() => {
+		if (valueEditorInstanceRef.current && valueEditorInstanceRef.current.getContent() !== value) {
+			valueEditorInstanceRef.current.setContent(value);
+		}
+	}, [value]);
+
 	const handleEnable = (checked: boolean) => {
 		if (!disabled) {
 			onChange(id, 'enabled', checked);
-		}
-	};
-
-	const handleKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (!disabled) {
-			onChange(id, 'keyValue', e.target.value);
-		}
-	};
-
-	const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (!disabled) {
-			onChange(id, 'value', e.target.value);
 		}
 	};
 
@@ -64,19 +136,13 @@ export function InputRow({
 					disabled={disabled}
 				/>
 			)}
-			<Input 
-				placeholder="Key" 
-				value={keyValue} 
-				onChange={handleKeyChange} 
-				disabled={disabled}
-				className={disabled ? 'cursor-not-allowed' : ''}
+			<div 
+				ref={keyEditorRef}
+				className={`h-9 flex-1 rounded-md border border-input px-3 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring ${disabled ? 'cursor-not-allowed bg-muted' : ''}`}
 			/>
-			<Input 
-				placeholder="Value" 
-				value={value} 
-				onChange={handleValueChange} 
-				disabled={disabled}
-				className={disabled ? 'cursor-not-allowed' : ''}
+			<div 
+				ref={valueEditorRef}
+				className={`h-9 flex-1 rounded-md border border-input px-3 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring ${disabled ? 'cursor-not-allowed bg-muted' : ''}`}
 			/>
 			<Button
 				variant="ghost"
