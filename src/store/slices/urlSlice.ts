@@ -72,6 +72,13 @@ const buildUrlFromParams = (baseUrl: string, path: string, pathParams: Row[], qu
     fullUrl += `?${queryString}`;
   }
   
+  // URL decode the final URL
+  try {
+    fullUrl = decodeURIComponent(fullUrl);
+  } catch {
+    // If decoding fails, return the original URL
+    console.error('Error decoding URL:', fullUrl);
+  }
   return fullUrl;
 };
 
