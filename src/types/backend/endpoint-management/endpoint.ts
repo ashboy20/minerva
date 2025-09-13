@@ -10,6 +10,10 @@ export type Request = {
     query_params: Row[];
     path_params: Row[];
     body: Record<string, any> | null;
+    auth: {
+        auth_type: string;
+        token: string;
+    } | null;
 }
 
 export type Response = {

@@ -32,7 +32,7 @@ interface RequestSectionProps {
 	onQueryParamsChange: (queryParams: Row[]) => void;
 	onHeadersChange: (headers: Row[]) => void;
 	onBodyChange: (body: string) => void;
-	onAuthTypeChange: (authType: string) => void;
+	onAuthChange: (authType: string, token: string) => void;
 	onActiveTabChange: (tab: string) => void;
 	onSendRequest: () => void;
 }
@@ -62,7 +62,7 @@ export function RequestSection({
 	onQueryParamsChange,
 	onHeadersChange,
 	onBodyChange,
-	onAuthTypeChange,
+	onAuthChange,
 	onActiveTabChange,
 	onSendRequest,
 }: RequestSectionProps) {
@@ -220,9 +220,11 @@ export function RequestSection({
 						</TabsContent>
 						<TabsContent value="auth" className="space-y-2 flex-1">
 							<AuthSection 
-								authType="Bearer"
-								token=""
-								onAuthTypeChange={onAuthTypeChange}
+								authType={activeCase?.request?.auth?.auth_type || "Bearer"}
+								token={activeCase?.request?.auth?.token || ""}
+								onAuthChange={(authType, token) => {
+									onAuthChange(authType, token);
+								}}
 							/>
 						</TabsContent>
 						<TabsContent value="pre-request-scripts" className="space-y-2 flex-1">

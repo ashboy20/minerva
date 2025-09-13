@@ -225,9 +225,10 @@ export function RequestBuilder() {
 		}
 	};
 
-	const handleAuthTypeChange = (authType: string) => {
-		// This could be implemented to add/update auth headers
-		console.log('Auth type changed:', authType);
+	const handleAuthChange = (authType: string, token: string) => {
+		if (activeCase) {
+			setActiveCase({ ...activeCase, request: { ...activeCase.request, auth: { auth_type: authType, token: token } } });
+		}
 	};
 
 	return (
@@ -259,7 +260,7 @@ export function RequestBuilder() {
 							onQueryParamsChange={handleQueryParamsChange}
 							onHeadersChange={handleHeadersChange}
 							onBodyChange={handleBodyChange}
-							onAuthTypeChange={handleAuthTypeChange}
+							onAuthChange={handleAuthChange}
 							onActiveTabChange={setActiveTab}
 							onSendRequest={sendRequest}
 						/>

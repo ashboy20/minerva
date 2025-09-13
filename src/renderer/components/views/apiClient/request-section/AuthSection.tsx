@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/renderer/components/ui/input';
 import {
 	Select,
@@ -11,23 +11,30 @@ import {
 interface AuthSectionProps {
 	authType?: string;
 	token?: string;
-	onAuthTypeChange: (authType: string) => void;
-	onTokenChange?: (token: string) => void;
+	onAuthChange: (authType: string, token: string) => void;
 }
 
 export function AuthSection({
 	authType = 'Bearer',
 	token = '',
-	onAuthTypeChange,
-	onTokenChange,
+	onAuthChange,
 }: AuthSectionProps) {
-	const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		onTokenChange?.(e.target.value);
-	};
+    const [authTypeState, setAuthTypeState] = useState(authType);
+    const [tokenState, setTokenState] = useState(token);
+
+    const handleAuthTypeChange = (authType: string) => {
+        setAuthTypeState(authType);
+        onAuthChange(authType, token);
+    };
+
+    const handleTokenChange = (token: string) => {
+        setTokenState(token);
+        onAuthChange(authType, token);
+    };
 
 	return (
 		<div className="space-y-2">
-			<Select value={authType} onValueChange={onAuthTypeChange}>
+			<Select value={authTypeState} onValueChange={handleAuthTypeChange}>
 				<SelectTrigger className="w-full">
 					<SelectValue placeholder="Select auth type" />
 				</SelectTrigger>
@@ -50,8 +57,8 @@ export function AuthSection({
 						'Enter auth value'
 					}
 					type="password" 
-					value={token}
-					onChange={handleTokenChange}
+					value={tokenState}
+					onChange={(e) => handleTokenChange(e.target.value)}
 				/>
 			)}
 		</div>
