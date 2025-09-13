@@ -1,11 +1,15 @@
 import { Layout } from '@/renderer/components/layout/Layout';
 import App from '@/renderer/components/windows/main/App';
 import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { store } from '@/store';
 
 const container = document.getElementById('root') as HTMLElement;
 const root = createRoot(container);
 root.render(
-	<Layout>
-		<App />
-	</Layout>,
+	<Provider store={store}>
+		<Layout>
+			<App />
+		</Layout>
+	</Provider>,
 );
