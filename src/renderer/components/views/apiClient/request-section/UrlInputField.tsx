@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, hoverTooltip } from '@codemirror/view'
 import { Range } from '@codemirror/state'
 import { createSingleLineEditor, SingleLineEditorInstance, variableHighlightTheme, singleLineEditorTheme } from '@/renderer/lib/codemirror/SingleLineEditor'
-
+import { variableCompletions, variableHover, variables } from '@/renderer/lib/codemirror/VariableExtensions'
 
 const urlPathParamsHighlightTheme = EditorView.theme({
   '.cm-path-param': {
@@ -13,80 +13,6 @@ const urlPathParamsHighlightTheme = EditorView.theme({
     transition: 'colors 0.2s',
   },
 }, { dark: true })
-
-
-// TODO: move this to utils or BE?
-const variables: Record<string, string> = {
-  'HOST': 'https://api.example.com',
-  'API_KEY': 'api-key',
-}
-
-// TODO: move the utils?
-function myCompletions(context: any) {
-  let word = context.matchBefore(/\{\{/);
-  if (!word) return null;
-  if (word.from == word.to && !context.explicit) return null;
-  return {
-    from: word.to,
-    options: [
-      ...Object.keys(variables).map((key) => ({
-        label: `${key}`,
-        type: 'variable',
-        apply: (view: EditorView, completion: any, from: number, to: number) => {
-          const insert = `${completion.label}}}`
-          view.dispatch({
-            changes: { from: from, to: to, insert: insert },
-            selection: { anchor: from + insert.length, head: from + insert.length }
-          })
-        }
-      })),
-    ]
-  };
-}
-
-// TODO: move to utils or somewhere else?
-// Hover tooltip function to show variable values
-const variableHover = hoverTooltip((view, pos, side) => {
-  const doc = view.state.doc
-  const line = doc.lineAt(pos)
-  const text = line.text
-
-  // Find if cursor is over a variable {{...}}
-  const variableRegex = /\{\{([^}]+)\}\}/g
-  let match
-  
-  while ((match = variableRegex.exec(text)) !== null) {
-    const start = line.from + match.index
-    const end = line.from + match.index + match[0].length
-    
-    // Check if cursor position is within this variable
-    if (pos >= start && pos <= end) {
-      const variableName = match[1]
-      const variableValue = variables[variableName]
-      
-      if (variableValue) {
-        return {
-          pos: start,
-          end: end,
-          below: true,
-          create(view) {
-            const dom = document.createElement("div")
-            dom.className = "cm-tooltip-variable"
-            dom.innerHTML = `
-              <div style="padding: 8px; background: hsl(var(--popover)); border: 1px solid hsl(var(--border)); border-radius: 6px; font-size: 0.875rem;">
-                <div style="font-weight: 600; color: hsl(var(--foreground));">Key: ${variableName}</div>
-                <div style="color: hsl(var(--muted-foreground)); margin-top: 4px;">Value: ${variableValue}</div>
-              </div>
-            `
-            return { dom }
-          }
-        }
-      }
-    }
-  }
-  
-  return null
-})
 
 // highlight the url and variables
 const urlInputDecorator = ViewPlugin.fromClass(class {
@@ -161,7 +87,7 @@ export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldPro
         editable: true,
         customExtensions: [singleLineEditorTheme, variableHighlightTheme, urlPathParamsHighlightTheme],
         decorator: urlInputDecorator,
-        completions: [myCompletions],
+        completions: [variableCompletions],
         hover: variableHover,
         onChange: (newValue) => {
           setContentValue(newValue)
