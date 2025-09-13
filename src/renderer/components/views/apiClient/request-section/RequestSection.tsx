@@ -50,20 +50,42 @@ const stringifyBody = (body: any) => {
 	}
 };
 
+const getQueryParamsFromUrl = (url: string) => {
+	try {
+		// Handle cases where URL might not have protocol
+		const urlToUse = url.startsWith('http') ? url : `http://localhost${url.startsWith('/') ? url : '/' + url}`;
+		const urlObj = new URL(urlToUse);
+		const params = Array.from(urlObj.searchParams.entries());
+		return params.map(([key, value], index) => ({
+			row_id: index + 1,
+			keyValue: key,
+			value: value,
+			enabled: true,
+		}));
+	} catch (error) {
+		// If URL parsing fails, return empty array
+		return [];
+	}
+}
+
 const urlPathParamsSync = (
 	initUrl: string, 
-	initPathParams: Row[], 
+	initPathParams: Row[],
+	initQueryParams: Row[],
 	onUrlChange?: (url: string) => void,
-	onPathParamsChange?: (pathParams: Row[]) => void
+	onPathParamsChange?: (pathParams: Row[]) => void,
+	onQueryParamsChange?: (queryParams: Row[]) => void
 ) => {
 	const [url, setUrl] = useState(initUrl)
 	const [pathParams, setPathParams] = useState(initPathParams)
+	const [queryParams, setQueryParams] = useState(initQueryParams)
 	const [showPathParams, setShowPathParams] = useState(false)
 
 	useEffect(() => {
 		setUrl(initUrl)
 		setPathParams(initPathParams)
-	}, [initUrl, initPathParams])
+		setQueryParams(initQueryParams)
+	}, [initUrl, initPathParams, initQueryParams])
 
 	useEffect(() => {
 		// Check if URL contains path parameters (like :id, :userId, etc.)
@@ -80,6 +102,7 @@ const urlPathParamsSync = (
 
 	const isUpdatingUrl = useRef(false)
 	const isUpdatingPathParams = useRef(false)
+	const isUpdatingQueryParams = useRef(false)
 	const pathParamsRegex = /(?<!https?)\:[a-zA-Z0-9_]*/g
 
 	const handleUrlChange = (newUrl: string) => {
@@ -109,6 +132,17 @@ const urlPathParamsSync = (
 				isUpdatingPathParams.current = false
 			}, 0)
 		}
+
+        // Parse query parameters from URL
+        if (!isUpdatingUrl.current) {
+            let newQueryParams: Row[] = getQueryParamsFromUrl(newUrl)
+            isUpdatingQueryParams.current = true
+            setQueryParams(newQueryParams)
+            
+            setTimeout(() => {
+                isUpdatingQueryParams.current = false
+            }, 0)
+        }
 	}
 
 	const handlePathParamsChange = (newPathParams: Row[]) => {
@@ -140,12 +174,54 @@ const urlPathParamsSync = (
 		}
 	}
 
+	const handleQueryParamsChange = (newQueryParams: Row[]) => {		
+		// // Skip URL update if this change came from URL parsing
+		// if (isUpdatingQueryParams.current) {
+		// 	return
+		// }
+
+		// try {
+		// 	// Handle cases where URL might not have protocol
+		// 	const urlToUse = url.startsWith('http') ? url : `http://localhost${url.startsWith('/') ? url : '/' + url}`;
+		// 	let currentUrlObj = new URL(urlToUse)
+			
+		// 	// Clear existing query parameters
+		// 	currentUrlObj.searchParams.forEach((value, key) => {
+		// 		currentUrlObj.searchParams.delete(key)
+		// 	})
+			
+		// 	// Add new query parameters
+		// 	newQueryParams.forEach((param) => {
+		// 		if (param.enabled && param.keyValue && param.value) {
+		// 			currentUrlObj.searchParams.set(param.keyValue, param.value)
+		// 		}
+		// 	})
+			
+		// 	// Reconstruct the original URL format (remove the protocol/host if it was added)
+		// 	let currentUrl = currentUrlObj.toString()
+		// 	if (!url.startsWith('http')) {
+		// 		currentUrl = currentUrlObj.pathname + currentUrlObj.search + currentUrlObj.hash
+		// 	}
+			
+		// 	isUpdatingUrl.current = true
+		// 	setUrl(currentUrl)
+		// 	setQueryParams(newQueryParams)
+		// 	onQueryParamsChange?.(newQueryParams)
+			
+		// 	setTimeout(() => { isUpdatingUrl.current = false }, 0)
+		// } catch (error) {
+		// 	console.error('Error updating query parameters:', error)
+		// }
+	}
+
 	return {
 		url,
 		pathParams,
 		showPathParams,
+		queryParams,
 		setUrl: handleUrlChange,
 		setPathParams: handlePathParamsChange,
+		setQueryParams: handleQueryParamsChange
 	}
 }
 
@@ -165,11 +241,13 @@ export function RequestSection({
 	onSendRequest,
 }: RequestSectionProps) {
 	const constructedUrl = (activeEndpoint?.base_url || '') + (activeEndpoint?.path || '')
-	const { url, pathParams, showPathParams, setUrl, setPathParams } = urlPathParamsSync(
+	const { url, pathParams, showPathParams, queryParams, setUrl, setPathParams, setQueryParams } = urlPathParamsSync(
 		constructedUrl,
 		activeCase?.request?.path_params || [],
+		activeCase?.request?.query_params || [],
 		onUrlChange,
-		onPathParamsChange
+		onPathParamsChange,
+		onQueryParamsChange
 	)
 
 	return (
@@ -211,7 +289,7 @@ export function RequestSection({
 								isPathParamTable={true}
 							/>
 							)}
-							<TableForm rows={activeCase?.request?.query_params || []} title="Query Params" onChange={onQueryParamsChange} />
+							<TableForm rows={queryParams} title="Query Params" onChange={setQueryParams} />
 						</TabsContent>
 						<TabsContent value="headers" className="space-y-2 flex-1">
 							<TableForm rows={activeCase?.request?.headers || []} onChange={onHeadersChange} />
