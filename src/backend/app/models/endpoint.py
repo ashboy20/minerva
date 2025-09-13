@@ -11,6 +11,11 @@ class Row(BaseModel):
     enabled: bool = Field(description="Enabled of the row")
 
 
+class Auth(BaseModel):
+    auth_type: str = Field(description="Type of the auth", alias="auth")
+    token: str = Field(description="Token of the auth")
+
+
 class Request(BaseModel):
     headers: Optional[List[dict]] = Field(
         default=None, description="Headers of the request"
@@ -24,6 +29,7 @@ class Request(BaseModel):
     body: Optional[dict] = Field(
         default=None, description="Body of the request"
     )
+    auth: Optional[dict] = Field(default=None, description="Auth of the request")
 
 
 class Response(BaseModel):
