@@ -19,6 +19,12 @@ import {
 	updateQueryParams,
 	clearUpdateSource,
 } from '@/store/slices/urlSlice';
+import {
+	initializeHeadersAuth,
+	updateHeaders,
+	updateAuth,
+	clearUpdateSource as clearHeadersAuthUpdateSource,
+} from '@/store/slices/headersAuthSlice';
 
 
 interface RequestSectionProps {
@@ -68,20 +74,31 @@ export function RequestSection({
 }: RequestSectionProps) {
 	const dispatch = useAppDispatch();
 	const { fullUrl, pathParams, queryParams, lastUpdateSource } = useAppSelector(state => state.url);
+	const { headers, auth, lastUpdateSource: headersAuthUpdateSource } = useAppSelector(state => state.headersAuth);
 
-	// Initialize URL state when endpoint/case changes
+	// Initialize URL and headers/auth state when endpoint/case changes
 	useEffect(() => {
 		if (activeEndpoint) {
 			const baseUrl = activeEndpoint.base_url || '';
 			const path = activeEndpoint.path || '';
 			const initialPathParams = activeCase?.request?.path_params || [];
 			const initialQueryParams = activeCase?.request?.query_params || [];
+			const initialHeaders = activeCase?.request?.headers || [];
+			const initialAuth = {
+				authType: activeCase?.request?.auth?.auth_type || 'Bearer',
+				token: activeCase?.request?.auth?.token || ''
+			};
 			
 			dispatch(initializeUrl({
 				baseUrl,
 				path,
 				pathParams: initialPathParams,
 				queryParams: initialQueryParams
+			}));
+			
+			dispatch(initializeHeadersAuth({
+				headers: initialHeaders,
+				auth: initialAuth
 			}));
 		}
 	}, [activeEndpoint, activeCase, dispatch]);
@@ -95,6 +112,16 @@ export function RequestSection({
 			return () => clearTimeout(timeout);
 		}
 	}, [lastUpdateSource, dispatch]);
+
+	// Clean up headers/auth update source
+	useEffect(() => {
+		if (headersAuthUpdateSource) {
+			const timeout = setTimeout(() => {
+				dispatch(clearHeadersAuthUpdateSource());
+			}, 10);
+			return () => clearTimeout(timeout);
+		}
+	}, [headersAuthUpdateSource, dispatch]);
 
 	// Show path params table if URL has path parameters OR if there are existing path params
 	const showPathParams = pathParams.length > 0;
@@ -139,6 +166,42 @@ export function RequestSection({
 			onQueryParamsChange?.(newQueryParams);
 		}, 50);
 	}, [dispatch, onQueryParamsChange]);
+
+	// Debounce headers updates to prevent infinite loops
+	const headersTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	
+	const handleHeadersChange = useCallback((newHeaders: Row[]) => {
+		// Clear previous timeout
+		if (headersTimeoutRef.current) {
+			clearTimeout(headersTimeoutRef.current);
+		}
+		
+		// Immediately update Redux (for UI responsiveness)
+		dispatch(updateHeaders(newHeaders));
+		
+		// Debounce parent callback to prevent cascading updates
+		headersTimeoutRef.current = setTimeout(() => {
+			onHeadersChange?.(newHeaders);
+		}, 50);
+	}, [dispatch, onHeadersChange]);
+
+	// Debounce auth updates to prevent infinite loops
+	const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	
+	const handleAuthChange = useCallback((authType: string, token: string) => {
+		// Clear previous timeout
+		if (authTimeoutRef.current) {
+			clearTimeout(authTimeoutRef.current);
+		}
+		
+		// Immediately update Redux (for UI responsiveness)
+		dispatch(updateAuth({ authType, token }));
+		
+		// Debounce parent callback to prevent cascading updates
+		authTimeoutRef.current = setTimeout(() => {
+			onAuthChange?.(authType, token);
+		}, 50);
+	}, [dispatch, onAuthChange]);
 	
 	// Cleanup timeouts on unmount
 	useEffect(() => {
@@ -148,6 +211,12 @@ export function RequestSection({
 			}
 			if (queryParamsTimeoutRef.current) {
 				clearTimeout(queryParamsTimeoutRef.current);
+			}
+			if (headersTimeoutRef.current) {
+				clearTimeout(headersTimeoutRef.current);
+			}
+			if (authTimeoutRef.current) {
+				clearTimeout(authTimeoutRef.current);
 			}
 		};
 	}, []);
@@ -194,7 +263,7 @@ export function RequestSection({
 							<TableForm rows={queryParams} title="Query Params" onChange={handleQueryParamsChange} />
 						</TabsContent>
 						<TabsContent value="headers" className="space-y-2 flex-1">
-							<TableForm rows={activeCase?.request?.headers || []} onChange={onHeadersChange} />
+							<TableForm rows={headers} onChange={handleHeadersChange} />
 						</TabsContent>
 						<TabsContent
 							value="body"
@@ -220,11 +289,9 @@ export function RequestSection({
 						</TabsContent>
 						<TabsContent value="auth" className="space-y-2 flex-1">
 							<AuthSection 
-								authType={activeCase?.request?.auth?.auth_type || "Bearer"}
-								token={activeCase?.request?.auth?.token || ""}
-								onAuthChange={(authType, token) => {
-									onAuthChange(authType, token);
-								}}
+								authType={auth.authType}
+								token={auth.token}
+								onAuthChange={handleAuthChange}
 							/>
 						</TabsContent>
 						<TabsContent value="pre-request-scripts" className="space-y-2 flex-1">

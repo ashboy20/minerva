@@ -3,6 +3,7 @@ export type Row = {
     keyValue: string;
     value: string;
     enabled: boolean;
+    disabled?: boolean;
 }
 
 export type Request = {

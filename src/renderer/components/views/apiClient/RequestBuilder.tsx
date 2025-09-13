@@ -36,6 +36,8 @@ export function RequestBuilder() {
 	
 	// Get URL state from Redux
 	const { pathParams, queryParams } = useAppSelector(state => state.url);
+	// Get headers and auth state from Redux
+	const { headers, auth } = useAppSelector(state => state.headersAuth);
 
 	const handleEndpointClick = (endpoint: Endpoint) => {
 		setActiveEndpoint(endpoint);
@@ -53,14 +55,20 @@ export function RequestBuilder() {
 
 		try {
 			// TODO: call request by backend side?
-			// Build headers object from the active case
+			// Build headers object from Redux state
 			const requestHeaders: Record<string, string> = {};
-			if (activeCase.request?.headers) {
-				activeCase.request.headers.forEach((header: Row) => {
-					if (header.enabled && header.keyValue && header.value) {
+			headers.forEach((header: Row) => {
+				if (header.enabled && header.keyValue && header.value) {
+					// Skip Authorization header as we'll handle it separately from auth state
+					if (header.keyValue.toLowerCase() !== 'authorization') {
 						requestHeaders[header.keyValue] = header.value;
 					}
-				});
+				}
+			});
+
+			// Add Authorization header from auth state (use actual token, not masked)
+			if (auth.authType === 'Bearer' && auth.token) {
+				requestHeaders['Authorization'] = `Bearer ${auth.token}`;
 			}
 
 			// Build query parameters from Redux state
@@ -195,24 +203,6 @@ export function RequestBuilder() {
 		}
 	};
 
-	const handlePathParamsChange = (pathParams: Row[]) => {
-		// Don't update activeCase - let Redux be the single source of truth
-		// The actual request will read from Redux state when sending
-		console.log('Path params updated in Redux:', pathParams);
-	};
-
-	const handleQueryParamsChange = (queryParams: Row[]) => {
-		// Don't update activeCase - let Redux be the single source of truth
-		// The actual request will read from Redux state when sending
-		console.log('Query params updated in Redux:', queryParams);
-	};
-
-	const handleHeadersChange = (headers: Row[]) => {
-		if (activeCase) {
-			setActiveCase({ ...activeCase, request: { ...activeCase.request, headers: headers } });
-		}
-	};
-
 	const handleBodyChange = (body: string) => {
 		if (activeCase) {
 			setActiveCase({
@@ -222,12 +212,6 @@ export function RequestBuilder() {
 					body: body as any, // Allow string or object for body
 				},
 			});
-		}
-	};
-
-	const handleAuthChange = (authType: string, token: string) => {
-		if (activeCase) {
-			setActiveCase({ ...activeCase, request: { ...activeCase.request, auth: { auth_type: authType, token: token } } });
 		}
 	};
 
@@ -256,11 +240,11 @@ export function RequestBuilder() {
 							loading={loading}
 							onMethodChange={handleMethodChange}
 							onUrlChange={handleUrlChange}
-							onPathParamsChange={handlePathParamsChange}
-							onQueryParamsChange={handleQueryParamsChange}
-							onHeadersChange={handleHeadersChange}
+							onPathParamsChange={() => {}} // No-op since Redux handles this
+							onQueryParamsChange={() => {}} // No-op since Redux handles this
+							onHeadersChange={() => {}} // No-op since Redux handles this
 							onBodyChange={handleBodyChange}
-							onAuthChange={handleAuthChange}
+							onAuthChange={() => {}} // No-op since Redux handles this
 							onActiveTabChange={setActiveTab}
 							onSendRequest={sendRequest}
 						/>

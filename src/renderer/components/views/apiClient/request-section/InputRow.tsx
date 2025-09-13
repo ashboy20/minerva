@@ -9,6 +9,7 @@ interface InputRowProps {
 	keyValue: string;
 	value: string;
 	enabled: boolean;
+	disabled?: boolean;
 	isPathParamTable?: boolean;
 	onChange: (
 		id: number,
@@ -23,40 +24,66 @@ export function InputRow({
 	keyValue,
 	value,
 	enabled,
+	disabled = false,
 	onChange,
 	onDelete,
 	isPathParamTable = false,
 }: InputRowProps) {
 	const handleEnable = (checked: boolean) => {
-		onChange(id, 'enabled', checked);
+		if (!disabled) {
+			onChange(id, 'enabled', checked);
+		}
 	};
 
 	const handleKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		onChange(id, 'keyValue', e.target.value);
+		if (!disabled) {
+			onChange(id, 'keyValue', e.target.value);
+		}
 	};
 
 	const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		onChange(id, 'value', e.target.value);
+		if (!disabled) {
+			onChange(id, 'value', e.target.value);
+		}
 	};
 
 	const handleDelete = () => {
-		onDelete(id);
+		if (!disabled) {
+			onDelete(id);
+		}
 	};
 
 	return (
-		<div className="flex items-center flex-row gap-2 group">
+		<div className={`flex items-center flex-row gap-2 group ${disabled ? 'opacity-60' : ''}`}>
 			{isPathParamTable ? (
 				<div className="w-9 h-5" />
 			) : (
-				<Checkbox checked={enabled} onCheckedChange={handleEnable} />
+				<Checkbox 
+					checked={enabled} 
+					onCheckedChange={handleEnable} 
+					disabled={disabled}
+				/>
 			)}
-			<Input placeholder="Key" value={keyValue} onChange={handleKeyChange} />
-			<Input placeholder="Value" value={value} onChange={handleValueChange} />
+			<Input 
+				placeholder="Key" 
+				value={keyValue} 
+				onChange={handleKeyChange} 
+				disabled={disabled}
+				className={disabled ? 'cursor-not-allowed' : ''}
+			/>
+			<Input 
+				placeholder="Value" 
+				value={value} 
+				onChange={handleValueChange} 
+				disabled={disabled}
+				className={disabled ? 'cursor-not-allowed' : ''}
+			/>
 			<Button
 				variant="ghost"
 				size="sm"
-				className="opacity-0 group-hover:opacity-50"
+				className={`opacity-0 group-hover:opacity-50 ${disabled ? 'cursor-not-allowed' : ''}`}
 				onClick={handleDelete}
+				disabled={disabled}
 			>
 				<TrashIcon />
 			</Button>
