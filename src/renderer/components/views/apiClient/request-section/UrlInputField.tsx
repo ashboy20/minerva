@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, hoverTooltip } from '@codemirror/view'
 import { Range } from '@codemirror/state'
-import { createSingleLineEditor, SingleLineEditorInstance, variableHighlightTheme, singleLineEditorTheme } from '@/renderer/lib/codemirror/SingleLineEditor'
+import { createSingleLineEditor, SingleLineEditorInstance, variableHighlightTheme } from '@/renderer/lib/codemirror/SingleLineEditor'
 import { variableCompletions, variableHover, variables } from '@/renderer/lib/codemirror/VariableExtensions'
 
 const urlPathParamsHighlightTheme = EditorView.theme({
@@ -12,7 +12,7 @@ const urlPathParamsHighlightTheme = EditorView.theme({
     lineHeight: '1',
     transition: 'colors 0.2s',
   },
-}, { dark: true })
+})
 
 // highlight the url and variables
 const urlInputDecorator = ViewPlugin.fromClass(class {
@@ -85,7 +85,7 @@ export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldPro
         doc: value ?? placeholder ?? 'https://api.example.com/endpoint',
         placeholder: placeholder ?? 'https://api.example.com/endpoint',
         editable: true,
-        customExtensions: [singleLineEditorTheme, variableHighlightTheme, urlPathParamsHighlightTheme],
+        customExtensions: [variableHighlightTheme, urlPathParamsHighlightTheme],
         decorator: urlInputDecorator,
         completions: [variableCompletions],
         hover: variableHover,

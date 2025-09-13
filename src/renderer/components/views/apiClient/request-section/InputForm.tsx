@@ -18,9 +18,10 @@ interface TableFormProps {
 		disabled?: boolean;
 	}[]) => void;
 	isPathParamTable?: boolean;
+	isHeaderTable?: boolean;
 }
 
-export function TableForm({ rows, title, onChange, isPathParamTable = false }: TableFormProps) {
+export function TableForm({ rows, title, onChange, isPathParamTable = false, isHeaderTable = false }: TableFormProps) {
 	const initRows = () => [
 		...rows,
 		...(!isPathParamTable ? [{ row_id: rows.length + 1, keyValue: '', value: '', enabled: true }] : []),
@@ -106,6 +107,7 @@ export function TableForm({ rows, title, onChange, isPathParamTable = false }: T
 					onChange={onRowChange}
 					onDelete={onRowDelete}
 					isPathParamTable={isPathParamTable}
+					isHeaderTable={isHeaderTable}
 				/>
 			))}
 		</div>

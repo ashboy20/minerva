@@ -135,6 +135,7 @@ export function createSingleLineEditor(
     indentOnInput(), // Handles text input
     bracketMatching(), // Handles bracket matching
     EditorView.editable.of(editable),
+    singleLineEditorTheme, // Apply default single-line theme
   ]
 
   // Add optional extensions
@@ -344,5 +345,5 @@ export const singleLineEditorTheme = EditorView.theme({
   '.cm-editor .cm-scroller': {
     overflowY: 'hidden !important',
     overflowX: 'auto !important', // Allow horizontal scrolling for long text
-  }
-})
+  },
+}, { dark: true })
