@@ -115,7 +115,6 @@ export function headerKeyCompletions(context: any) {
     options: filteredHeaders.map((header) => ({
       label: header,
       type: 'keyword',
-      detail: 'HTTP Header',
       apply: (view: EditorView, completion: any, from: number, to: number) => {
         view.dispatch({
           changes: { from: from, to: to, insert: completion.label },
