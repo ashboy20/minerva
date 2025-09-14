@@ -46,7 +46,7 @@ export const DEFAULT_SETTINGS: SettingsType = {
 	quitOnWindowClose: false,
 
 	theme: 'system',
-	apiClientLayout: 'vertical',
+	apiClientLayout: 'horizontal',
 };
 
 // see src/main/keyboard-shortcuts.ts

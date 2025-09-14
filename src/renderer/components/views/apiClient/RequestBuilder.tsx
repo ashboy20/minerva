@@ -39,6 +39,9 @@ export function RequestBuilder() {
 	// Get global settings including layout preference
 	const { settings } = useGlobalContext();
 	
+	// Debug: Log the current layout setting
+	console.log('RequestBuilder - Current layout setting:', settings.apiClientLayout);
+	
 	// Get URL state from Redux
 	const { pathParams, queryParams } = useAppSelector(state => state.url);
 	// Get headers and auth state from Redux
