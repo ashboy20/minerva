@@ -103,6 +103,28 @@ export function createJsonEditor(
   } = options
 
   let isInternalChange = false
+  let view: EditorView
+
+  // Enhanced JSON formatting function
+  const formatJson = () => {
+    if (view) {
+      try {
+        const content = view.state.doc.toString().trim()
+        
+        // If content is empty, don't try to format
+        if (!content) return
+        
+        // Parse and format JSON with proper indentation
+        const parsed = JSON.parse(content)
+        const formatted = JSON.stringify(parsed, null, 2)
+        
+        setContent(formatted)
+      } catch (error) {
+        console.warn('Cannot format invalid JSON:', error)
+        // Could show a toast notification here in the future
+      }
+    }
+  }
 
   // Base extensions for JSON editor
   const baseExtensions: Extension[] = [
@@ -124,7 +146,23 @@ export function createJsonEditor(
     keymap.of([
       ...defaultKeymap,
       ...historyKeymap,
-      indentWithTab
+      indentWithTab,
+      {
+        key: 'Shift-Alt-f',
+        preventDefault: true,
+        run: () => {
+          formatJson()
+          return true
+        }
+      },
+      {
+        key: 'Mod-Shift-f', // Cmd+Shift+F on Mac, Ctrl+Shift+F on Windows/Linux
+        preventDefault: true,
+        run: () => {
+          formatJson()
+          return true
+        }
+      }
     ]),
     
     // Variable extensions from VariableExtensions.ts
@@ -201,7 +239,7 @@ export function createJsonEditor(
     extensions: baseExtensions,
   })
 
-  const view = new EditorView({
+  view = new EditorView({
     state,
     parent: container,
   })
@@ -226,19 +264,6 @@ export function createJsonEditor(
   const focus = () => {
     if (view) {
       view.focus()
-    }
-  }
-
-  const formatJson = () => {
-    if (view) {
-      try {
-        const content = view.state.doc.toString()
-        const parsed = JSON.parse(content)
-        const formatted = JSON.stringify(parsed, null, 2)
-        setContent(formatted)
-      } catch (error) {
-        console.warn('Cannot format invalid JSON:', error)
-      }
     }
   }
 

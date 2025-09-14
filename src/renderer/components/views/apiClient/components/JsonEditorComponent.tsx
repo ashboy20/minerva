@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { JsonEditorInstance, createJsonEditor } from '@/renderer/lib/codemirror/JsonEditor';
+import { Button } from '@/components/ui/button';
 
 interface JsonEditorComponentProps {
   /** Initial value for the editor */
@@ -83,23 +84,38 @@ export function JsonEditorComponent({
     }
   }, [disabled, isReady]);
 
+  const handlePrettify = () => {
+    if (editorRef.current) {
+      editorRef.current.formatJson();
+    }
+  };
+
   return (
-    <div 
-      ref={containerRef} 
-      className={`json-editor-container ${className}`}
-      style={{ 
-        minHeight: '200px',
-        border: '1px solid hsl(var(--border))',
-        borderRadius: '6px',
-        overflow: 'visible', // Changed from 'hidden' to 'visible'
-        position: 'relative' // Ensure proper positioning
-      }}
-      onClick={() => {
-        if (editorRef.current) {
-          editorRef.current.focus();
-        }
-      }}
-    />
+    <div>
+        <div className="flex justify-between">
+            <p className="text-sm text-muted-foreground">Enter request body (JSON, XML, etc.)</p>
+            <Button size="sm" className="px-2" onClick={handlePrettify}>
+                Prettify
+            </Button>
+        </div>
+        <div 
+        ref={containerRef} 
+        className={`json-editor-container ${className}`}
+        style={{ 
+            minHeight: '200px',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '6px',
+            overflow: 'visible', // Changed from 'hidden' to 'visible'
+            position: 'relative' // Ensure proper positioning
+        }}
+        onClick={() => {
+            if (editorRef.current) {
+            editorRef.current.focus();
+            }
+        }}
+        />
+    </div>
+
   );
 }
 

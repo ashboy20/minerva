@@ -269,7 +269,6 @@ export function RequestSection({
 							value="body"
 							className="space-y-2 flex-1 flex flex-col"
 						>
-							<p className="text-sm text-muted-foreground">Enter request body (JSON, XML, etc.)</p>
 							<JsonEditorComponent
 								placeholder='{}'
 								value={stringifyBody(activeCase?.request?.body)}
