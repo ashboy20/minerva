@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, hoverTooltip } from '@codemirror/view'
 import { Range } from '@codemirror/state'
-import { createSingleLineEditor, SingleLineEditorInstance, variableHighlightTheme } from '@/renderer/lib/codemirror/SingleLineEditor'
-import { variableCompletions, variableHover, variables } from '@/renderer/lib/codemirror/VariableExtensions'
+import { createSingleLineEditor, SingleLineEditorInstance } from '@/renderer/lib/codemirror/SingleLineEditor'
+import { variableHighlighting } from '@/renderer/lib/codemirror/VariableExtensions'
+import { variableCompletions, variableHover } from '@/renderer/lib/codemirror/VariableExtensions'
 
 const urlPathParamsHighlightTheme = EditorView.theme({
   '.cm-path-param': {
@@ -14,10 +15,9 @@ const urlPathParamsHighlightTheme = EditorView.theme({
   },
 })
 
-// highlight the url and variables
-const urlInputDecorator = ViewPlugin.fromClass(class {
+// highlight path parameters like :id, :userId, etc.
+const urlPathParamsDecorator = ViewPlugin.fromClass(class {
   decorations: DecorationSet
-  
 
   constructor(view: EditorView) {
     this.decorations = this.buildDecorations(view)
@@ -31,26 +31,11 @@ const urlInputDecorator = ViewPlugin.fromClass(class {
 
   buildDecorations(view: EditorView) {
     const text = view.state.doc.toString()
-    
-    // Highlight {{variables}}
-    const variableRegex = /\{\{[^}]+\}\}/g
-    let match
     const matches: Array<{from: number, to: number, class: string}> = []
-    
-    while ((match = variableRegex.exec(text)) !== null) {
-      const variableName = match[0].slice(2, -2) // Remove {{ and }}
-      const isValid = variables[variableName] !== undefined
-      
-      matches.push({
-        from: match.index,
-        to: match.index + match[0].length,
-        class: isValid ? 'cm-variable cm-variable-valid' : 'cm-variable cm-variable-invalid'
-      })
-    }
 
     // Highlight path parameters like :id, :userId, etc.
     const pathParamRegex = /\/:[a-zA-Z_][a-zA-Z0-9_]*/g
-    pathParamRegex.lastIndex = 0 // Reset regex
+    let match
     
     while ((match = pathParamRegex.exec(text)) !== null) {
       matches.push({
@@ -85,8 +70,8 @@ export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldPro
         doc: value ?? placeholder ?? 'https://api.example.com/endpoint',
         placeholder: placeholder ?? 'https://api.example.com/endpoint',
         editable: true,
-        customExtensions: [variableHighlightTheme, urlPathParamsHighlightTheme],
-        decorator: urlInputDecorator,
+        customExtensions: [...variableHighlighting, urlPathParamsHighlightTheme],
+        decorator: urlPathParamsDecorator,
         completions: [variableCompletions],
         hover: variableHover,
         onChange: (newValue) => {

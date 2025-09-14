@@ -257,21 +257,6 @@ export function useSingleLineEditor(
   return editorInstanceRef.current
 }
 
-export const variableHighlightTheme = EditorView.theme({
-  '.cm-variable': {
-    padding: '2px 8px',
-    fontWeight: '500',
-    lineHeight: '1',
-    transition: 'colors 0.2s',
-  },
-  '.cm-variable-valid': {
-    color: 'hsl(120, 60%, 50%)',
-  },
-  '.cm-variable-invalid': {
-    color: 'hsl(0, 60%, 50%)',
-  },
-}, { dark: true })
-
 /**
  * Default single-line editor theme with common styling
  */

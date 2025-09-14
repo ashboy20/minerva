@@ -6,7 +6,7 @@ import {
 	TabsTrigger,
 } from '@/renderer/components/ui/tabs';
 import { Card, CardContent } from '@/renderer/components/ui/card';
-import { Textarea } from '@/renderer/components/ui/textarea';
+import { JsonEditorComponent } from '@/renderer/components/views/apiClient/components/JsonEditorComponent';
 import { TableForm } from '@/renderer/components/views/apiClient/request-section/InputForm';
 import { Case, Endpoint, Row } from '@/types/backend/endpoint-management/endpoint';
 import UrlBar from '@/renderer/components/views/apiClient/request-section/UrlBar';
@@ -269,16 +269,17 @@ export function RequestSection({
 							value="body"
 							className="space-y-2 flex-1 flex flex-col"
 						>
-							<Textarea
-								placeholder="Enter request body (JSON, XML, etc.)"
+							<p className="text-sm text-muted-foreground">Enter request body (JSON, XML, etc.)</p>
+							<JsonEditorComponent
+								placeholder='{}'
 								value={stringifyBody(activeCase?.request?.body)}
-								onChange={(e) => onBodyChange(e.target.value)}
-								className="font-mono text-sm flex-1 resize-none"
+								onChange={onBodyChange}
+								className="flex-1"
 								disabled={
 									activeEndpoint?.method === 'GET' ||
 									activeEndpoint?.method === 'HEAD'
 								}
-								rows={15}
+								darkTheme={true}
 							/>
 							{(activeEndpoint?.method === 'GET' ||
 								activeEndpoint?.method === 'HEAD') && (

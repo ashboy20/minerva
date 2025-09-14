@@ -1,4 +1,5 @@
-import { EditorView, hoverTooltip } from '@codemirror/view'
+import { EditorView, hoverTooltip, Decoration, DecorationSet, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view'
+import { StateField, StateEffect } from '@codemirror/state'
 
 export const variables: Record<string, string> = {
   'HOST': 'https://api.example.com',
@@ -171,3 +172,95 @@ export const variableHover = hoverTooltip((view, pos, side) => {
   
   return null
 })
+
+/**
+ * Variable highlight theme for styling {{variable}} syntax
+ */
+export const variableHighlightTheme = EditorView.theme({
+  '.cm-variable': {
+    padding: '2px 8px',
+    fontWeight: '500',
+    lineHeight: '1',
+    transition: 'colors 0.2s',
+  },
+  '.cm-variable-valid': {
+    color: 'hsl(120, 60%, 50%)',
+  },
+  '.cm-variable-invalid': {
+    color: 'hsl(0, 60%, 50%)',
+  },
+}, { dark: true })
+
+/**
+ * Variable widget for replacing {{variable}} text with styled elements
+ */
+class VariableWidget extends WidgetType {
+  constructor(readonly variable: string, readonly isValid: boolean) {
+    super()
+  }
+
+  toDOM() {
+    const span = document.createElement('span')
+    span.className = `cm-variable ${this.isValid ? 'cm-variable-valid' : 'cm-variable-invalid'}`
+    span.textContent = this.variable
+    return span
+  }
+}
+
+/**
+ * Creates variable decorations for the current document
+ */
+function createVariableDecorations(view: EditorView): DecorationSet {
+  const decorations: any[] = []
+  const doc = view.state.doc
+  const variableRegex = /\{\{([^}]+)\}\}/g
+  
+  for (let lineNum = 1; lineNum <= doc.lines; lineNum++) {
+    const line = doc.line(lineNum)
+    const lineText = line.text
+    let match
+    
+    while ((match = variableRegex.exec(lineText)) !== null) {
+      const variableName = match[1].trim()
+      const isValid = variables.hasOwnProperty(variableName)
+      const from = line.from + match.index
+      const to = from + match[0].length
+      
+      decorations.push(
+        Decoration.replace({
+          widget: new VariableWidget(match[0], isValid),
+          inclusive: false
+        }).range(from, to)
+      )
+    }
+  }
+  
+  return Decoration.set(decorations)
+}
+
+/**
+ * ViewPlugin that handles variable decorations
+ */
+export const variableDecorations = ViewPlugin.fromClass(class {
+  decorations: DecorationSet
+
+  constructor(view: EditorView) {
+    this.decorations = createVariableDecorations(view)
+  }
+
+  update(update: ViewUpdate) {
+    if (update.docChanged || update.viewportChanged) {
+      this.decorations = createVariableDecorations(update.view)
+    }
+  }
+}, {
+  decorations: v => v.decorations
+})
+
+/**
+ * Complete variable highlighting extension that includes both theme and decorations
+ */
+export const variableHighlighting = [
+  variableHighlightTheme,
+  variableDecorations
+]
