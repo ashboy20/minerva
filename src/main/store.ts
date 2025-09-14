@@ -65,6 +65,10 @@ const schema: Store.Schema<StoreType> = {
 				type: 'string',
 				enum: ['system', 'light', 'dark'],
 			},
+			apiClientLayout: {
+				type: 'string',
+				enum: ['horizontal', 'vertical'],
+			},
 		},
 		default: DEFAULT_SETTINGS,
 	},

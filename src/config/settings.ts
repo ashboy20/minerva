@@ -4,6 +4,8 @@ export type ThemeType = 'system' | 'light' | 'dark';
 
 export type NotificationType = 'system' | 'app' | 'all';
 
+export type ApiClientLayoutType = 'horizontal' | 'vertical';
+
 export interface SettingsType {
 	accentColor: string;
 	allowAnalytics: boolean;
@@ -17,6 +19,7 @@ export interface SettingsType {
 	quitOnWindowClose: boolean;
 
 	theme: ThemeType;
+	apiClientLayout: ApiClientLayoutType;
 
 	// vibrancy: 'none' | 'sidebar' | 'full';
 	// hardwareAcceleration: boolean;
@@ -43,6 +46,7 @@ export const DEFAULT_SETTINGS: SettingsType = {
 	quitOnWindowClose: false,
 
 	theme: 'system',
+	apiClientLayout: 'vertical',
 };
 
 // see src/main/keyboard-shortcuts.ts
