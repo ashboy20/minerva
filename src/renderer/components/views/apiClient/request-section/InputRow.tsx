@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TrashIcon } from '@radix-ui/react-icons';
-import { createSingleLineEditor, SingleLineEditorInstance, variableHighlightTheme } from '@/renderer/lib/codemirror/SingleLineEditor';
+import { createSingleLineEditor, SingleLineEditorInstance } from '@/renderer/lib/codemirror/SingleLineEditor';
+import { variableHighlighting } from '@/renderer/lib/codemirror/VariableExtensions';
 import { headerKeyCompletions, variableCompletions, variableHover } from '@/renderer/lib/codemirror/VariableExtensions';
 
 interface InputRowProps {
@@ -79,7 +80,7 @@ export function InputRow({
 				editable: !disabled,
 				completions: effectiveValueCompletions,
 				hover: effectiveValueHover,
-				customExtensions: [variableHighlightTheme],
+				customExtensions: [...variableHighlighting],
 				onChange: (newValue) => {
 					if (!disabled) {
 						onChange(id, 'value', newValue);
