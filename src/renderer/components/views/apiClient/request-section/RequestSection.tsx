@@ -267,7 +267,7 @@ export function RequestSection({
 						</TabsContent>
 						<TabsContent
 							value="body"
-							className="space-y-2 flex-1 flex flex-col"
+							className="space-y-2 flex-1 flex flex-col max-h-screen overflow-auto"
 						>
 							<JsonEditorComponent
 								placeholder='{}'
