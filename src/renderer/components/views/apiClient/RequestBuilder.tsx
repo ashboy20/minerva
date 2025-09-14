@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppSelector } from '@/store/hooks';
+import { useGlobalContext } from '@/renderer/context/global-context';
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -8,6 +9,7 @@ import {
 import { EndpointList } from '@/renderer/components/views/apiClient/components/EndpointList';
 import { RequestSection } from '@/renderer/components/views/apiClient/request-section/RequestSection';
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
+import { LayoutSwitcher } from '@/renderer/components/views/apiClient/components/LayoutSwitcher';
 import { ipcChannels } from '@/config/ipc-channels';
 import {
 	Case,
@@ -33,6 +35,9 @@ export function RequestBuilder() {
 
 	const [activeEndpoint, setActiveEndpoint] = useState<Endpoint | null>(null);
 	const [activeCase, setActiveCase] = useState<Case | null>(null);
+	
+	// Get global settings including layout preference
+	const { settings } = useGlobalContext();
 	
 	// Get URL state from Redux
 	const { pathParams, queryParams } = useAppSelector(state => state.url);
@@ -231,31 +236,45 @@ export function RequestBuilder() {
 			<ResizableHandle />
 			{/* Right Side - Main Content */}
 			<ResizablePanel defaultSize={75} minSize={60}>
-				<ResizablePanelGroup direction="vertical" className="h-full">
-					<ResizablePanel defaultSize={60} minSize={30}>
-						<RequestSection
-							activeEndpoint={activeEndpoint}
-							activeCase={activeCase}
-							activeTab={activeTab}
-							loading={loading}
-							onMethodChange={handleMethodChange}
-							onUrlChange={handleUrlChange}
-							onPathParamsChange={() => {}} // No-op since Redux handles this
-							onQueryParamsChange={() => {}} // No-op since Redux handles this
-							onHeadersChange={() => {}} // No-op since Redux handles this
-							onBodyChange={handleBodyChange}
-							onAuthChange={() => {}} // No-op since Redux handles this
-							onActiveTabChange={setActiveTab}
-							onSendRequest={sendRequest}
-						/>
-					</ResizablePanel>
+				<div className="flex flex-col h-full">
+					{/* Top Bar */}
+					<div className="flex items-center justify-between p-4 border-b border-border h-12">
+						<h6 className="text-lg font-semibold">API Client</h6>
+						<LayoutSwitcher />
+					</div>
 
-					<ResizableHandle withHandle />
+					{/* Request/Response Content */}
+					<div className="flex-1">
+						<ResizablePanelGroup 
+							direction={settings.apiClientLayout === 'horizontal' ? 'horizontal' : 'vertical'} 
+							className="h-full"
+						>
+							<ResizablePanel defaultSize={60} minSize={30}>
+								<RequestSection
+									activeEndpoint={activeEndpoint}
+									activeCase={activeCase}
+									activeTab={activeTab}
+									loading={loading}
+									onMethodChange={handleMethodChange}
+									onUrlChange={handleUrlChange}
+									onPathParamsChange={() => {}} // No-op since Redux handles this
+									onQueryParamsChange={() => {}} // No-op since Redux handles this
+									onHeadersChange={() => {}} // No-op since Redux handles this
+									onBodyChange={handleBodyChange}
+									onAuthChange={() => {}} // No-op since Redux handles this
+									onActiveTabChange={setActiveTab}
+									onSendRequest={sendRequest}
+								/>
+							</ResizablePanel>
 
-					<ResizablePanel defaultSize={40} minSize={20}>
-						<ResponseSection response={response} />
-					</ResizablePanel>
-				</ResizablePanelGroup>
+							<ResizableHandle withHandle />
+
+							<ResizablePanel defaultSize={40} minSize={20}>
+								<ResponseSection response={response} />
+							</ResizablePanel>
+						</ResizablePanelGroup>
+					</div>
+				</div>
 			</ResizablePanel>
 		</ResizablePanelGroup>
 	);
