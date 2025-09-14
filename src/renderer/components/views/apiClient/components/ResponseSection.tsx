@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/renderer/components/ui/card';
 import { Badge } from '@/renderer/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/renderer/components/ui/tabs';
-import { PlayIcon } from '@radix-ui/react-icons';
+import { CopyIcon, PlayIcon } from '@radix-ui/react-icons';
+import { Button } from '@/components/ui/button';
 
 interface ApiResponse {
 	status: number;
@@ -24,6 +25,12 @@ export function ResponseSection({ response }: ResponseSectionProps) {
 		if (status >= 400 && status < 500) return 'bg-orange-500';
 		if (status >= 500) return 'bg-red-500';
 		return 'bg-gray-500';
+	};
+
+	const handleCopy = () => {
+		if (response) {
+			navigator.clipboard.writeText(JSON.stringify(response.data, null, 2));
+		}
 	};
 
 	return (
@@ -54,9 +61,13 @@ export function ResponseSection({ response }: ResponseSectionProps) {
 								<TabsTrigger value="body">Body</TabsTrigger>
 								<TabsTrigger value="headers">Headers</TabsTrigger>
 							</TabsList>
-
 							<TabsContent value="body" className="mt-4">
-								<div className="bg-muted rounded-md p-4 max-h-96 overflow-auto">
+								<div className="flex justify-end">
+									<Button size="sm" className="px-2" onClick={handleCopy}>
+										<CopyIcon />
+									</Button>
+								</div>
+								<div className="bg-muted rounded-md p-4 max-h-screen overflow-auto">
 									<pre className="text-sm font-mono whitespace-pre-wrap">
 										{typeof response.data === 'object'
 											? JSON.stringify(response.data, null, 2)
