@@ -106,7 +106,9 @@ export class BackendService {
 				
 				// Try to use Python from virtual environment if available
 				let pythonCmd = 'python';
-				const venvPython = path.join(this.backendPath, '.venv', 'bin', 'python');
+				const venvPython = process.platform === 'win32'
+				? path.join(this.backendPath, '.venv', 'Scripts', 'python.exe')
+				: path.join(this.backendPath, '.venv', 'bin', 'python');
 				try {
 					fs.accessSync(venvPython, fs.constants.X_OK);
 					pythonCmd = venvPython;
