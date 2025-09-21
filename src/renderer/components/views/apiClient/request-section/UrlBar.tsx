@@ -46,7 +46,6 @@ const UrlBar = ({
 
 			<UrlInputField 
 				value={url}
-				placeholder="https://api.example.com/endpoint"
 				onChange={onUrlChange}
 			/>
 

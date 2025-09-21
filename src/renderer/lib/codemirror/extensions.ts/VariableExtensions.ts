@@ -1,5 +1,6 @@
 import { EditorView, hoverTooltip, Decoration, DecorationSet, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view'
 import { StateField, StateEffect } from '@codemirror/state'
+import { autocompletion } from '@codemirror/autocomplete';
 
 export const variables: Record<string, string> = {
   'HOST': 'https://api.example.com',
@@ -71,7 +72,7 @@ export const commonHeaders = [
 /**
  * Variable completions for {{variable}} syntax
  */
-export function variableCompletions(context: any) {
+function variableCompletions(context: any) {
   let word = context.matchBefore(/\{\{/);
   if (!word) return null;
   if (word.from == word.to && !context.explicit) return null;
@@ -129,7 +130,7 @@ export function headerKeyCompletions(context: any) {
 /**
  * Hover tooltip function to show variable values
  */
-export const variableHover = hoverTooltip((view, pos, side) => {
+const variableHover = hoverTooltip((view, pos, side) => {
   const doc = view.state.doc
   const line = doc.lineAt(pos)
   const text = line.text
@@ -176,7 +177,7 @@ export const variableHover = hoverTooltip((view, pos, side) => {
 /**
  * Variable highlight theme for styling {{variable}} syntax
  */
-export const variableHighlightTheme = EditorView.theme({
+const variableHighlightTheme = EditorView.theme({
   '.cm-variable': {
     padding: '2px 8px',
     fontWeight: '500',
@@ -257,10 +258,9 @@ export const variableDecorations = ViewPlugin.fromClass(class {
   decorations: v => v.decorations
 })
 
-/**
- * Complete variable highlighting extension that includes both theme and decorations
- */
-export const variableHighlighting = [
+export const variableExtensions = [
+  autocompletion({ override: [variableCompletions] }),
   variableHighlightTheme,
-  variableDecorations
+  variableDecorations,
+  variableHover,
 ]

@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { JsonEditorInstance, createJsonEditor } from '@/renderer/lib/codemirror/JsonEditor';
+import { JsonEditorInstance, createJsonEditor } from '@/renderer/lib/codemirror/editors/JsonEditor';
 import { Button } from '@/components/ui/button';
 
 interface JsonEditorComponentProps {
