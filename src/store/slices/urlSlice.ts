@@ -54,7 +54,9 @@ const parseQueryParams = (url: string): Row[] => {
 };
 
 const buildUrlFromParams = (baseUrl: string, path: string, pathParams: Row[], queryParams: Row[]): string => {
-  let fullUrl = baseUrl + path;
+  // Strip existing query parameters from path to prevent duplication
+  const [pathWithoutQuery] = path.split('?');
+  let fullUrl = baseUrl + pathWithoutQuery;
   
   // Replace path parameters with values (for preview, keep placeholders for template)
   pathParams.forEach(param => {
@@ -63,7 +65,7 @@ const buildUrlFromParams = (baseUrl: string, path: string, pathParams: Row[], qu
     }
   });
   
-  // Add query parameters
+  // Add query parameters - ALWAYS rebuild from scratch to avoid duplication
   const enabledQueryParams = queryParams.filter(p => p.enabled && p.keyValue && p.value);
   if (enabledQueryParams.length > 0) {
     const queryString = enabledQueryParams
@@ -131,7 +133,12 @@ export const urlSlice = createSlice({
     updateFromUrl: (state, action: PayloadAction<string>) => {
       const newUrl = action.payload;
       
-      // Prevent circular updates
+      // Check if URL actually changed to prevent unnecessary processing
+      if (state.fullUrl === newUrl) {
+        return;
+      }
+      
+      // Prevent circular updates when we just updated from params
       if (state.lastUpdateSource === 'pathParams' || state.lastUpdateSource === 'queryParams') {
         state.lastUpdateSource = null;
         return;
@@ -153,12 +160,6 @@ export const urlSlice = createSlice({
 
     // Update path parameters from table
     updatePathParams: (state, action: PayloadAction<Row[]>) => {
-      // Prevent circular updates
-      if (state.lastUpdateSource === 'url') {
-        state.lastUpdateSource = null;
-        return;
-      }
-      
       const newPathParams = action.payload;
       
       // Check if parameters actually changed to prevent unnecessary updates
@@ -196,12 +197,6 @@ export const urlSlice = createSlice({
 
     // Update query parameters from table
     updateQueryParams: (state, action: PayloadAction<Row[]>) => {
-      // Prevent circular updates
-      if (state.lastUpdateSource === 'url') {
-        state.lastUpdateSource = null;
-        return;
-      }
-      
       const newQueryParams = action.payload;
       
       // Check if parameters actually changed to prevent unnecessary updates
