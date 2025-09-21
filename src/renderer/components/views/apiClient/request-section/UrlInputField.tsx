@@ -1,119 +1,34 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { DecorationSet, EditorView, ViewPlugin, ViewUpdate, Decoration, hoverTooltip } from '@codemirror/view'
-import { Range } from '@codemirror/state'
-import { createSingleLineEditor, SingleLineEditorInstance } from '@/renderer/lib/codemirror/SingleLineEditor'
-import { variableHighlighting } from '@/renderer/lib/codemirror/VariableExtensions'
-import { variableCompletions, variableHover } from '@/renderer/lib/codemirror/VariableExtensions'
+import React, { useRef } from 'react'
+import { useSingleLineEditor } from '@/renderer/lib/codemirror/editors/SingleLineEditor'
+import { variableExtensions } from '@/renderer/lib/codemirror/extensions/VariableExtensions'
+import { urlParamExtensions } from '@/renderer/lib/codemirror/extensions/UrlParamExtensions'
 
-const urlPathParamsHighlightTheme = EditorView.theme({
-  '.cm-path-param': {
-    color: 'hsl(15, 70%, 45%)', // Brown-red color
-    padding: '2px 6px',
-    fontWeight: '600',
-    lineHeight: '1',
-    transition: 'colors 0.2s',
-  },
-})
 
-// highlight path parameters like :id, :userId, etc.
-const urlPathParamsDecorator = ViewPlugin.fromClass(class {
-  decorations: DecorationSet
-
-  constructor(view: EditorView) {
-    this.decorations = this.buildDecorations(view)
-  }
-
-  update(update: ViewUpdate) {
-    if (update.docChanged || update.viewportChanged) {
-      this.decorations = this.buildDecorations(update.view)
-    }
-  }
-
-  buildDecorations(view: EditorView) {
-    const text = view.state.doc.toString()
-    const matches: Array<{from: number, to: number, class: string}> = []
-
-    // Highlight path parameters like :id, :userId, etc.
-    const pathParamRegex = /\/:[a-zA-Z_][a-zA-Z0-9_]*/g
-    let match
-    
-    while ((match = pathParamRegex.exec(text)) !== null) {
-      matches.push({
-        from: match.index,
-        to: match.index + match[0].length,
-        class: 'cm-path-param'
-      })
-    }
-
-    let decorations: Range<Decoration>[] = []
-    matches.map(match => decorations.push(Decoration.mark({ class: match.class }).range(match.from, match.to)))
-    return Decoration.set(decorations, true)
-  }
-}, {
-  decorations: v => v.decorations
-})
 
 interface UrlInputFieldProps {
   value?: string
-  placeholder?: string
   onChange: (value: string) => void
 }
-0
-export const UrlInputField = ({ value, placeholder, onChange }: UrlInputFieldProps) => {
+
+export const UrlInputField = ({ value, onChange }: UrlInputFieldProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const editorInstanceRef = useRef<SingleLineEditorInstance | null>(null)
-  const [contentValue, setContentValue] = useState(value || '')
 
-  useEffect(() => {
-    if (containerRef.current) {
-      editorInstanceRef.current = createSingleLineEditor(containerRef.current, {
-        doc: value ?? placeholder ?? 'https://api.example.com/endpoint',
-        placeholder: placeholder ?? 'https://api.example.com/endpoint',
-        editable: true,
-        customExtensions: [...variableHighlighting, urlPathParamsHighlightTheme],
-        decorator: urlPathParamsDecorator,
-        completions: [variableCompletions],
-        hover: variableHover,
-        onChange: (newValue) => {
-          setContentValue(newValue)
-          onChange(newValue)
-        }
-      })
+  const editorOptions = {
+    doc: value ?? '',
+    placeholder: 'input the url here',
+    extensions: [
+      ...variableExtensions,
+      ...urlParamExtensions,
+    ],
+    onChange: (newValue: string) => {
+      onChange(newValue)
 
-      // Focus and set cursor at end
-      setTimeout(() => {
-        editorInstanceRef.current?.focus()
-      }, 100)
-
-      return () => {
-        if (editorInstanceRef.current) {
-          editorInstanceRef.current.destroy()
-          editorInstanceRef.current = null
-        }
-      }
     }
-  }, [])
+  }
+  
+  useSingleLineEditor(containerRef, editorOptions)
 
-  // Method to set content programmatically
-  const setContent = useCallback((newContent: string) => {
-    if (editorInstanceRef.current) {
-      editorInstanceRef.current.setContent(newContent)
-    }
-  }, [])
-
-  // Handle value prop changes from parent (only when significantly different)
-  useEffect(() => {
-    if (value !== undefined && value !== contentValue && editorInstanceRef.current) {
-      const currentEditorValue = editorInstanceRef.current.getContent()
-      // Only update if the value is truly different from what's in the editor
-      if (value !== currentEditorValue) {
-        setContentValue(value)
-        setContent(value)
-      }
-    }
-  }, [value, setContent])
-
-    return (
-      <div className="h-9 w-full max-w-full overflow-hidden rounded-md border border-input pt-1 pl-2 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring" ref={containerRef}></div>
-    )
+  return (
+    <div className="h-9 w-full max-w-full overflow-hidden rounded-md border border-input pt-1 pl-2 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring" ref={containerRef}></div>
+  )
 }
