@@ -13,7 +13,7 @@ export {
   JsonEditorInstance,
   UseJsonEditorOptions,
   UseJsonEditorHook,
-  createJsonEditor
+  useJsonEditor
 } from './JsonEditor'
 
 // Single-line editor

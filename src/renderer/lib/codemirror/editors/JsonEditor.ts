@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react'
 import { Extension } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view'
 import { indentWithTab } from '@codemirror/commands'
@@ -5,9 +6,9 @@ import { autocompletion, CompletionSource } from '@codemirror/autocomplete'
 import { json, jsonParseLinter } from '@codemirror/lang-json'
 import { linter } from '@codemirror/lint'
 import { oneDark } from '@codemirror/theme-one-dark'
-import { variableExtensions } from '@/renderer/lib/codemirror/extensions.ts/VariableExtensions'
+import { variableCompletions, variableHighlightTheme, variableHover, variableDecorations } from '@/renderer/lib/codemirror/extensions/VariableExtensions'
 import { BaseEditor, BaseEditorOptions, BaseEditorInstance, EditorThemeUtils } from './BaseEditor'
-
+import { createJsonCompletions } from '@/renderer/lib/codemirror/extensions/JsonEditorExtensions'
 export interface JsonEditorOptions extends BaseEditorOptions {
   /** Whether to use dark theme */
   darkTheme?: boolean
@@ -16,51 +17,6 @@ export interface JsonEditorOptions extends BaseEditorOptions {
 export interface JsonEditorInstance extends BaseEditorInstance {
   /** Format JSON content */
   formatJson: () => void
-}
-
-/**
- * JSON property autocompletion source
- */
-function createJsonCompletions(): CompletionSource {
-  return (context) => {
-    const { state, pos } = context
-    const doc = state.doc
-    const line = doc.lineAt(pos)
-    const lineText = line.text
-    const linePos = pos - line.from
-    
-    // Check if we're inside a string
-    const beforeCursor = lineText.slice(0, linePos)
-    const inString = (beforeCursor.match(/"/g) || []).length % 2 === 1
-    
-    if (!inString) {
-      return null
-    }
-    
-    // JSON property suggestions
-    const commonJsonProps = [
-      'id', 'name', 'type', 'value', 'data', 'items', 'length', 'count',
-      'status', 'message', 'error', 'success', 'result', 'response',
-      'created_at', 'updated_at', 'deleted_at', 'timestamp'
-    ]
-    
-    const word = context.matchBefore(/\w*/)
-    if (!word || word.from === word.to) {
-      return null
-    }
-    
-    const completions = commonJsonProps
-      .filter(prop => prop.toLowerCase().includes(word.text.toLowerCase()))
-      .map(prop => ({
-        label: prop,
-        type: 'property'
-      }))
-    
-    return {
-      from: word.from,
-      options: completions
-    }
-  }
 }
 
 /**
@@ -110,9 +66,6 @@ class JsonEditor extends BaseEditor {
         }
       ]),
       
-      // Variable extensions from VariableExtensions.ts
-      ...variableExtensions,
-      
       // JSON editor theme
       this.getJsonEditorTheme(),
       
@@ -130,7 +83,10 @@ class JsonEditor extends BaseEditor {
       override: [variableCompletions, createJsonCompletions()],
       icons: false,
       maxRenderedOptions: 20
-    }))
+    }),
+    variableHighlightTheme,
+    variableDecorations,
+    variableHover)
 
     return extensions
   }
@@ -183,7 +139,7 @@ class JsonEditor extends BaseEditor {
  * Creates a JSON editor with CodeMirror with line numbers, syntax highlighting, 
  * variable highlighting, autocompletion, and hover support
  */
-export function createJsonEditor(
+function createJsonEditor(
   container: HTMLElement,
   options: JsonEditorOptions = {}
 ): JsonEditorInstance {
@@ -197,6 +153,47 @@ export function createJsonEditor(
     formatJson: () => editor.formatJson(),
     destroy: () => editor.destroy()
   }
+}
+
+/**
+ * Hook for using JSON CodeMirror editor in React components
+ */
+export function useJsonEditor(
+  containerRef: React.RefObject<HTMLElement>,
+  options: JsonEditorOptions & {
+    /** Dependencies array for when to recreate the editor */
+    deps?: React.DependencyList
+  } = {}
+) {
+  const { deps = [], ...editorOptions } = options
+  const editorInstanceRef = React.useRef<JsonEditorInstance | null>(null)
+
+  // Create/destroy editor effect
+  React.useEffect(() => {
+    if (containerRef.current && !editorInstanceRef.current) {
+      editorInstanceRef.current = createJsonEditor(containerRef.current, editorOptions)
+    }
+
+    return () => {
+      if (editorInstanceRef.current) {
+        editorInstanceRef.current.destroy()
+        editorInstanceRef.current = null
+      }
+    }
+  }, deps)
+
+  // Handle value prop changes from parent
+  React.useEffect(() => {
+    if (options.doc !== undefined && editorInstanceRef.current) {
+      const currentEditorValue = editorInstanceRef.current.getContent()
+      // Only update if the value is truly different from what's in the editor
+      if (options.doc !== currentEditorValue) {
+        editorInstanceRef.current.setContent(options.doc)
+      }
+    }
+  }, [options.doc])
+
+  return editorInstanceRef.current
 }
 
 // React hook interface for TypeScript (actual implementation should be in React component)

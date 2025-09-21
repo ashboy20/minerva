@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from 'react';
-import { JsonEditorInstance, createJsonEditor } from '@/renderer/lib/codemirror/editors/JsonEditor';
+import { useRef, useEffect } from 'react';
+import { JsonEditorInstance, useJsonEditor } from '@/renderer/lib/codemirror/editors/JsonEditor';
 import { Button } from '@/components/ui/button';
 
 interface JsonEditorComponentProps {
@@ -29,64 +29,29 @@ export function JsonEditorComponent({
   onReady
 }: JsonEditorComponentProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<JsonEditorInstance | null>(null);
-  const [isReady, setIsReady] = useState(false);
 
-  // Initialize editor
+  // All lifecycle management and value synchronization handled automatically!
+  const editor = useJsonEditor(containerRef, {
+    doc: value,
+    placeholder,
+    editable: !disabled,
+    darkTheme,
+    onChange: (newValue) => {
+      onChange?.(newValue);
+    },
+    deps: [disabled, darkTheme] // Recreate when these change
+  });
+
+  // Call onReady when editor becomes available
   useEffect(() => {
-    if (containerRef.current && !editorRef.current) {
-      editorRef.current = createJsonEditor(containerRef.current, {
-        doc: value,
-        placeholder,
-        editable: !disabled,
-        darkTheme,
-        onChange: (newValue) => {
-          onChange?.(newValue);
-        }
-      });
-
-      setIsReady(true);
-      onReady?.(editorRef.current);
+    if (editor && onReady) {
+      onReady(editor);
     }
-
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.destroy();
-        editorRef.current = null;
-        setIsReady(false);
-      }
-    };
-  }, []);
-
-  // Update content when value prop changes
-  useEffect(() => {
-    if (editorRef.current && isReady && value !== editorRef.current.getContent()) {
-      editorRef.current.setContent(value);
-    }
-  }, [value, isReady]);
-
-  // Update editability when disabled prop changes
-  useEffect(() => {
-    if (editorRef.current && isReady) {
-      // Recreate editor with new editable state
-      const currentContent = editorRef.current.getContent();
-      editorRef.current.destroy();
-      
-      editorRef.current = createJsonEditor(containerRef.current!, {
-        doc: currentContent,
-        placeholder,
-        editable: !disabled,
-        darkTheme,
-        onChange: (newValue) => {
-          onChange?.(newValue);
-        }
-      });
-    }
-  }, [disabled, isReady]);
+  }, [editor, onReady]);
 
   const handlePrettify = () => {
-    if (editorRef.current) {
-      editorRef.current.formatJson();
+    if (editor) {
+      editor.formatJson();
     }
   };
 
@@ -109,8 +74,8 @@ export function JsonEditorComponent({
             position: 'relative' // Ensure proper positioning
         }}
         onClick={() => {
-            if (editorRef.current) {
-            editorRef.current.focus();
+            if (editor) {
+            editor.focus();
             }
         }}
         />

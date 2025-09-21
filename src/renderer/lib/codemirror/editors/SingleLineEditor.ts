@@ -242,6 +242,7 @@ export function useSingleLineEditor(
   const { deps = [], ...editorOptions } = options
   const editorInstanceRef = React.useRef<BaseEditorInstance | null>(null)
 
+  // Create/destroy editor effect
   useEffect(() => {
     if (containerRef.current && !editorInstanceRef.current) {
       editorInstanceRef.current = createSingleLineEditor(containerRef.current, editorOptions)
@@ -258,6 +259,17 @@ export function useSingleLineEditor(
       }
     }
   }, deps)
+
+  // Handle value prop changes from parent
+  useEffect(() => {
+    if (options.doc !== undefined && editorInstanceRef.current) {
+      const currentEditorValue = editorInstanceRef.current.getContent()
+      // Only update if the value is truly different from what's in the editor
+      if (options.doc !== currentEditorValue) {
+        editorInstanceRef.current.setContent(options.doc)
+      }
+    }
+  }, [options.doc])
 
   return editorInstanceRef.current
 }

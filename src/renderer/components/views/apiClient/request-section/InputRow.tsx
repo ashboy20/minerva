@@ -1,12 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TrashIcon } from '@radix-ui/react-icons';
 import { useSingleLineEditor } from '@/renderer/lib/codemirror/editors/SingleLineEditor';
-import { BaseEditorInstance } from '@/renderer/lib/codemirror/editors/BaseEditor';
-import { variableExtensions } from '@/renderer/lib/codemirror/extensions.ts/VariableExtensions';
-import { headerKeyCompletions } from '@/renderer/lib/codemirror/extensions.ts/VariableExtensions';
+import { variableExtensions } from '@/renderer/lib/codemirror/extensions/VariableExtensions';
 import { autocompletion } from '@codemirror/autocomplete';
+import { headerKeyCompletions } from '@/renderer/lib/codemirror/extensions.ts/headerKeyExtensions';
 
 interface InputRowProps {
 	id: number;
@@ -22,10 +21,6 @@ interface InputRowProps {
 		value: string | boolean,
 	) => void;
 	onDelete: (id: number) => void;
-	keyCompletions?: Array<any>;
-	keyHovers?: Array<any>;
-	valueCompletions?: Array<any>;
-	valueHovers?: Array<any>;
 }
 
 export function InputRow({
@@ -38,16 +33,11 @@ export function InputRow({
 	onDelete,
 	isPathParamTable = false,
 	isHeaderTable = false,
-	keyCompletions,
-	keyHovers,
-	valueCompletions,
-	valueHovers,
 }: InputRowProps) {
 	const parseExtensions = () => {
 		if (isHeaderTable) {
 			return [
-				autocompletion({ override: [headerKeyCompletions, ...(keyCompletions || [])] }),
-				...(keyHovers || []),
+				autocompletion({ override: [headerKeyCompletions] }),
 			]
 		}
 		return [
@@ -73,22 +63,8 @@ export function InputRow({
 		],
 	}
 
-	const keyEditorInstanceRefCurrent = useSingleLineEditor(keyEditorRef, keyEditorOptions)
-	const valueEditorInstanceRefCurrent = useSingleLineEditor(valueEditorRef, valueEditorOptions)
-
-
-	// Update editor content when props change
-	useEffect(() => {
-		if (keyEditorInstanceRefCurrent && keyEditorInstanceRefCurrent.getContent() !== keyValue) {
-			keyEditorInstanceRefCurrent.setContent(keyValue);
-		}
-	}, [keyValue]);
-
-	useEffect(() => {
-		if (valueEditorInstanceRefCurrent && valueEditorInstanceRefCurrent.getContent() !== value) {
-			valueEditorInstanceRefCurrent.setContent(value);
-		}
-	}, [value]);
+	useSingleLineEditor(keyEditorRef, keyEditorOptions)
+	useSingleLineEditor(valueEditorRef, valueEditorOptions)
 
 	const handleEnable = (checked: boolean) => {
 		if (!disabled) {
