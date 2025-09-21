@@ -24,6 +24,8 @@ const OPEN_CHILD_WINDOW = 'open-child-window';
 
 // Backend API channels
 const BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET = 'backend:endpoint-management:endpoints:get';
+const BACKEND_ENDPOINT_MANAGEMENT_RESET = 'backend:endpoint-management:reset';
+const BACKEND_API_CALL_ENDPOINT = 'backend:api-call:endpoint';
 
 export const ipcChannels = {
 	// main -> renderer
@@ -47,4 +49,6 @@ export const ipcChannels = {
 
 	// Backend API channels
 	BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET,
+	BACKEND_ENDPOINT_MANAGEMENT_RESET,
+	BACKEND_API_CALL_ENDPOINT,
 } as const;

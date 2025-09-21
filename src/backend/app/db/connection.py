@@ -320,6 +320,27 @@ def seed_data():
         session.commit()
 
 
+def reset_database():
+    """Reset database by dropping all tables and recreating them with seed data"""
+    import os
+
+    # Close all connections to the database
+    engine.dispose()
+
+    # Remove the database file if it exists
+    if DATABASE_PATH.exists():
+        os.remove(DATABASE_PATH)
+        print(f"Removed database file: {DATABASE_PATH}")
+
+    # Recreate database and tables
+    create_db_and_tables()
+    print("Recreated database and tables")
+
+    # Seed with initial data
+    seed_data()
+    print("Seeded database with initial data")
+
+
 def get_session():
     """Get database session"""
     with Session(engine) as session:

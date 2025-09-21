@@ -5,7 +5,7 @@ import { TrashIcon } from '@radix-ui/react-icons';
 import { useSingleLineEditor } from '@/renderer/lib/codemirror/editors/SingleLineEditor';
 import { variableExtensions } from '@/renderer/lib/codemirror/extensions/VariableExtensions';
 import { autocompletion } from '@codemirror/autocomplete';
-import { headerKeyCompletions } from '@/renderer/lib/codemirror/extensions.ts/headerKeyExtensions';
+import { headerKeyCompletions } from '@/renderer/lib/codemirror/extensions/HeaderKeyExtensions';
 
 interface InputRowProps {
 	id: number;

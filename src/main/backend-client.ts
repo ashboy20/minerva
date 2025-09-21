@@ -70,6 +70,21 @@ export class BackendClient {
 		return this.request(`/api/endpoint-management/endpoints`)
 	}
 
+	// Reset database
+	async resetDatabase() {
+		return this.request('/api/endpoint-management/reset', {
+			method: 'POST'
+		})
+	}
+
+	// Call external API endpoint through backend
+	async callEndpoint(requestData: any) {
+		return this.request('/api/call-endpoint/call', {
+			method: 'POST',
+			body: JSON.stringify(requestData)
+		})
+	}
+
 
 	// Test connection
 	async testConnection() {
@@ -97,6 +112,11 @@ export function getBackendClient() {
 export const BackendAPI = {
 	endpointManagement: {
 		getEndpoints: () => getBackendClient().getEndpoints(),
+		resetDatabase: () => getBackendClient().resetDatabase(),
+	},
+
+	apiCalls: {
+		callEndpoint: (requestData: any) => getBackendClient().callEndpoint(requestData),
 	},
 
 	health: {
@@ -120,6 +140,32 @@ export const registerBackendHandlers = () => {
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 			log.error('❌ IPC BACKEND_GET_ENDPOINTS error:', error);
+			return { success: false, error: errorMessage };
+		}
+	});
+
+	// Reset database
+	ipcMain.handle(ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_RESET, async (_event) => {
+		try {
+			log.info('🔄 IPC: Resetting database...');
+			const result = await BackendAPI.endpointManagement.resetDatabase();
+			return result;
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+			log.error('❌ IPC BACKEND_ENDPOINT_MANAGEMENT_RESET error:', error);
+			return { success: false, error: errorMessage };
+		}
+	});
+
+	// Call external API endpoint through backend
+	ipcMain.handle(ipcChannels.BACKEND_API_CALL_ENDPOINT, async (_event, requestData: any) => {
+		try {
+			log.info('🚀 IPC: Calling external API through backend...');
+			const result = await BackendAPI.apiCalls.callEndpoint(requestData);
+			return result;
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+			log.error('❌ IPC BACKEND_API_CALL_ENDPOINT error:', error);
 			return { success: false, error: errorMessage };
 		}
 	});
