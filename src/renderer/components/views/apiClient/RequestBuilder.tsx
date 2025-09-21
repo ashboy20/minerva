@@ -10,6 +10,8 @@ import { EndpointList } from '@/renderer/components/views/apiClient/components/E
 import { RequestSection } from '@/renderer/components/views/apiClient/request-section/RequestSection';
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
 import { LayoutSwitcher } from '@/renderer/components/views/apiClient/components/LayoutSwitcher';
+import { EndpointTabs, createEndpointTab, updateTabActiveState } from '@/renderer/components/views/apiClient/top-nav-bar/EndpointTabs';
+import type { EndpointTab } from '@/renderer/components/views/apiClient/top-nav-bar/EndpointTabs';
 import { ipcChannels } from '@/config/ipc-channels';
 import ApiCallService from '@/renderer/services/apiCallService';
 import {
@@ -37,6 +39,10 @@ export function RequestBuilder() {
 	const [activeEndpoint, setActiveEndpoint] = useState<Endpoint | null>(null);
 	const [activeCase, setActiveCase] = useState<Case | null>(null);
 	
+	// Tab management state
+	const [endpointTabs, setEndpointTabs] = useState<EndpointTab[]>([]);
+	const [activeTabId, setActiveTabId] = useState<string | undefined>(undefined);
+	
 	// Get global settings including layout preference
 	const { settings } = useGlobalContext();
 	
@@ -46,11 +52,65 @@ export function RequestBuilder() {
 	const { headers, auth } = useAppSelector(state => state.headersAuth);
 
 	const handleEndpointClick = (endpoint: Endpoint) => {
-		setActiveEndpoint(endpoint);
-		// Set the first case as active by default
-		if (endpoint.cases && endpoint.cases.length > 0) {
-			setActiveCase(endpoint.cases[0]);
+		// Check if this endpoint is already open in a tab
+		const existingTab = endpointTabs.find(tab => tab.endpoint.id === endpoint.id);
+
+		if (existingTab) {
+			// Switch to existing tab
+			handleTabClick(existingTab.id);
+		} else {
+			// Create new tab
+			const newTab = createEndpointTab(endpoint, true);
+			const updatedTabs = updateTabActiveState([...endpointTabs, newTab], newTab.id);
+			setEndpointTabs(updatedTabs);
+			setActiveTabId(newTab.id);
+			setActiveEndpoint(endpoint);
+			
+			// Set the first case as active by default
+			if (endpoint.cases && endpoint.cases.length > 0) {
+				setActiveCase(endpoint.cases[0]);
+			}
 		}
+	};
+
+	const handleTabClick = (tabId: string) => {
+		const tab = endpointTabs.find(t => t.id === tabId);
+		if (tab) {
+			const updatedTabs = updateTabActiveState(endpointTabs, tabId);
+			setEndpointTabs(updatedTabs);
+			setActiveTabId(tabId);
+			setActiveEndpoint(tab.endpoint);
+			
+			// Set the first case as active by default
+			if (tab.endpoint.cases && tab.endpoint.cases.length > 0) {
+				setActiveCase(tab.endpoint.cases[0]);
+			}
+		}
+	};
+
+	const handleTabClose = (tabId: string) => {
+		const updatedTabs = endpointTabs.filter(tab => tab.id !== tabId);
+		setEndpointTabs(updatedTabs);
+		
+		// If we closed the active tab, switch to another tab or clear state
+		if (tabId === activeTabId) {
+			if (updatedTabs.length > 0) {
+				// Switch to the last tab
+				const newActiveTab = updatedTabs[updatedTabs.length - 1];
+				handleTabClick(newActiveTab.id);
+			} else {
+				// No tabs left, clear state
+				setActiveTabId(undefined);
+				setActiveEndpoint(null);
+				setActiveCase(null);
+				setResponse(null);
+			}
+		}
+	};
+
+	const handleNewTab = () => {
+		// For now, just log - could open a "new request" tab or endpoint selector
+		console.log('New tab clicked - could implement endpoint selection modal');
 	};
 
 	const sendRequest = async () => {
@@ -142,6 +202,12 @@ export function RequestBuilder() {
 				if (result && result.data && result.data.length > 0) {
 					setEndpoints(result.data);
 					setActiveEndpoint(result.data[0]);
+
+					const newTab = createEndpointTab(result.data[0], true);
+					const updatedTabs = updateTabActiveState([...endpointTabs, newTab], newTab.id);
+					setEndpointTabs(updatedTabs);
+					setActiveTabId(newTab.id);
+
 					if (result.data[0].cases && result.data[0].cases.length > 0) {
 						setActiveCase(result.data[0].cases[0]);
 					}
@@ -203,47 +269,58 @@ export function RequestBuilder() {
 					onEndpointClick={handleEndpointClick}
 				/>
 			</ResizablePanel>
-
 			<ResizableHandle />
 			{/* Right Side - Main Content */}
 			<ResizablePanel defaultSize={75} minSize={60}>
 				<div className="flex flex-col h-full">
-					{/* Top Bar */}
-					<div className="flex items-center justify-between p-4 border-b border-border h-12">
-						<h6 className="text-lg font-semibold">API Client</h6>
-						<LayoutSwitcher />
-					</div>
-
+					{/* Endpoint Tabs */}
+					<EndpointTabs
+						tabs={endpointTabs}
+						activeTabId={activeTabId}
+						onTabClick={handleTabClick}
+						onTabClose={handleTabClose}
+						onNewTab={handleNewTab}
+						showLayoutSwitcher={true}
+					/>
 					{/* Request/Response Content */}
 					<div className="flex-1">
-						<ResizablePanelGroup 
-							direction={settings.apiClientLayout === 'horizontal' ? 'horizontal' : 'vertical'} 
-							className="h-full"
-						>
-							<ResizablePanel defaultSize={60} minSize={30}>
-								<RequestSection
-									activeEndpoint={activeEndpoint}
-									activeCase={activeCase}
-									activeTab={activeTab}
-									loading={loading}
-									onMethodChange={handleMethodChange}
-									onUrlChange={handleUrlChange}
-									onPathParamsChange={() => {}} // No-op since Redux handles this
-									onQueryParamsChange={() => {}} // No-op since Redux handles this
-									onHeadersChange={() => {}} // No-op since Redux handles this
-									onBodyChange={handleBodyChange}
-									onAuthChange={() => {}} // No-op since Redux handles this
-									onActiveTabChange={setActiveTab}
-									onSendRequest={sendRequest}
-								/>
-							</ResizablePanel>
+						{activeEndpoint ? (
+							<ResizablePanelGroup 
+								direction={settings.apiClientLayout === 'horizontal' ? 'horizontal' : 'vertical'} 
+								className="h-full"
+							>
+								<ResizablePanel defaultSize={60} minSize={30}>
+									<RequestSection
+										activeEndpoint={activeEndpoint}
+										activeCase={activeCase}
+										activeTab={activeTab}
+										loading={loading}
+										onMethodChange={handleMethodChange}
+										onUrlChange={handleUrlChange}
+										onPathParamsChange={() => {}} // No-op since Redux handles this
+										onQueryParamsChange={() => {}} // No-op since Redux handles this
+										onHeadersChange={() => {}} // No-op since Redux handles this
+										onBodyChange={handleBodyChange}
+										onAuthChange={() => {}} // No-op since Redux handles this
+										onActiveTabChange={setActiveTab}
+										onSendRequest={sendRequest}
+									/>
+								</ResizablePanel>
 
-							<ResizableHandle withHandle />
+								<ResizableHandle withHandle />
 
-							<ResizablePanel defaultSize={40} minSize={20}>
-								<ResponseSection response={response} />
-							</ResizablePanel>
-						</ResizablePanelGroup>
+								<ResizablePanel defaultSize={40} minSize={20}>
+									<ResponseSection response={response} />
+								</ResizablePanel>
+							</ResizablePanelGroup>
+						) : (
+							<div className="flex items-center justify-center h-full text-muted-foreground">
+								<div className="text-center">
+									<p className="text-lg mb-2">No endpoint selected</p>
+									<p className="text-sm">Click on an endpoint from the sidebar to get started</p>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 			</ResizablePanel>

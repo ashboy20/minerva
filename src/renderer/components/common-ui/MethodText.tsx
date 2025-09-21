@@ -2,6 +2,7 @@ import React from 'react';
 
 interface MethodTextProps {
 	method: string;
+	className?: string;
 }
 
 const getMethodTextColor = (methodName: string) => {
@@ -25,9 +26,9 @@ const getMethodTextColor = (methodName: string) => {
 	}
 };
 
-export function MethodText({ method }: MethodTextProps) {
+export function MethodText({ method, className }: MethodTextProps) {
 	return (
-		<span className={`font-medium ${getMethodTextColor(method)}`}>
+		<span className={`font-medium ${getMethodTextColor(method)} ${className}`}>
 			{method}
 		</span>
 	);
