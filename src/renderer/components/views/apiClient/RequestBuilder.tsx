@@ -11,6 +11,7 @@ import { RequestSection } from '@/renderer/components/views/apiClient/request-se
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
 import { LayoutSwitcher } from '@/renderer/components/views/apiClient/components/LayoutSwitcher';
 import { ipcChannels } from '@/config/ipc-channels';
+import ApiCallService from '@/renderer/services/apiCallService';
 import {
 	Case,
 	Endpoint,
@@ -56,93 +57,63 @@ export function RequestBuilder() {
 		if (!activeEndpoint || !activeCase) return;
 
 		setLoading(true);
-		const startTime = Date.now();
 
 		try {
-			// TODO: call request by backend side?
 			// Build headers object from Redux state
 			const requestHeaders: Record<string, string> = {};
 			headers.forEach((header: Row) => {
 				if (header.enabled && header.keyValue && header.value) {
-					// Skip Authorization header as we'll handle it separately from auth state
-					if (header.keyValue.toLowerCase() !== 'authorization') {
-						requestHeaders[header.keyValue] = header.value;
-					}
+					requestHeaders[header.keyValue] = header.value;
 				}
 			});
 
-			// Add Authorization header from auth state (use actual token, not masked)
-			if (auth.authType === 'Bearer' && auth.token) {
-				requestHeaders['Authorization'] = `Bearer ${auth.token}`;
-			}
-
 			// Build query parameters from Redux state
-			const queryParamsUrl = new URLSearchParams();
+			const requestQueryParams: Record<string, string> = {};
 			queryParams.forEach((param: Row) => {
 				if (param.enabled && param.keyValue && param.value) {
-					queryParamsUrl.append(param.keyValue, param.value);
+					requestQueryParams[param.keyValue] = param.value;
 				}
 			});
 
 			// Construct the full URL
 			const baseUrl = activeEndpoint.base_url + activeEndpoint.path;
-			const fullUrl = queryParamsUrl.toString()
-				? `${baseUrl}?${queryParamsUrl.toString()}`
-				: baseUrl;
 
-			// Prepare request options
-			const requestOptions: {
-				method: string;
-				headers: Record<string, string>;
-				body?: string;
-			} = {
-				method: activeEndpoint.method,
-				headers: requestHeaders,
-			};
-
-			// Add body for non-GET requests
+			// Prepare request body for non-GET requests
+			let requestBody: string | object | undefined;
 			if (
 				activeEndpoint.method !== 'GET' &&
 				activeEndpoint.method !== 'HEAD' &&
 				activeCase.request?.body
 			) {
-				requestOptions.body =
-					typeof activeCase.request.body === 'string'
-						? activeCase.request.body
-						: JSON.stringify(activeCase.request.body);
+				requestBody = activeCase.request.body;
 			}
 
-			const fetchResponse = await fetch(fullUrl, requestOptions);
-			const endTime = Date.now();
-			const responseTime = endTime - startTime;
+			// Prepare auth configuration
+			const authConfig = auth.authType !== 'None' && auth.token ? {
+				auth_type: auth.authType,
+				token: auth.token
+			} : undefined;
 
-			// Get response headers
-			const responseHeaders: Record<string, string> = {};
-			fetchResponse.headers.forEach((value, key) => {
-				responseHeaders[key] = value;
+			// Call API through Python backend
+			const backendResponse = await ApiCallService.callEndpoint({
+				method: activeEndpoint.method,
+				url: baseUrl,
+				headers: Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
+				query_params: Object.keys(requestQueryParams).length > 0 ? requestQueryParams : undefined,
+				body: requestBody,
+				auth: authConfig
 			});
 
-			// Parse response data
-			const contentType = fetchResponse.headers.get('content-type');
-			let responseData;
-
-			if (contentType?.includes('application/json')) {
-				responseData = await fetchResponse.json();
-			} else {
-				responseData = await fetchResponse.text();
-			}
-
-			// Calculate response size (approximate)
-			const responseSize = new Blob([JSON.stringify(responseData)]).size;
-
+			// Convert backend response to frontend format
 			setResponse({
-				status: fetchResponse.status,
-				statusText: fetchResponse.statusText,
-				headers: responseHeaders,
-				data: responseData,
-				time: responseTime,
-				size: responseSize,
+				status: backendResponse.status_code,
+				statusText: backendResponse.status_code >= 400 ? 'Error' : 'OK',
+				headers: backendResponse.headers,
+				data: backendResponse.body,
+				time: backendResponse.response_time,
+				size: backendResponse.size,
 			});
+
 		} catch (error) {
 			setResponse({
 				status: 0,
@@ -151,7 +122,7 @@ export function RequestBuilder() {
 				data: {
 					error: error instanceof Error ? error.message : 'Unknown error',
 				},
-				time: Date.now() - startTime,
+				time: 0,
 				size: 0,
 			});
 		} finally {

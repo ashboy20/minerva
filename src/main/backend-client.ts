@@ -70,6 +70,14 @@ export class BackendClient {
 		return this.request(`/api/endpoint-management/endpoints`)
 	}
 
+	// Call external API endpoint through backend
+	async callEndpoint(requestData: any) {
+		return this.request('/api/call-endpoint/call', {
+			method: 'POST',
+			body: JSON.stringify(requestData)
+		})
+	}
+
 
 	// Test connection
 	async testConnection() {
@@ -99,6 +107,10 @@ export const BackendAPI = {
 		getEndpoints: () => getBackendClient().getEndpoints(),
 	},
 
+	apiCalls: {
+		callEndpoint: (requestData: any) => getBackendClient().callEndpoint(requestData),
+	},
+
 	health: {
 		test: () => getBackendClient().testConnection(),
 	},
@@ -120,6 +132,19 @@ export const registerBackendHandlers = () => {
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 			log.error('❌ IPC BACKEND_GET_ENDPOINTS error:', error);
+			return { success: false, error: errorMessage };
+		}
+	});
+
+	// Call external API endpoint through backend
+	ipcMain.handle(ipcChannels.BACKEND_API_CALL_ENDPOINT, async (_event, requestData: any) => {
+		try {
+			log.info('🚀 IPC: Calling external API through backend...');
+			const result = await BackendAPI.apiCalls.callEndpoint(requestData);
+			return result;
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+			log.error('❌ IPC BACKEND_API_CALL_ENDPOINT error:', error);
 			return { success: false, error: errorMessage };
 		}
 	});
