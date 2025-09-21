@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TrashIcon } from '@radix-ui/react-icons';
@@ -47,20 +47,42 @@ export function InputRow({
 
 	const keyEditorRef = useRef<HTMLDivElement>(null);
 	const valueEditorRef = useRef<HTMLDivElement>(null);
+	
+	// Local state to track editor values
+	const [localKeyValue, setLocalKeyValue] = useState(keyValue);
+	const [localValue, setLocalValue] = useState(value);
+
+	// Update local state when props change
+	useEffect(() => {
+		setLocalKeyValue(keyValue);
+	}, [keyValue]);
+
+	useEffect(() => {
+		setLocalValue(value);
+	}, [value]);
+
 	const keyEditorOptions = {
-		doc: keyValue,
+		doc: localKeyValue,
 		placeholder: 'Key',
 		editable: !disabled,
 		extensions: parseExtensions(),
+		onChange: (newValue: string) => {
+			setLocalKeyValue(newValue);
+			onChange(id, 'keyValue', newValue);
+		}
 	}
 
 	const valueEditorOptions = {
-		doc: value,
+		doc: localValue,
 		placeholder: 'Value',
 		editable: !disabled,
 		extensions: [
 			...variableExtensions,
 		],
+		onChange: (newValue: string) => {
+			setLocalValue(newValue);
+			onChange(id, 'value', newValue);
+		}
 	}
 
 	useSingleLineEditor(keyEditorRef, keyEditorOptions)

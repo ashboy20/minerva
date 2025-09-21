@@ -237,9 +237,11 @@ export function useSingleLineEditor(
   options: BaseEditorOptions & {
     /** Dependencies array for when to recreate the editor */
     deps?: React.DependencyList
+    /** Whether to auto-focus the editor when created */
+    autoFocus?: boolean
   } = {}
 ) {
-  const { deps = [], ...editorOptions } = options
+  const { deps = [], autoFocus = false, ...editorOptions } = options
   const editorInstanceRef = React.useRef<BaseEditorInstance | null>(null)
 
   // Create/destroy editor effect
@@ -248,9 +250,11 @@ export function useSingleLineEditor(
       editorInstanceRef.current = createSingleLineEditor(containerRef.current, editorOptions)
     }
 
-    setTimeout(() => {
-      editorInstanceRef.current?.focus()
-    }, 100)
+    if (autoFocus) {
+      setTimeout(() => {
+        editorInstanceRef.current?.focus()
+      }, 100)
+    }
 
     return () => {
       if (editorInstanceRef.current) {

@@ -1,9 +1,7 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useSingleLineEditor } from '@/renderer/lib/codemirror/editors/SingleLineEditor'
 import { variableExtensions } from '@/renderer/lib/codemirror/extensions/VariableExtensions'
 import { urlParamExtensions } from '@/renderer/lib/codemirror/extensions/UrlParamExtensions'
-
-
 
 interface UrlInputFieldProps {
   value?: string
@@ -12,6 +10,7 @@ interface UrlInputFieldProps {
 
 export const UrlInputField = ({ value, onChange }: UrlInputFieldProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const lastValueRef = useRef(value)
 
   const editorOptions = {
     doc: value ?? '',
@@ -21,10 +20,18 @@ export const UrlInputField = ({ value, onChange }: UrlInputFieldProps) => {
       ...urlParamExtensions,
     ],
     onChange: (newValue: string) => {
-      onChange(newValue)
-
+      // Only call onChange if this is actually a user change
+      if (newValue !== lastValueRef.current) {
+        lastValueRef.current = newValue
+        onChange(newValue)
+      }
     }
   }
+
+  // Update lastValueRef when prop changes
+  useEffect(() => {
+    lastValueRef.current = value
+  }, [value])
   
   useSingleLineEditor(containerRef, editorOptions)
 
