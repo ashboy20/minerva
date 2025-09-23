@@ -4,6 +4,8 @@ from pydantic import BaseModel
 import json
 import uuid
 
+from .base import BaseResponse
+
 
 class Row(BaseModel):
     row_id: int = Field(description="ID of the row")
@@ -95,6 +97,80 @@ class UpdateEndpointRequest(BaseModel):
     cases: List[dict] = None
 
 
-class DeleteEndpointResponse(BaseModel):
-    success: bool
-    message: str
+# Response Models - Each endpoint has its own response model inheriting from BaseResponse
+class GetEndpointsResponse(BaseResponse):
+    """Response model for GET /endpoints"""
+
+    class GetEndpointsResponseData(BaseModel):
+        """Data structure for GET /endpoints response"""
+
+        endpoints: List[Endpoint] = Field(description="List of all endpoints")
+
+    data: GetEndpointsResponseData = Field(
+        description="Response data containing endpoints list"
+    )
+
+
+class GetEndpointResponse(BaseResponse):
+    """Response model for GET /endpoints/{uuid}"""
+
+    class GetEndpointResponseData(BaseModel):
+        """Data structure for GET /endpoints/{uuid} response"""
+
+        endpoint: Endpoint = Field(description="The requested endpoint")
+
+    data: GetEndpointResponseData = Field(
+        description="Response data containing single endpoint"
+    )
+
+
+class CreateEndpointResponse(BaseResponse):
+    """Response model for POST /endpoints"""
+
+    class CreateEndpointResponseData(BaseModel):
+        """Data structure for POST /endpoints response"""
+
+        endpoint: Endpoint = Field(description="The created endpoint")
+
+    data: CreateEndpointResponseData = Field(
+        description="Response data containing created endpoint"
+    )
+
+
+class UpdateEndpointResponse(BaseResponse):
+    """Response model for PUT /endpoints/{uuid}"""
+
+    class UpdateEndpointResponseData(BaseModel):
+        """Data structure for PUT /endpoints/{uuid} response"""
+
+        endpoint: Endpoint = Field(description="The updated endpoint")
+
+    data: UpdateEndpointResponseData = Field(
+        description="Response data containing updated endpoint"
+    )
+
+
+class DeleteEndpointResponse(BaseResponse):
+    """Response model for DELETE /endpoints/{uuid}"""
+
+    class DeleteEndpointResponseData(BaseModel):
+        """Data structure for DELETE /endpoints/{uuid} response"""
+
+        message: str = Field(description="Deletion confirmation message")
+
+    data: DeleteEndpointResponseData = Field(
+        description="Response data containing deletion confirmation"
+    )
+
+
+class ResetDatabaseResponse(BaseResponse):
+    """Response model for POST /reset"""
+
+    class ResetDatabaseResponseData(BaseModel):
+        """Data structure for POST /reset response"""
+
+        message: str = Field(description="Reset confirmation message")
+
+    data: ResetDatabaseResponseData = Field(
+        description="Response data containing reset confirmation"
+    )

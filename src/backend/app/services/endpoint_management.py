@@ -1,5 +1,5 @@
 from typing import List, Optional
-from backend.app.models.endpoint_management import Endpoint, Request, Response
+from app.models.endpoint_management import Endpoint, Request, Response
 from app.db.connection import Session, engine
 from sqlmodel import select
 

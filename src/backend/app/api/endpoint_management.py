@@ -1,11 +1,16 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 
-from backend.app.models.endpoint_management import (
+from app.models.endpoint_management import (
     Endpoint,
     CreateEndpointRequest,
     UpdateEndpointRequest,
+    GetEndpointsResponse,
+    GetEndpointResponse,
+    CreateEndpointResponse,
+    UpdateEndpointResponse,
     DeleteEndpointResponse,
+    ResetDatabaseResponse,
 )
 from app.services.endpoint_management import endpoint_service
 from app.db.connection import reset_database
@@ -13,22 +18,41 @@ from app.db.connection import reset_database
 router = APIRouter()
 
 
-@router.get("/endpoints", response_model=List[Endpoint])
+@router.get("/endpoints", response_model=GetEndpointsResponse)
 async def get_endpoints():
     """Get all endpoints"""
-    return await endpoint_service.get_all_endpoints()
+    try:
+        endpoints = await endpoint_service.get_all_endpoints()
+        return GetEndpointsResponse(
+            success=True,
+            data=GetEndpointsResponse.GetEndpointsResponseData(endpoints=endpoints),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve endpoints: {str(e)}"
+        )
 
 
-@router.get("/endpoints/{endpoint_uuid}", response_model=Endpoint)
+@router.get("/endpoints/{endpoint_uuid}", response_model=GetEndpointResponse)
 async def get_endpoint_by_uuid(endpoint_uuid: str):
     """Get a specific endpoint by UUID"""
-    endpoint = await endpoint_service.get_endpoint_by_uuid(endpoint_uuid)
-    if not endpoint:
-        raise HTTPException(status_code=404, detail="Endpoint not found")
-    return endpoint
+    try:
+        endpoint = await endpoint_service.get_endpoint_by_uuid(endpoint_uuid)
+        if not endpoint:
+            raise HTTPException(status_code=404, detail="Endpoint not found")
+        return GetEndpointResponse(
+            success=True,
+            data=GetEndpointResponse.GetEndpointResponseData(endpoint=endpoint),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve endpoint: {str(e)}"
+        )
 
 
-@router.post("/endpoints", response_model=Endpoint)
+@router.post("/endpoints", response_model=CreateEndpointResponse)
 async def create_endpoint(request: CreateEndpointRequest):
     """Create a new endpoint"""
     try:
@@ -45,14 +69,19 @@ async def create_endpoint(request: CreateEndpointRequest):
         )
 
         created_endpoint = await endpoint_service.create_endpoint(endpoint)
-        return created_endpoint
+        return CreateEndpointResponse(
+            success=True,
+            data=CreateEndpointResponse.CreateEndpointResponseData(
+                endpoint=created_endpoint
+            ),
+        )
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Failed to create endpoint: {str(e)}"
         )
 
 
-@router.put("/endpoints/{endpoint_uuid}", response_model=Endpoint)
+@router.put("/endpoints/{endpoint_uuid}", response_model=UpdateEndpointResponse)
 async def update_endpoint(endpoint_uuid: str, request: UpdateEndpointRequest):
     """Update an endpoint by UUID"""
     try:
@@ -68,7 +97,12 @@ async def update_endpoint(endpoint_uuid: str, request: UpdateEndpointRequest):
         if not updated_endpoint:
             raise HTTPException(status_code=404, detail="Endpoint not found")
 
-        return updated_endpoint
+        return UpdateEndpointResponse(
+            success=True,
+            data=UpdateEndpointResponse.UpdateEndpointResponseData(
+                endpoint=updated_endpoint
+            ),
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -86,7 +120,10 @@ async def delete_endpoint(endpoint_uuid: str):
             raise HTTPException(status_code=404, detail="Endpoint not found")
 
         return DeleteEndpointResponse(
-            success=True, message="Endpoint deleted successfully"
+            success=True,
+            data=DeleteEndpointResponse.DeleteEndpointResponseData(
+                message="Endpoint deleted successfully"
+            ),
         )
     except HTTPException:
         raise
@@ -96,11 +133,18 @@ async def delete_endpoint(endpoint_uuid: str):
         )
 
 
-@router.post("/reset")
+@router.post("/reset", response_model=ResetDatabaseResponse)
 async def reset_database_endpoint():
     """Reset the database by removing and recreating it with seed data"""
     try:
         reset_database()
-        return {"message": "Database reset successfully", "success": True}
+        return ResetDatabaseResponse(
+            success=True,
+            data=ResetDatabaseResponse.ResetDatabaseResponseData(
+                message="Database reset successfully"
+            ),
+        )
     except Exception as e:
-        return {"message": f"Failed to reset database: {str(e)}", "success": False}
+        raise HTTPException(
+            status_code=500, detail=f"Failed to reset database: {str(e)}"
+        )
