@@ -1,60 +1,50 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
-
-interface Tab {
-	id: string;
-	label: string;
-	method?: string;
-	isActive?: boolean;
-	notSaved?: boolean;
-}
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { addTab, setActiveTab, closeTab, addNewTab } from '@/store/slices/tabsSlice';
+import { setActiveEndpoint } from '@/store/slices/endpointsSlice';
 
 interface TabBarProps {
 	className?: string;
 }
 
 export function TabBar({ className }: TabBarProps) {
-    // TODO: Remove this once the tabs are implemented
-	const [tabs, setTabs] = useState<Tab[]>([
-		{ id: '1', label: 'GET /users', method: 'GET', isActive: true, notSaved: false },
-		{ id: '2', label: 'POST /auth/login', method: 'POST', isActive: false, notSaved: true },
-		{ id: '3', label: 'PUT /users/123/profile/update', method: 'PUT', isActive: false, notSaved: false },
-	]);
-	const [activeTabId, setActiveTabId] = useState('1');
+	const dispatch = useAppDispatch();
+	
+	// Get tabs and active tab from Redux
+	const { tabs, activeTabId } = useAppSelector(state => state.tabs);
+	const { endpoints, activeEndpoint } = useAppSelector(state => state.endpoints);
 
+
+	// When the active endpoint changes, ensure there's a corresponding tab
+	useEffect(() => {
+		if (activeEndpoint) {
+			dispatch(addTab({ endpoint: activeEndpoint, setAsActive: true }));
+		}
+	}, [activeEndpoint, dispatch]);
 
 	const handleTabClick = (tabId: string) => {
-		setActiveTabId(tabId);
-		setTabs(tabs.map(tab => ({ ...tab, isActive: tab.id === tabId })));
+		dispatch(setActiveTab(tabId));
+		
+		// Find the corresponding endpoint and set it as active
+		const tab = tabs.find(t => t.id === tabId);
+		if (tab && tab.endpointId !== -1) {
+			const endpoint = endpoints.find(ep => ep.id === tab.endpointId);
+			if (endpoint) {
+				dispatch(setActiveEndpoint({ endpoint }));
+			}
+		}
 	};
 
 	const handleCloseTab = (tabId: string, e: React.MouseEvent) => {
 		e.stopPropagation();
-		if (tabs.length === 1) return; // Don't close if it's the last tab
-		
-		const newTabs = tabs.filter(tab => tab.id !== tabId);
-		setTabs(newTabs);
-		
-		// If we closed the active tab, make the first remaining tab active
-		if (activeTabId === tabId && newTabs.length > 0) {
-			setActiveTabId(newTabs[0].id);
-			newTabs[0].isActive = true;
-		}
+		dispatch(closeTab(tabId));
 	};
 
 	const handleAddTab = () => {
-		const newId = (tabs.length + 1).toString();
-        // TODO: Remove this once the tabs are implemented
-		const newTab: Tab = {
-			id: newId,
-			label: 'New Request',
-			method: 'GET',
-			isActive: false,
-			notSaved: false,
-		};
-		setTabs([...tabs, newTab]);
+		dispatch(addNewTab());
 	};
 
 	return (
@@ -68,7 +58,7 @@ export function TabBar({ className }: TabBarProps) {
 							'flex items-center gap-2 px-3 py-2 border-r border-border cursor-pointer group relative',
 							'w-48 min-w-48 max-w-48', // Fixed width of 192px
 							'hover:bg-muted/50 transition-colors duration-150',
-							tab.isActive || activeTabId === tab.id
+							activeTabId === tab.id
 								? 'bg-background border-b-2 border-b-primary'
 								: 'bg-muted/30'
 						)}

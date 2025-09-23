@@ -202,11 +202,7 @@ export function RequestBuilder() {
 									loading={loading}
 									onMethodChange={handleMethodChange}
 									onUrlChange={handleUrlChange}
-									onPathParamsChange={() => {}} // No-op since Redux handles this
-									onQueryParamsChange={() => {}} // No-op since Redux handles this
-									onHeadersChange={() => {}} // No-op since Redux handles this
 									onBodyChange={handleBodyChange}
-									onAuthChange={() => {}} // No-op since Redux handles this
 									onActiveTabChange={setActiveTab}
 									onSendRequest={sendRequest}
 								/>
