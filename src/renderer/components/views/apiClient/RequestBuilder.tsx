@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { useGlobalContext } from '@/renderer/context/global-context';
 import {
 	ResizableHandle,
@@ -11,13 +11,17 @@ import { RequestSection } from '@/renderer/components/views/apiClient/request-se
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
 import { LayoutSwitcher } from '@/renderer/components/views/apiClient/top-nav-bar/LayoutSwitcher';
 import { TabBar } from '@/renderer/components/views/apiClient/top-nav-bar/TabBar';
-import { ipcChannels } from '@/config/ipc-channels';
 import ApiCallService from '@/renderer/services/apiCallService';
 import {
-	Case,
-	Endpoint,
 	Row,
+	Endpoint,
 } from '@/types/backend/endpoint-management/endpoint';
+import { 
+	fetchEndpoints, 
+	setActiveEndpoint, 
+	updateActiveEndpoint, 
+	updateActiveCase 
+} from '@/store/slices/endpointsSlice';
 
 interface ApiResponse {
 	status: number;
@@ -29,14 +33,10 @@ interface ApiResponse {
 }
 
 export function RequestBuilder() {
+	const dispatch = useAppDispatch();
 	const [response, setResponse] = useState<ApiResponse | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [activeTab, setActiveTab] = useState('headers');
-	const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
-	const [_endpointsLoading, setEndpointsLoading] = useState(true);
-
-	const [activeEndpoint, setActiveEndpoint] = useState<Endpoint | null>(null);
-	const [activeCase, setActiveCase] = useState<Case | null>(null);
 	
 	// Get global settings including layout preference
 	const { settings } = useGlobalContext();
@@ -45,13 +45,11 @@ export function RequestBuilder() {
 	const { pathParams, queryParams } = useAppSelector(state => state.url);
 	// Get headers and auth state from Redux
 	const { headers, auth } = useAppSelector(state => state.headersAuth);
+	// Get endpoints state from Redux
+	const { endpoints, activeEndpoint, activeCase, loading: endpointsLoading } = useAppSelector(state => state.endpoints);
 
 	const handleEndpointClick = (endpoint: Endpoint) => {
-		setActiveEndpoint(endpoint);
-		// Set the first case as active by default
-		if (endpoint.cases && endpoint.cases.length > 0) {
-			setActiveCase(endpoint.cases[0]);
-		}
+		dispatch(setActiveEndpoint({ endpoint }));
 	};
 
 	const sendRequest = async () => {
@@ -133,62 +131,35 @@ export function RequestBuilder() {
 
 	// Fetch endpoints from FastAPI backend service on mount
 	useEffect(() => {
-		const fetchEndpoints = async () => {
-			try {
-				setEndpointsLoading(true);
-				const result = await window.electron.ipcRenderer.invoke(
-					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET,
-				);
-
-				if (result && result.data && result.data.length > 0) {
-					setEndpoints(result.data);
-					setActiveEndpoint(result.data[0]);
-					if (result.data[0].cases && result.data[0].cases.length > 0) {
-						setActiveCase(result.data[0].cases[0]);
-					}
-				}
-			} catch (error) {
-				console.error('Failed to fetch endpoints:', error);
-				setEndpoints([]);
-			} finally {
-				setEndpointsLoading(false);
-			}
-		};
-
-		fetchEndpoints();
-	}, []);
+		dispatch(fetchEndpoints());
+	}, [dispatch]);
 
 	// Handler functions for RequestSection
 	const handleMethodChange = (method: string) => {
-		if (activeEndpoint) {
-			setActiveEndpoint({ ...activeEndpoint, method });
-		}
+		dispatch(updateActiveEndpoint({ method }));
 	};
 
 	const handleUrlChange = (url: string) => {
-		if (activeEndpoint) {
-			// Parse the URL to extract base_url and path
-			try {
-				const urlObj = new URL(url);
-				const basePath = urlObj.origin;
-				const path = urlObj.pathname + urlObj.search;
-				setActiveEndpoint({ ...activeEndpoint, base_url: basePath, path });
-			} catch {
-				// If URL parsing fails, just update the path
-				setActiveEndpoint({ ...activeEndpoint, path: url });
-			}
+		// Parse the URL to extract base_url and path
+		try {
+			const urlObj = new URL(url);
+			const basePath = urlObj.origin;
+			const path = urlObj.pathname + urlObj.search;
+			dispatch(updateActiveEndpoint({ base_url: basePath, path }));
+		} catch {
+			// If URL parsing fails, just update the path
+			dispatch(updateActiveEndpoint({ path: url }));
 		}
 	};
 
 	const handleBodyChange = (body: string) => {
 		if (activeCase) {
-			setActiveCase({
-				...activeCase,
+			dispatch(updateActiveCase({
 				request: {
 					...activeCase.request,
 					body: body as any, // Allow string or object for body
 				},
-			});
+			}));
 		}
 	};
 
