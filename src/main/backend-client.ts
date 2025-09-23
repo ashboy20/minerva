@@ -42,21 +42,17 @@ export class BackendClient {
 	}
 
 	/**
-	 * Helper function to process responses consistently
+	 * Helper function to process responses and return API response directly
 	 */
 	private async processResponse(response: Response) {
 		if (!response.ok) {
-			return {
-				error: `HTTP ${response.status}: ${response.statusText}`,
-				status: response.status,
-			};
+			// For errors, throw an exception that will be caught by the IPC handler
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 		}
 		
-		const data = await response.json();
-		return {
-			data: data,
-			status: response.status,
-		};
+		// Return the API response directly (our BaseResponse format)
+		const apiResponse = await response.json();
+		return apiResponse;
 	}
 
 	/**
@@ -153,7 +149,11 @@ export const registerBackendHandlers = () => {
 			} catch (error) {
 				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 				log.error(`❌ IPC ${endpointConfig.ipcChannel} error:`, error);
-				return { success: false, error: errorMessage };
+				// Return error in BaseResponse format for consistency
+				return { 
+					success: false, 
+					data: { error: errorMessage } 
+				};
 			}
 		});
 	}
