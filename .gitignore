@@ -32,3 +32,4 @@ npm-debug.log.*
 src/backend/build/
 src/backend/dist/
 src/backend/*.spec
+src/backend/app/db/data/minerva.db

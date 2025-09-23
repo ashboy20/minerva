@@ -34,11 +34,11 @@ interface RequestSectionProps {
 	loading: boolean;
 	onMethodChange: (method: string) => void;
 	onUrlChange: (url: string) => void;
-	onPathParamsChange: (pathParams: Row[]) => void;
-	onQueryParamsChange: (queryParams: Row[]) => void;
-	onHeadersChange: (headers: Row[]) => void;
+	onPathParamsChange?: (pathParams: Row[]) => void;
+	onQueryParamsChange?: (queryParams: Row[]) => void;
+	onHeadersChange?: (headers: Row[]) => void;
 	onBodyChange: (body: string) => void;
-	onAuthChange: (authType: string, token: string) => void;
+	onAuthChange?: (authType: string, token: string) => void;
 	onActiveTabChange: (tab: string) => void;
 	onSendRequest: () => void;
 }

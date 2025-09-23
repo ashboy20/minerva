@@ -8,6 +8,11 @@ import log from 'electron-log';
 import { getBackendService } from './backend-service';
 import { ipcChannels } from '../config/ipc-channels';
 
+interface EndpointConfig {
+	ipcChannel: string;
+	handler: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => Promise<any>;
+}
+
 export class BackendClient {
 	private baseUrl: string;
 
@@ -25,76 +30,65 @@ export class BackendClient {
 			'Content-Type': 'application/json',
 		};
 
-		try {
-			log.info(`API Request: ${options.method || 'GET'} ${url}`);
+		log.info(`API Request: ${options.method || 'GET'} ${url}`);
 
-			const response = await fetch(url, {
-				...options,
-				headers: {
-					...defaultHeaders,
-					...options.headers,
-				},
-			});
+		return fetch(url, {
+			...options,
+			headers: {
+				...defaultHeaders,
+				...options.headers,
+			},
+		});
+	}
 
-			let responseData = null;
-			try {
-				responseData = await response.json();
-			} catch (e) {
-				// Response might not be JSON
-			}
-
-			if (!response.ok) {
-				log.error(`API Error: ${response.status} ${response.statusText}`);
-				return {
-					error: `HTTP ${response.status}: ${response.statusText}`,
-					status: response.status,
-				};
-			}
+	/**
+	 * Helper function to process responses consistently
+	 */
+	private async processResponse(response: Response) {
+		if (!response.ok) {
 			return {
-				data: responseData,
+				error: `HTTP ${response.status}: ${response.statusText}`,
 				status: response.status,
 			};
-
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-			log.error(`API Request failed: ${errorMessage}`);
-			return {
-				error: errorMessage,
-				status: 0,
-			};
 		}
+		
+		const data = await response.json();
+		return {
+			data: data,
+			status: response.status,
+		};
 	}
 
-	// Endpoints
-	async getEndpoints() {
-		return this.request(`/api/endpoint-management/endpoints`)
-	}
-
-	// Reset database
-	async resetDatabase() {
-		return this.request('/api/endpoint-management/reset', {
-			method: 'POST'
-		})
-	}
-
-	// Call external API endpoint through backend
-	async callEndpoint(requestData: any) {
-		return this.request('/api/call-endpoint/call', {
-			method: 'POST',
-			body: JSON.stringify(requestData)
-		})
-	}
-
-
-	// Test connection
-	async testConnection() {
-		try {
-			const response = await this.request('/');
-			return response.status === 200;
-		} catch (error) {
-			log.error('Backend connection test failed:', error);
-			return false;
-		}
+	/**
+	 * Get endpoint configurations for IPC handlers
+	 */
+	getEndpoints(): EndpointConfig[] {
+		return [
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET,
+				handler: async (_event, _search?: string) => {
+					const response = await this.request('/api/endpoint-management/endpoints');
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_RESET,
+				handler: async (_event) => {
+					const response = await this.request('/api/endpoint-management/reset', {method: 'POST'});
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_API_CALL_ENDPOINT,
+				handler: async (_event, requestData: any) => {
+					const response = await this.request('/api/call-endpoint/call', {
+						method: 'POST',
+						body: JSON.stringify(requestData)
+					});
+					return this.processResponse(response);
+				},
+			}
+		];
 	}
 }
 
@@ -108,67 +102,24 @@ export function getBackendClient() {
 	return backendClientInstance;
 }
 
-// Simple API shortcuts
-export const BackendAPI = {
-	endpointManagement: {
-		getEndpoints: () => getBackendClient().getEndpoints(),
-		resetDatabase: () => getBackendClient().resetDatabase(),
-	},
-
-	apiCalls: {
-		callEndpoint: (requestData: any) => getBackendClient().callEndpoint(requestData),
-	},
-
-	health: {
-		test: () => getBackendClient().testConnection(),
-	},
-};
-
 /**
  * Register FastAPI Backend IPC Handlers
  * Handles IPC communication between renderer and FastAPI backend
  */
 export const registerBackendHandlers = () => {
 	log.info('🔌 Registering FastAPI Backend IPC handlers...');
-
-	// Get all endpoints
-	ipcMain.handle(ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET, async (_event, search?: string) => {
-		try {
-			log.info('📋 IPC: Getting endpoints from FastAPI backend...');
-			const result = await BackendAPI.endpointManagement.getEndpoints();
-			return result;
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-			log.error('❌ IPC BACKEND_GET_ENDPOINTS error:', error);
-			return { success: false, error: errorMessage };
-		}
-	});
-
-	// Reset database
-	ipcMain.handle(ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_RESET, async (_event) => {
-		try {
-			log.info('🔄 IPC: Resetting database...');
-			const result = await BackendAPI.endpointManagement.resetDatabase();
-			return result;
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-			log.error('❌ IPC BACKEND_ENDPOINT_MANAGEMENT_RESET error:', error);
-			return { success: false, error: errorMessage };
-		}
-	});
-
-	// Call external API endpoint through backend
-	ipcMain.handle(ipcChannels.BACKEND_API_CALL_ENDPOINT, async (_event, requestData: any) => {
-		try {
-			log.info('🚀 IPC: Calling external API through backend...');
-			const result = await BackendAPI.apiCalls.callEndpoint(requestData);
-			return result;
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-			log.error('❌ IPC BACKEND_API_CALL_ENDPOINT error:', error);
-			return { success: false, error: errorMessage };
-		}
-	});
-
+	const backendClient = getBackendClient();
+	for (const endpointConfig of backendClient.getEndpoints()) {
+		ipcMain.handle(endpointConfig.ipcChannel, async (event, ...args) => {
+			try {
+				log.info(`🚀 IPC: Calling ${endpointConfig.ipcChannel}...`);
+				return await endpointConfig.handler(event, ...args);
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+				log.error(`❌ IPC ${endpointConfig.ipcChannel} error:`, error);
+				return { success: false, error: errorMessage };
+			}
+		});
+	}
 	log.info('✅ FastAPI Backend IPC handlers registered successfully');
 };

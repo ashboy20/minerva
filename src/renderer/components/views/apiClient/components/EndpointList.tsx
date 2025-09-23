@@ -76,7 +76,7 @@ export function EndpointList({ endpoints, onEndpointClick }: EndpointListProps) 
 							>
 								<div className="flex items-center justify-between">
 									<span className="text-sm font-medium">
-										{endpoint.summary}
+										{endpoint.name}
 									</span>
 									<Badge variant="secondary" className="text-xs">
 										<MethodText method={endpoint.method} />
