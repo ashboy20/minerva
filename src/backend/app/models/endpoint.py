@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 from sqlmodel import Field, SQLModel, Column, JSON
 from pydantic import BaseModel
 import json
+import uuid
 
 
 class Row(BaseModel):
@@ -26,9 +27,7 @@ class Request(BaseModel):
     path_params: Optional[List[dict]] = Field(
         default=None, description="Path params of the request"
     )
-    body: Optional[dict] = Field(
-        default=None, description="Body of the request"
-    )
+    body: Optional[dict] = Field(default=None, description="Body of the request")
     auth: Optional[dict] = Field(default=None, description="Auth of the request")
 
 
@@ -37,9 +36,7 @@ class Response(BaseModel):
     headers: Optional[List[dict]] = Field(
         default=None, description="Headers of the response"
     )
-    body: Optional[dict] = Field(
-        default=None, description="Body of the response"
-    )
+    body: Optional[dict] = Field(default=None, description="Body of the response")
 
 
 class Case(BaseModel):
@@ -48,13 +45,17 @@ class Case(BaseModel):
         default=None, description="Description of the case"
     )
     request: Optional[dict] = Field(default=None, description="Request of the case")
-    response: Optional[dict] = Field(
-        default=None, description="Response of the case"
-    )
+    response: Optional[dict] = Field(default=None, description="Response of the case")
 
 
 class Endpoint(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    uuid: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        unique=True,
+        index=True,
+        description="Unique UUID for endpoint identification",
+    )
     operation_id: str = Field(description="Operation ID of the endpoint")
     name: str = Field(description="Name of the endpoint")
     summary: Optional[str] = Field(default=None, description="Summary of the endpoint")

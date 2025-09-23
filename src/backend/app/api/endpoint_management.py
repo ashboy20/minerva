@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from typing import List
 
 from app.models.endpoint import Endpoint
@@ -12,6 +12,15 @@ router = APIRouter()
 async def get_endpoints():
     """Get all endpoints"""
     return await endpoint_service.get_all_endpoints()
+
+
+@router.get("/endpoints/{endpoint_uuid}", response_model=Endpoint)
+async def get_endpoint_by_uuid(endpoint_uuid: str):
+    """Get a specific endpoint by UUID"""
+    endpoint = await endpoint_service.get_endpoint_by_uuid(endpoint_uuid)
+    if not endpoint:
+        raise HTTPException(status_code=404, detail="Endpoint not found")
+    return endpoint
 
 
 @router.post("/reset")
