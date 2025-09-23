@@ -9,7 +9,8 @@ import {
 import { EndpointList } from '@/renderer/components/views/apiClient/components/EndpointList';
 import { RequestSection } from '@/renderer/components/views/apiClient/request-section/RequestSection';
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
-import { LayoutSwitcher } from '@/renderer/components/views/apiClient/components/LayoutSwitcher';
+import { LayoutSwitcher } from '@/renderer/components/views/apiClient/top-nav-bar/LayoutSwitcher';
+import { TabBar } from '@/renderer/components/views/apiClient/top-nav-bar/TabBar';
 import { ipcChannels } from '@/config/ipc-channels';
 import ApiCallService from '@/renderer/services/apiCallService';
 import {
@@ -208,10 +209,12 @@ export function RequestBuilder() {
 			{/* Right Side - Main Content */}
 			<ResizablePanel defaultSize={75} minSize={60}>
 				<div className="flex flex-col h-full">
-					{/* Top Bar */}
-					<div className="flex items-center justify-between p-4 border-b border-border h-12">
-						<h6 className="text-lg font-semibold">API Client</h6>
-						<LayoutSwitcher />
+					{/* Top Bar with Tabs */}
+					<div className="flex flex-col">
+						<div className="flex items-center justify-between p-4 border-b border-border h-12">
+							<TabBar />
+							<LayoutSwitcher />
+						</div>
 					</div>
 
 					{/* Request/Response Content */}
