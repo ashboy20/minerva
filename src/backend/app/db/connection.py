@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, create_engine, Session
 from pathlib import Path
-from app.models.endpoint import Endpoint, Request, Response, Case
+from backend.app.models.endpoint_management import Endpoint, Request, Response, Case
 import uuid
 
 # Database configuration

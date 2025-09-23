@@ -70,3 +70,31 @@ class Endpoint(SQLModel, table=True):
     cases: List[dict] = Field(
         description="Cases of the endpoint", sa_column=Column(JSON)
     )
+
+
+# API Request/Response Models
+class CreateEndpointRequest(BaseModel):
+    operation_id: str
+    name: str
+    summary: str = None
+    description: str = None
+    method: str
+    path: str
+    base_url: str
+    cases: List[dict] = []
+
+
+class UpdateEndpointRequest(BaseModel):
+    operation_id: str = None
+    name: str = None
+    summary: str = None
+    description: str = None
+    method: str = None
+    path: str = None
+    base_url: str = None
+    cases: List[dict] = None
+
+
+class DeleteEndpointResponse(BaseModel):
+    success: bool
+    message: str

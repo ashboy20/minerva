@@ -72,6 +72,42 @@ export class BackendClient {
 				},
 			},
 			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET,
+				handler: async (_event, endpointUuid: string) => {
+					const response = await this.request(`/api/endpoint-management/endpoints/${endpointUuid}`);
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_CREATE,
+				handler: async (_event, endpointData: any) => {
+					const response = await this.request('/api/endpoint-management/endpoints', {
+						method: 'POST',
+						body: JSON.stringify(endpointData)
+					});
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_UPDATE,
+				handler: async (_event, endpointUuid: string, updateData: any) => {
+					const response = await this.request(`/api/endpoint-management/endpoints/${endpointUuid}`, {
+						method: 'PUT',
+						body: JSON.stringify(updateData)
+					});
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_DELETE,
+				handler: async (_event, endpointUuid: string) => {
+					const response = await this.request(`/api/endpoint-management/endpoints/${endpointUuid}`, {
+						method: 'DELETE'
+					});
+					return this.processResponse(response);
+				},
+			},
+			{
 				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_RESET,
 				handler: async (_event) => {
 					const response = await this.request('/api/endpoint-management/reset', {method: 'POST'});
