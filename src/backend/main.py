@@ -1,9 +1,9 @@
 import argparse
 import os
 from fastapi import FastAPI
-from app.api.endpoint_management import router as endpoint_management_router
-from app.api.call_endpoint import router as call_endpoint_router
-from app.db.connection import create_db_and_tables, DATABASE_PATH, seed_data
+# from app.api.endpoint_management import router as endpoint_management_router
+# from app.api.call_endpoint import router as call_endpoint_router
+from app.db.connection import create_db_and_tables, DATABASE_PATH, add_seed_data
 import uvicorn
 
 
@@ -20,23 +20,23 @@ def create_app() -> FastAPI:
     async def root():
         return {"message": "Welcome to Minerva BE"}
 
-    # Include routers
-    app.include_router(
-        endpoint_management_router,
-        prefix="/api/endpoint-management",
-        tags=["endpoint-management"],
-    )
-    app.include_router(
-        call_endpoint_router,
-        prefix="/api/call-endpoint",
-        tags=["call-endpoint"],
-    )
+    # # Include routers
+    # app.include_router(
+    #     endpoint_management_router,
+    #     prefix="/api/endpoint-management",
+    #     tags=["endpoint-management"],
+    # )
+    # app.include_router(
+    #     call_endpoint_router,
+    #     prefix="/api/call-endpoint",
+    #     tags=["call-endpoint"],
+    # )
 
     # Initialize database
     if not DATABASE_PATH.exists():
         print("Initializing database...")
         create_db_and_tables()
-        seed_data()
+        add_seed_data()
         print("Database initialized.")
     else:
         print("Database already exists. Skipping initialization.")
