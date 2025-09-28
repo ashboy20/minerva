@@ -116,6 +116,11 @@ class Collection(SQLModel, table=True):
     )
 
 
+class GetCollectionResponse(BaseResponse):
+    """Response model for GET /collections"""
+    data: List[Collection] = Field(description="Collection data")
+
+
 # # TODO: revise this
 # # API Request/Response Models
 # class CreateEndpointRequest(BaseModel):
