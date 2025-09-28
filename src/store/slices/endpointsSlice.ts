@@ -290,12 +290,5 @@ export const {
 	resetEndpoints,
 } = endpointsSlice.actions;
 
-// Export async thunks
-export { 
-	fetchEndpoints, 
-	createEndpoint, 
-	updateEndpoint, 
-	deleteEndpoint 
-};
 
 export default endpointsSlice.reducer;
