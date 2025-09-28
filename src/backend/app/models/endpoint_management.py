@@ -85,10 +85,10 @@ class Item(BaseModel):
 class Folder(Item):
     """Folder containing other items"""
     type: str = Field(default="folder", description="Item type")
-    item: Optional[List[Union['Folder', 'EndpointItem']]] = Field(default=None, description="Child items in folder")
+    items: Optional[List[Union['Folder', 'EndpointItem']]] = Field(default=None, description="Child items in folder")
 
 
-class EndpointItem(Item):
+class Endpoint(Item):
     """Endpoint item withcases"""
     type: str = Field(default="endpoint", description="Item type")
     method: str = Field(description="HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)")

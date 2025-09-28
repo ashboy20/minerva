@@ -22,7 +22,7 @@ variables:
 items:
   - name: "GET"
     type: "folder"
-    item:
+    items:
       - name: "Get list of all users"
         type: "endpoint"
         method: "GET"
@@ -90,6 +90,15 @@ items:
                   value: "application/json"
               body: "[{\"id\": 1, \"title\": \"delectus aut autem\", \"completed\": false, \"userId\": 1}, {\"id\": 2, \"title\": \"quis ut nam facilis et officia qui\", \"completed\": false, \"userId\": 1}, {\"id\": 3, \"title\": \"fugiat veniam minus\", \"completed\": false, \"userId\": 1}, {\"id\": 4, \"title\": \"et porro tempora\", \"completed\": true, \"userId\": 1}, {\"id\": 5, \"title\": \"laboriosam mollitia et enim quasi adipisci quia provident illum\", \"completed\": false, \"userId\": 1}, {\"id\": 6, \"title\": \"qui ullam ratione quibusdam voluptatem quia omnis\", \"completed\": false, \"userId\": 1}, {\"id\": 7, \"title\": \"illo expedita consequatur quia in\", \"completed\": false, \"userId\": 1}, {\"id\": 8, \"title\": \"quo adipisci enim quam ut ab\", \"completed\": true, \"userId\": 1}, {\"id\": 9, \"title\": \"molestiae perspiciatis ipsa\", \"completed\": false, \"userId\": 1}, {\"id\": 10, \"title\": \"illo est ratione doloremque quia maiores aut\", \"completed\": true, \"userId\": 1}]"
       
+
+              status_code: 201
+              headers:
+                - name: "Content-Type"
+                  value: "application/json"
+              body: "[{\"id\": 1, \"title\": \"sunt aut facere\", \"body\": \"quia et suscipit\", \"userId\": 1}]"
+  - name: "POST"
+    type: "folder"
+    items:
       - name: "Post request"
         type: "endpoint"
         method: "POST"
@@ -105,12 +114,3 @@ items:
                 - name: "Content-Type"
                   value: "application/json"
             response:
-              status_code: 201
-              headers:
-                - name: "Content-Type"
-                  value: "application/json"
-              body: "[{\"id\": 1, \"title\": \"sunt aut facere\", \"body\": \"quia et suscipit\", \"userId\": 1}]"
-      
-      - name: "Get list of posts"
-        type: "endpoint"
-        method: "GET"
