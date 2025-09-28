@@ -2,6 +2,24 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { Endpoint, Case } from '@/types/backend/endpoint-management/endpoint';
 import { ipcChannels } from '@/config/ipc-channels';
 
+// Type for API responses
+interface ApiResponse<T = any> {
+	success: boolean;
+	data: T;
+}
+
+// Type for endpoint creation request
+interface CreateEndpointRequest {
+	operation_id: string;
+	name: string;
+	summary?: string;
+	description?: string;
+	method: string;
+	path: string;
+	base_url: string;
+	cases?: any[];
+}
+
 interface EndpointsState {
 	endpoints: Endpoint[];
 	activeEndpoint: Endpoint | null;
@@ -27,13 +45,99 @@ export const fetchEndpoints = createAsyncThunk(
 				ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET,
 			);
 
-			if (result && result.data && result.data.length > 0) {
-				return result.data as Endpoint[];
+			// Check if the API call was successful
+			if (result && result.success && result.data && result.data.endpoints) {
+				return result.data.endpoints as Endpoint[];
+			}   
+
+			// Handle API error response
+			if (result && !result.success) {
+				return rejectWithValue(result.data?.error || 'API call failed');
 			}
+
 			return [];
 		} catch (error) {
 			console.error('Failed to fetch endpoints:', error);
 			return rejectWithValue('Failed to fetch endpoints');
+		}
+	}
+);
+
+// Async thunk for creating an endpoint
+export const createEndpoint = createAsyncThunk(
+	'endpoints/createEndpoint',
+	async (endpointData: CreateEndpointRequest, { rejectWithValue }) => {
+		try {
+			const result = await window.electron.ipcRenderer.invoke(
+				ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_CREATE,
+				endpointData
+			);
+
+			if (result && result.success && result.data && result.data.endpoint) {
+				return result.data.endpoint as Endpoint;
+			}
+
+			if (result && !result.success) {
+				return rejectWithValue(result.data?.error || 'Failed to create endpoint');
+			}
+
+			return rejectWithValue('Unexpected response format');
+		} catch (error) {
+			console.error('Failed to create endpoint:', error);
+			return rejectWithValue('Failed to create endpoint');
+		}
+	}
+);
+
+// Async thunk for updating an endpoint
+export const updateEndpoint = createAsyncThunk(
+	'endpoints/updateEndpoint',
+	async ({ uuid, updateData }: { uuid: string; updateData: any }, { rejectWithValue }) => {
+		try {
+			const result = await window.electron.ipcRenderer.invoke(
+				ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_UPDATE,
+				uuid,
+				updateData
+			);
+
+			if (result && result.success && result.data && result.data.endpoint) {
+				return result.data.endpoint as Endpoint;
+			}
+
+			if (result && !result.success) {
+				return rejectWithValue(result.data?.error || 'Failed to update endpoint');
+			}
+
+			return rejectWithValue('Unexpected response format');
+		} catch (error) {
+			console.error('Failed to update endpoint:', error);
+			return rejectWithValue('Failed to update endpoint');
+		}
+	}
+);
+
+// Async thunk for deleting an endpoint
+export const deleteEndpoint = createAsyncThunk(
+	'endpoints/deleteEndpoint',
+	async (uuid: string, { rejectWithValue }) => {
+		try {
+			const result = await window.electron.ipcRenderer.invoke(
+				ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_DELETE,
+				uuid
+			);
+
+			if (result && result.success) {
+				return uuid; // Return the UUID of the deleted endpoint
+			}
+
+			if (result && !result.success) {
+				return rejectWithValue(result.data?.error || 'Failed to delete endpoint');
+			}
+
+			return rejectWithValue('Unexpected response format');
+		} catch (error) {
+			console.error('Failed to delete endpoint:', error);
+			return rejectWithValue('Failed to delete endpoint');
 		}
 	}
 );
@@ -96,6 +200,7 @@ export const endpointsSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
+			// Fetch endpoints
 			.addCase(fetchEndpoints.pending, (state) => {
 				state.loading = true;
 				state.error = null;
@@ -116,6 +221,62 @@ export const endpointsSlice = createSlice({
 			.addCase(fetchEndpoints.rejected, (state, action) => {
 				state.loading = false;
 				state.error = action.payload as string || 'Failed to fetch endpoints';
+			})
+			// Create endpoint
+			.addCase(createEndpoint.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(createEndpoint.fulfilled, (state, action) => {
+				state.loading = false;
+				state.endpoints.push(action.payload);
+				state.error = null;
+			})
+			.addCase(createEndpoint.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string || 'Failed to create endpoint';
+			})
+			// Update endpoint
+			.addCase(updateEndpoint.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(updateEndpoint.fulfilled, (state, action) => {
+				state.loading = false;
+				const index = state.endpoints.findIndex(ep => ep.uuid === action.payload.uuid);
+				if (index !== -1) {
+					state.endpoints[index] = action.payload;
+					// Update active endpoint if it's the one being updated
+					if (state.activeEndpoint?.uuid === action.payload.uuid) {
+						state.activeEndpoint = action.payload;
+					}
+				}
+				state.error = null;
+			})
+			.addCase(updateEndpoint.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string || 'Failed to update endpoint';
+			})
+			// Delete endpoint
+			.addCase(deleteEndpoint.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(deleteEndpoint.fulfilled, (state, action) => {
+				state.loading = false;
+				const deletedUuid = action.payload;
+				state.endpoints = state.endpoints.filter(ep => ep.uuid !== deletedUuid);
+				
+				// Clear active endpoint if it was deleted
+				if (state.activeEndpoint?.uuid === deletedUuid) {
+					state.activeEndpoint = state.endpoints.length > 0 ? state.endpoints[0] : null;
+					state.activeCase = state.activeEndpoint?.cases?.[0] || null;
+				}
+				state.error = null;
+			})
+			.addCase(deleteEndpoint.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string || 'Failed to delete endpoint';
 			});
 	},
 });
@@ -128,5 +289,6 @@ export const {
 	clearError,
 	resetEndpoints,
 } = endpointsSlice.actions;
+
 
 export default endpointsSlice.reducer;

@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, create_engine, Session
 from pathlib import Path
-from app.models.endpoint import Endpoint, Request, Response, Case
+from app.models.endpoint_management import Endpoint, Request, Response, Case
+import uuid
 
 # Database configuration
 DATABASE_DIR = Path(__file__).parent / "data"

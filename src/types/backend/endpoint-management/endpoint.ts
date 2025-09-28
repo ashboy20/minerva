@@ -33,6 +33,7 @@ export type Case = {
 
 export type Endpoint = {
     id: number;
+    uuid: string;
     operation_id: string;
     name: string;
     summary: string;

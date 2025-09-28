@@ -42,21 +42,17 @@ export class BackendClient {
 	}
 
 	/**
-	 * Helper function to process responses consistently
+	 * Helper function to process responses and return API response directly
 	 */
 	private async processResponse(response: Response) {
 		if (!response.ok) {
-			return {
-				error: `HTTP ${response.status}: ${response.statusText}`,
-				status: response.status,
-			};
+			// For errors, throw an exception that will be caught by the IPC handler
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 		}
 		
-		const data = await response.json();
-		return {
-			data: data,
-			status: response.status,
-		};
+		// Return the API response directly (our BaseResponse format)
+		const apiResponse = await response.json();
+		return apiResponse;
 	}
 
 	/**
@@ -68,6 +64,42 @@ export class BackendClient {
 				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET,
 				handler: async (_event, _search?: string) => {
 					const response = await this.request('/api/endpoint-management/endpoints');
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET,
+				handler: async (_event, endpointUuid: string) => {
+					const response = await this.request(`/api/endpoint-management/endpoints/${endpointUuid}`);
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_CREATE,
+				handler: async (_event, endpointData: any) => {
+					const response = await this.request('/api/endpoint-management/endpoints', {
+						method: 'POST',
+						body: JSON.stringify(endpointData)
+					});
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_UPDATE,
+				handler: async (_event, endpointUuid: string, updateData: any) => {
+					const response = await this.request(`/api/endpoint-management/endpoints/${endpointUuid}`, {
+						method: 'PUT',
+						body: JSON.stringify(updateData)
+					});
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_DELETE,
+				handler: async (_event, endpointUuid: string) => {
+					const response = await this.request(`/api/endpoint-management/endpoints/${endpointUuid}`, {
+						method: 'DELETE'
+					});
 					return this.processResponse(response);
 				},
 			},
@@ -117,7 +149,11 @@ export const registerBackendHandlers = () => {
 			} catch (error) {
 				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 				log.error(`❌ IPC ${endpointConfig.ipcChannel} error:`, error);
-				return { success: false, error: errorMessage };
+				// Return error in BaseResponse format for consistency
+				return { 
+					success: false, 
+					data: { error: errorMessage } 
+				};
 			}
 		});
 	}
