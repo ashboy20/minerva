@@ -23,13 +23,9 @@ const OPEN_URL = 'open-url';
 const OPEN_CHILD_WINDOW = 'open-child-window';
 
 // Backend API channels
-const BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET = 'backend:endpoint-management:endpoints:get';
-const BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET = 'backend:endpoint-management:endpoint:get';
-const BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_CREATE = 'backend:endpoint-management:endpoint:create';
-const BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_UPDATE = 'backend:endpoint-management:endpoint:update';
-const BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_DELETE = 'backend:endpoint-management:endpoint:delete';
-const BACKEND_ENDPOINT_MANAGEMENT_RESET = 'backend:endpoint-management:reset';
-const BACKEND_API_CALL_ENDPOINT = 'backend:api-call:endpoint';
+const BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET = 'backend:endpoint-management:collections:get';
+const BACKEND_API_CALL_ENDPOINT =
+	'backend:api-call:endpoint';
 
 export const ipcChannels = {
 	// main -> renderer
@@ -52,11 +48,6 @@ export const ipcChannels = {
 	OPEN_CHILD_WINDOW,
 
 	// Backend API channels
-	BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET,
-	BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET,
-	BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_CREATE,
-	BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_UPDATE,
-	BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_DELETE,
-	BACKEND_ENDPOINT_MANAGEMENT_RESET,
+	BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
 	BACKEND_API_CALL_ENDPOINT,
 } as const;

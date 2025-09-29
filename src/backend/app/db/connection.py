@@ -68,7 +68,7 @@ def reset_database():
     print("Recreated database and tables")
 
     # Seed with initial data
-    seed_data()
+    add_seed_data()
     print("Seeded database with initial data")
 
 
