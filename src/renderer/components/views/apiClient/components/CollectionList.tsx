@@ -22,6 +22,7 @@ import {
 	Trash2,
 	FolderPlus,
 	Plus,
+	Import,
 } from 'lucide-react';
 import {
 	Collection,
@@ -36,6 +37,13 @@ import {
 	ContextMenuSeparator,
 	ContextMenuTrigger,
 } from '@/renderer/components/ui/context-menu';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@/renderer/components/ui/tooltip';
+import { Button } from '@/renderer/components/ui/button';
 
 // Context menu action handlers
 const handleAddEndpoint = (
@@ -216,7 +224,7 @@ const CollectionContextMenu = ({
 	</ContextMenuContent>
 );
 
-interface EndpointListProps {
+interface CollectionListProps {
 	collections: Collection[];
 	loading: boolean;
 	error: string | null;
@@ -398,26 +406,62 @@ function CollectionItem({
 	);
 }
 
-export function EndpointList({
+export function CollectionList({
 	collections,
 	loading,
 	error,
 	onEndpointClick,
-}: EndpointListProps) {
+}: CollectionListProps) {
 	if (loading) {
 		return (
 			<div className="h-full border-r p-4">
-				<Card className="h-full border-none">
-					<CardHeader className="pb-3">
+			<Card className="h-full border-none">
+				<CardHeader className="pb-3">
+					<div className="flex items-center justify-between">
 						<CardTitle className="text-lg">
 							Collections
 						</CardTitle>
-					</CardHeader>
-					<CardContent className="flex h-32 items-center justify-center p-0">
-						<div className="text-sm text-muted-foreground">
-							Loading collections...
-						</div>
-					</CardContent>
+						<TooltipProvider>
+							<div className="flex items-center gap-1">
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-7 w-7"
+											onClick={() => console.log('Create new collection')}
+										>
+											<Plus className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>Create New Collection</p>
+									</TooltipContent>
+								</Tooltip>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-7 w-7"
+											onClick={() => console.log('Import collection')}
+										>
+											<Import className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>Import</p>
+									</TooltipContent>
+								</Tooltip>
+							</div>
+						</TooltipProvider>
+					</div>
+				</CardHeader>
+				<CardContent className="flex h-32 items-center justify-center p-0">
+					<div className="text-sm text-muted-foreground">
+						Loading collections...
+					</div>
+				</CardContent>
 				</Card>
 			</div>
 		);
@@ -426,17 +470,53 @@ export function EndpointList({
 	if (error) {
 		return (
 			<div className="h-full border-r p-4">
-				<Card className="h-full border-none">
-					<CardHeader className="pb-3">
+			<Card className="h-full border-none">
+				<CardHeader className="pb-3">
+					<div className="flex items-center justify-between">
 						<CardTitle className="text-lg">
 							Collections
 						</CardTitle>
-					</CardHeader>
-					<CardContent className="flex h-32 items-center justify-center p-0">
-						<div className="text-sm text-red-500">
-							Error: {error}
-						</div>
-					</CardContent>
+						<TooltipProvider>
+							<div className="flex items-center gap-1">
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-7 w-7"
+											onClick={() => console.log('Create new collection')}
+										>
+											<Plus className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>Create New Collection</p>
+									</TooltipContent>
+								</Tooltip>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-7 w-7"
+											onClick={() => console.log('Import collection')}
+										>
+											<Import className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>Import</p>
+									</TooltipContent>
+								</Tooltip>
+							</div>
+						</TooltipProvider>
+					</div>
+				</CardHeader>
+				<CardContent className="flex h-32 items-center justify-center p-0">
+					<div className="text-sm text-red-500">
+						Error: {error}
+					</div>
+				</CardContent>
 				</Card>
 			</div>
 		);
@@ -446,9 +526,45 @@ export function EndpointList({
 		<div className="h-full border-r p-4">
 			<Card className="h-full border-none">
 				<CardHeader className="pb-3">
-					<CardTitle className="text-lg">
-						Collections
-					</CardTitle>
+					<div className="flex items-center justify-between">
+						<CardTitle className="text-lg">
+							Collections
+						</CardTitle>
+						<TooltipProvider>
+							<div className="flex items-center gap-1">
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-7 w-7"
+											onClick={() => console.log('Create new collection')}
+										>
+											<Plus className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>Create New Collection</p>
+									</TooltipContent>
+								</Tooltip>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-7 w-7"
+											onClick={() => console.log('Import collection')}
+										>
+											<Import className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>
+										<p>Import</p>
+									</TooltipContent>
+								</Tooltip>
+							</div>
+						</TooltipProvider>
+					</div>
 				</CardHeader>
 				<CardContent className="p-0">
 					<div className="space-y-1">
