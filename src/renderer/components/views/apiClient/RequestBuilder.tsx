@@ -176,6 +176,7 @@ export function RequestBuilder() {
 	useEffect(() => {
 		console.log('RequestBuilder: fetching collections');
 		dispatch(getCollections());
+		console.log('Collections fetched:', collections);
 	}, [dispatch]);
 
 	// Debug collections state

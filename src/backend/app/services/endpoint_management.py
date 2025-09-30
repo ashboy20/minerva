@@ -169,6 +169,35 @@ class EndpointManagementService:
                 return True
             return False
 
+    async def find_items_by_parent_uuid(
+        self, parent_uuid: str
+    ) -> List[Union[Folder, Endpoint]]:
+        """Find all items (folders and endpoints) with the given parent UUID"""
+        with Session(engine) as session:
+            # Get folders with this parent_uuid
+            folders = session.exec(
+                select(Folder).where(Folder.parent_uuid == parent_uuid)
+            ).all()
+            # Get endpoints with this parent_uuid
+            endpoints = session.exec(
+                select(Endpoint).where(Endpoint.parent_uuid == parent_uuid)
+            ).all()
+
+            # Combine and return
+            items = []
+            for folder in folders:
+                items.append(folder)
+            for endpoint in endpoints:
+                items.append(endpoint)
+
+            return items
+
+    async def find_items_by_collection_uuid(
+        self, collection_uuid: str
+    ) -> List[Union[Folder, Endpoint]]:
+        """Find all items (folders and endpoints) in a specific collection"""
+        return await self.find_items_by_parent_uuid(collection_uuid)
+
 
 # Global service instance
 endpoint_service = EndpointManagementService()

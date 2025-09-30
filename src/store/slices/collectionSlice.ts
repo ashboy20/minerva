@@ -10,13 +10,18 @@ export interface Variable {
 }
 
 export interface Item {
+	uuid: string;
 	name: string;
-	type: string;
+	type: 'folder' | 'endpoint';
+	description?: string;
+	parent_uuid?: string;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface Folder extends Item {
 	type: 'folder';
-	items: Item[];
+	items?: Item[]; // This will be populated when needed
 }
 
 export interface EndpointRequest {
@@ -43,21 +48,18 @@ export interface Case {
 export interface Endpoint extends Item {
 	type: 'endpoint';
 	method: string;
-	path: string;
+	url: string;
 	cases: Case[];
 }
 
 export interface Collection {
 	uuid: string;
-	info: {
-		name: string;
-		description: string;
-		[key: string]: any;
-	};
+	name: string;
+	description?: string;
 	variables: Variable[];
-	items: (Folder | Endpoint)[];
-	createdAt: Date;
-	updatedAt: Date;
+	items?: (Folder | Endpoint)[]; // This will be populated when needed
+	created_at: string;
+	updated_at: string;
 }
 
 interface CollectionState {
@@ -79,10 +81,7 @@ export const getCollections = createAsyncThunk(
 			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
 		);
 
-		console.log('Collections API result:', result);
-
 		if (result && result.success && result.data) {
-			console.log('Collections data:', result.data);
 			return result.data as Collection[];
 		}
 
@@ -101,6 +100,10 @@ export const collectionSlice = createSlice({
 	reducers: {},
 	extraReducers: (builder) => {
 		builder
+			.addCase(getCollections.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
 			.addCase(
 				getCollections.fulfilled,
 				(state, action) => {

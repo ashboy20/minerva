@@ -6,6 +6,11 @@ prod:
 	@echo "🚀 Starting production server..."
 	cd src/backend && uv run python main.py --host 0.0.0.0 --port 30000
 
+remove-db:
+	@echo "🧹 Removing database..."
+	rm -rf src/backend/app/db/data/minerva.db
+
+
 # Build with PyInstaller (recommended)
 build:
 	@echo "🚀 Building with PyInstaller..."

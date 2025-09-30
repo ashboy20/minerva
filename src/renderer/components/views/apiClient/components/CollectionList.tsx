@@ -177,10 +177,7 @@ const CollectionContextMenu = ({
 	<ContextMenuContent>
 		<ContextMenuItem
 			onClick={() =>
-				handleAddEndpoint(
-					collection.info.name,
-					'collection',
-				)
+				handleAddEndpoint(collection.name, 'collection')
 			}
 		>
 			<Plus className="mr-2 h-4 w-4" />
@@ -188,7 +185,7 @@ const CollectionContextMenu = ({
 		</ContextMenuItem>
 		<ContextMenuItem
 			onClick={() =>
-				handleAddFolder(collection.info.name, 'collection')
+				handleAddFolder(collection.name, 'collection')
 			}
 		>
 			<FolderPlus className="mr-2 h-4 w-4" />
@@ -197,7 +194,7 @@ const CollectionContextMenu = ({
 		<ContextMenuSeparator />
 		<ContextMenuItem
 			onClick={() =>
-				handleRename(collection.info.name, 'collection')
+				handleRename(collection.name, 'collection')
 			}
 		>
 			<Edit className="mr-2 h-4 w-4" />
@@ -205,7 +202,7 @@ const CollectionContextMenu = ({
 		</ContextMenuItem>
 		<ContextMenuItem
 			onClick={() =>
-				handleDuplicate(collection.info.name, 'collection')
+				handleDuplicate(collection.name, 'collection')
 			}
 		>
 			<Copy className="mr-2 h-4 w-4" />
@@ -215,7 +212,7 @@ const CollectionContextMenu = ({
 		<ContextMenuItem
 			className="text-red-600 focus:text-red-600"
 			onClick={() =>
-				handleDelete(collection.info.name, 'collection')
+				handleDelete(collection.name, 'collection')
 			}
 		>
 			<Trash2 className="mr-2 h-4 w-4" />
@@ -244,8 +241,16 @@ function FolderItem({
 	const [isOpen, setIsOpen] = useState(false);
 	const paddingLeft = level * 16;
 
+	const handleOpenChange = (open: boolean) => {
+		setIsOpen(open);
+		// No need to load items - they're already provided by the backend
+	};
+
 	return (
-		<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+		<Collapsible
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+		>
 			<ContextMenu>
 				<ContextMenuTrigger asChild>
 					<CollapsibleTrigger asChild>
@@ -271,14 +276,25 @@ function FolderItem({
 			</ContextMenu>
 			<CollapsibleContent>
 				<div className="space-y-1">
-					{folder.items.map((item) => (
-						<TreeItem
-							key={item.name}
-							item={item}
-							level={level + 1}
-							onEndpointClick={onEndpointClick}
-						/>
-					))}
+					{folder.items && folder.items.length > 0 ? (
+						folder.items.map((item) => (
+							<TreeItem
+								key={item.uuid}
+								item={item}
+								level={level + 1}
+								onEndpointClick={onEndpointClick}
+							/>
+						))
+					) : (
+						<div
+							className="px-6 py-2 text-sm text-muted-foreground"
+							style={{
+								paddingLeft: `${paddingLeft + 24}px`,
+							}}
+						>
+							No items
+						</div>
+					)}
 				</div>
 			</CollapsibleContent>
 		</Collapsible>
@@ -311,13 +327,15 @@ function EndpointItem({
 							e.preventDefault();
 							onEndpointClick?.(endpoint);
 						}
-					}}
+					}}e
 				>
 					<FileText className="h-4 w-4 text-blue-600" />
 					<div className="flex flex-1 items-center justify-between">
-						<span className="text-sm font-medium">
-							{endpoint.name}
-						</span>
+						<div className="flex flex-col">
+							<span className="text-sm font-medium">
+								{endpoint.name ?? endpoint.url}
+							</span>
+						</div>
 						<Badge
 							variant="secondary"
 							className="ml-2 text-xs"
@@ -372,8 +390,16 @@ function CollectionItem({
 }) {
 	const [isOpen, setIsOpen] = useState(true);
 
+	const handleOpenChange = (open: boolean) => {
+		setIsOpen(open);
+		// No need to load items - they're already provided by the backend
+	};
+
 	return (
-		<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+		<Collapsible
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+		>
 			<ContextMenu>
 				<ContextMenuTrigger asChild>
 					<CollapsibleTrigger asChild>
@@ -384,7 +410,7 @@ function CollectionItem({
 								<ChevronRight className="h-4 w-4 text-muted-foreground" />
 							)}
 							<Folder className="h-4 w-4 text-purple-600" />
-							<span>{collection.info.name}</span>
+							<span>{collection.name}</span>
 						</div>
 					</CollapsibleTrigger>
 				</ContextMenuTrigger>
@@ -392,14 +418,21 @@ function CollectionItem({
 			</ContextMenu>
 			<CollapsibleContent>
 				<div className="space-y-1">
-					{collection.items.map((item) => (
-						<TreeItem
-							key={item.name}
-							item={item}
-							level={1}
-							onEndpointClick={onEndpointClick}
-						/>
-					))}
+					{collection.items &&
+					collection.items.length > 0 ? (
+						collection.items.map((item) => (
+							<TreeItem
+								key={item.uuid}
+								item={item}
+								level={1}
+								onEndpointClick={onEndpointClick}
+							/>
+						))
+					) : (
+						<div className="px-6 py-2 text-sm text-muted-foreground">
+							No items
+						</div>
+					)}
 				</div>
 			</CollapsibleContent>
 		</Collapsible>
@@ -415,53 +448,59 @@ export function CollectionList({
 	if (loading) {
 		return (
 			<div className="h-full border-r p-4">
-			<Card className="h-full border-none">
-				<CardHeader className="pb-3">
-					<div className="flex items-center justify-between">
-						<CardTitle className="text-lg">
-							Collections
-						</CardTitle>
-						<TooltipProvider>
-							<div className="flex items-center gap-1">
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-7 w-7"
-											onClick={() => console.log('Create new collection')}
-										>
-											<Plus className="h-4 w-4" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>
-										<p>Create New Collection</p>
-									</TooltipContent>
-								</Tooltip>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-7 w-7"
-											onClick={() => console.log('Import collection')}
-										>
-											<Import className="h-4 w-4" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>
-										<p>Import</p>
-									</TooltipContent>
-								</Tooltip>
-							</div>
-						</TooltipProvider>
-					</div>
-				</CardHeader>
-				<CardContent className="flex h-32 items-center justify-center p-0">
-					<div className="text-sm text-muted-foreground">
-						Loading collections...
-					</div>
-				</CardContent>
+				<Card className="h-full border-none">
+					<CardHeader className="pb-3">
+						<div className="flex items-center justify-between">
+							<CardTitle className="text-lg">
+								Collections
+							</CardTitle>
+							<TooltipProvider>
+								<div className="flex items-center gap-1">
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-7 w-7"
+												onClick={() =>
+													console.log(
+														'Create new collection',
+													)
+												}
+											>
+												<Plus className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>Create New Collection</p>
+										</TooltipContent>
+									</Tooltip>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-7 w-7"
+												onClick={() =>
+													console.log('Import collection')
+												}
+											>
+												<Import className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>Import</p>
+										</TooltipContent>
+									</Tooltip>
+								</div>
+							</TooltipProvider>
+						</div>
+					</CardHeader>
+					<CardContent className="flex h-32 items-center justify-center p-0">
+						<div className="text-sm text-muted-foreground">
+							Loading collections...
+						</div>
+					</CardContent>
 				</Card>
 			</div>
 		);
@@ -470,53 +509,59 @@ export function CollectionList({
 	if (error) {
 		return (
 			<div className="h-full border-r p-4">
-			<Card className="h-full border-none">
-				<CardHeader className="pb-3">
-					<div className="flex items-center justify-between">
-						<CardTitle className="text-lg">
-							Collections
-						</CardTitle>
-						<TooltipProvider>
-							<div className="flex items-center gap-1">
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-7 w-7"
-											onClick={() => console.log('Create new collection')}
-										>
-											<Plus className="h-4 w-4" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>
-										<p>Create New Collection</p>
-									</TooltipContent>
-								</Tooltip>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-7 w-7"
-											onClick={() => console.log('Import collection')}
-										>
-											<Import className="h-4 w-4" />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent>
-										<p>Import</p>
-									</TooltipContent>
-								</Tooltip>
-							</div>
-						</TooltipProvider>
-					</div>
-				</CardHeader>
-				<CardContent className="flex h-32 items-center justify-center p-0">
-					<div className="text-sm text-red-500">
-						Error: {error}
-					</div>
-				</CardContent>
+				<Card className="h-full border-none">
+					<CardHeader className="pb-3">
+						<div className="flex items-center justify-between">
+							<CardTitle className="text-lg">
+								Collections
+							</CardTitle>
+							<TooltipProvider>
+								<div className="flex items-center gap-1">
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-7 w-7"
+												onClick={() =>
+													console.log(
+														'Create new collection',
+													)
+												}
+											>
+												<Plus className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>Create New Collection</p>
+										</TooltipContent>
+									</Tooltip>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-7 w-7"
+												onClick={() =>
+													console.log('Import collection')
+												}
+											>
+												<Import className="h-4 w-4" />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>
+											<p>Import</p>
+										</TooltipContent>
+									</Tooltip>
+								</div>
+							</TooltipProvider>
+						</div>
+					</CardHeader>
+					<CardContent className="flex h-32 items-center justify-center p-0">
+						<div className="text-sm text-red-500">
+							Error: {error}
+						</div>
+					</CardContent>
 				</Card>
 			</div>
 		);
@@ -538,7 +583,9 @@ export function CollectionList({
 											variant="ghost"
 											size="icon"
 											className="h-7 w-7"
-											onClick={() => console.log('Create new collection')}
+											onClick={() =>
+												console.log('Create new collection')
+											}
 										>
 											<Plus className="h-4 w-4" />
 										</Button>
@@ -553,7 +600,9 @@ export function CollectionList({
 											variant="ghost"
 											size="icon"
 											className="h-7 w-7"
-											onClick={() => console.log('Import collection')}
+											onClick={() =>
+												console.log('Import collection')
+											}
 										>
 											<Import className="h-4 w-4" />
 										</Button>

@@ -178,16 +178,67 @@ class Endpoint(SQLModel, table=True):
 
 
 # endpoint request + response models
+class CollectionSchema(BaseModel):
+    """Collection schema for API responses"""
+
+    uuid: str = Field(description="Collection UUID")
+    name: str = Field(description="Collection name")
+    description: Optional[str] = Field(
+        default=None, description="Collection description"
+    )
+    variables: List[dict] = Field(description="Collection variables")
+    items: List[Union["FolderSchema", "EndpointSchema"]] = Field(
+        description="Collection items"
+    )
+    created_at: datetime = Field(description="Collection creation timestamp")
+    updated_at: datetime = Field(description="Collection update timestamp")
+
+
+class ItemSchema(BaseModel):
+    """Base item schema"""
+
+    uuid: str = Field(description="Item UUID")
+    name: str = Field(description="Item name")
+    description: Optional[str] = Field(default=None, description="Item description")
+    parent_uuid: Optional[str] = Field(default=None, description="Parent UUID")
+    created_at: datetime = Field(description="Item creation timestamp")
+    updated_at: datetime = Field(description="Item update timestamp")
+
+
+class FolderSchema(ItemSchema):
+    """Folder schema for API responses"""
+
+    type: str = Field(default="folder", description="Item type")
+
+    items: List[Union["FolderSchema", "EndpointSchema"]] = Field(
+        default=[], description="Folder items"
+    )
+
+
+class EndpointSchema(ItemSchema):
+    """Endpoint schema for API responses"""
+
+    type: str = Field(default="endpoint", description="Item type")
+
+    method: str = Field(description="HTTP method")
+    url: str = Field(description="Endpoint URL")
+    cases: List[dict] = Field(default=[], description="Endpoint cases")
+
+
 class GetCollectionResponse(BaseResponse):
     """Response model for GET /collections"""
 
-    data: List[Collection] = Field(description="Collection data")
+    data: List[CollectionSchema] = Field(description="Collection data")
 
 
 class PostCollectionRequest(BaseModel):
     """Request model for POST /collection"""
 
-    collection: Collection = Field(description="Collection data")
+    name: str = Field(description="Collection name")
+    description: Optional[str] = Field(
+        default=None, description="Collection description"
+    )
+    variables: List[dict] = Field(description="Collection variables")
 
 
 class PostCollectionResponse(BaseResponse):
