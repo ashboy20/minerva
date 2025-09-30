@@ -203,6 +203,39 @@ class EndpointManagementService:
         """Find all items (folders and endpoints) in a specific collection"""
         return await self.find_items_by_parent_uuid(collection_uuid)
 
+    async def rename_collection(self, uuid: str, new_name: str) -> bool:
+        """Rename a collection by UUID"""
+        with Session(engine) as session:
+            collection = session.get(Collection, uuid)
+            if not collection:
+                return False
+
+            collection.name = new_name
+            session.commit()
+            return True
+
+    async def rename_folder(self, uuid: str, new_name: str) -> bool:
+        """Rename a folder by UUID"""
+        with Session(engine) as session:
+            folder = session.get(Folder, uuid)
+            if not folder:
+                return False
+
+            folder.name = new_name
+            session.commit()
+            return True
+
+    async def rename_endpoint(self, uuid: str, new_name: str) -> bool:
+        """Rename an endpoint by UUID"""
+        with Session(engine) as session:
+            endpoint = session.get(Endpoint, uuid)
+            if not endpoint:
+                return False
+
+            endpoint.name = new_name
+            session.commit()
+            return True
+
 
 # Global service instance
 endpoint_service = EndpointManagementService()

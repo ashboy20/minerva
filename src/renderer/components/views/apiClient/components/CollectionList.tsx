@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
 	Card,
 	CardContent,
@@ -44,6 +44,63 @@ import {
 	TooltipTrigger,
 } from '@/renderer/components/ui/tooltip';
 import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
+import { useAppDispatch } from '@/store/hooks';
+import {
+	renameCollection,
+	renameFolder,
+	renameEndpoint,
+} from '@/store/slices/collectionSlice';
+
+// Inline editing component
+function InlineEditInput({
+	value,
+	onSave,
+	onCancel,
+	placeholder = 'Enter name...',
+}: {
+	value: string;
+	onSave: (newValue: string) => void;
+	onCancel: () => void;
+	placeholder?: string;
+}) {
+	const [inputValue, setInputValue] = useState(value);
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		if (inputRef.current) {
+			setTimeout(() => {
+				inputRef.current?.focus();
+			}, 100);
+		}
+	}, []);
+
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			onSave(inputValue.trim());
+		} else if (e.key === 'Escape') {
+			e.preventDefault();
+			onCancel();
+		}
+	};
+
+	const handleBlur = () => {
+		onSave(inputValue.trim());
+	};
+
+	return (
+		<Input
+			ref={inputRef}
+			value={inputValue}
+			onChange={(e) => setInputValue(e.target.value)}
+			onKeyDown={handleKeyDown}
+			onBlur={handleBlur}
+			placeholder={placeholder}
+			className="h-auto px-2 py-1 text-sm"
+		/>
+	);
+}
 
 // Context menu action handlers
 const handleAddEndpoint = (
@@ -64,13 +121,6 @@ const handleAddFolder = (
 		`Add Folder to ${containerType}:`,
 		containerName,
 	);
-};
-
-const handleRename = (
-	itemName: string,
-	itemType: 'folder' | 'endpoint' | 'collection',
-) => {
-	console.log(`Rename ${itemType}:`, itemName);
 };
 
 const handleDuplicate = (
@@ -94,8 +144,10 @@ const handleEdit = (itemName: string) => {
 // Context menu components
 const FolderContextMenu = ({
 	folder,
+	onRename,
 }: {
 	folder: CollectionFolder;
+	onRename: () => void;
 }) => (
 	<ContextMenuContent>
 		<ContextMenuItem
@@ -113,9 +165,7 @@ const FolderContextMenu = ({
 			Add Folder
 		</ContextMenuItem>
 		<ContextMenuSeparator />
-		<ContextMenuItem
-			onClick={() => handleRename(folder.name, 'folder')}
-		>
+		<ContextMenuItem onClick={onRename}>
 			<Edit className="mr-2 h-4 w-4" />
 			Rename
 		</ContextMenuItem>
@@ -138,8 +188,10 @@ const FolderContextMenu = ({
 
 const EndpointContextMenu = ({
 	endpoint,
+	onRename,
 }: {
 	endpoint: CollectionEndpoint;
+	onRename: () => void;
 }) => (
 	<ContextMenuContent>
 		<ContextMenuItem
@@ -147,6 +199,10 @@ const EndpointContextMenu = ({
 		>
 			<Edit className="mr-2 h-4 w-4" />
 			Edit
+		</ContextMenuItem>
+		<ContextMenuItem onClick={onRename}>
+			<Edit className="mr-2 h-4 w-4" />
+			Rename
 		</ContextMenuItem>
 		<ContextMenuItem
 			onClick={() =>
@@ -171,8 +227,10 @@ const EndpointContextMenu = ({
 
 const CollectionContextMenu = ({
 	collection,
+	onRename,
 }: {
 	collection: Collection;
+	onRename: () => void;
 }) => (
 	<ContextMenuContent>
 		<ContextMenuItem
@@ -192,11 +250,7 @@ const CollectionContextMenu = ({
 			Add Folder
 		</ContextMenuItem>
 		<ContextMenuSeparator />
-		<ContextMenuItem
-			onClick={() =>
-				handleRename(collection.name, 'collection')
-			}
-		>
+		<ContextMenuItem onClick={onRename}>
 			<Edit className="mr-2 h-4 w-4" />
 			Rename
 		</ContextMenuItem>
@@ -240,11 +294,30 @@ function FolderItem({
 	onEndpointClick?: (endpoint: CollectionEndpoint) => void;
 }) {
 	const [isOpen, setIsOpen] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
+	const dispatch = useAppDispatch();
 	const paddingLeft = level * 16;
 
 	const handleOpenChange = (open: boolean) => {
 		setIsOpen(open);
 		// No need to load items - they're already provided by the backend
+	};
+
+	const handleRename = () => {
+		setIsEditing(true);
+	};
+
+	const handleSaveRename = async (newName: string) => {
+		if (newName && newName !== folder.name) {
+			await dispatch(
+				renameFolder({ uuid: folder.uuid, newName }),
+			);
+		}
+		setIsEditing(false);
+	};
+
+	const handleCancelRename = () => {
+		setIsEditing(false);
 	};
 
 	return (
@@ -267,13 +340,25 @@ function FolderItem({
 								<ChevronRight className="h-4 w-4 text-muted-foreground" />
 							)}
 							<Folder className="h-4 w-4 text-amber-600" />
-							<span className="font-medium">
-								{folder.name}
-							</span>
+							{isEditing ? (
+								<InlineEditInput
+									value={folder.name}
+									onSave={handleSaveRename}
+									onCancel={handleCancelRename}
+									placeholder="Folder name"
+								/>
+							) : (
+								<span className="font-medium">
+									{folder.name}
+								</span>
+							)}
 						</div>
 					</CollapsibleTrigger>
 				</ContextMenuTrigger>
-				<FolderContextMenu folder={folder} />
+				<FolderContextMenu
+					folder={folder}
+					onRename={handleRename}
+				/>
 			</ContextMenu>
 			<CollapsibleContent>
 				<div className="space-y-1">
@@ -312,7 +397,26 @@ function EndpointItem({
 	level?: number;
 	onEndpointClick?: (endpoint: CollectionEndpoint) => void;
 }) {
+	const [isEditing, setIsEditing] = useState(false);
+	const dispatch = useAppDispatch();
 	const paddingLeft = level * 16;
+
+	const handleRename = () => {
+		setIsEditing(true);
+	};
+
+	const handleSaveRename = async (newName: string) => {
+		if (newName && newName !== endpoint.name) {
+			await dispatch(
+				renameEndpoint({ uuid: endpoint.uuid, newName }),
+			);
+		}
+		setIsEditing(false);
+	};
+
+	const handleCancelRename = () => {
+		setIsEditing(false);
+	};
 
 	return (
 		<ContextMenu>
@@ -320,34 +424,49 @@ function EndpointItem({
 				<div
 					className="mx-3 flex cursor-pointer items-center gap-2 rounded-sm px-3 py-2 hover:bg-muted"
 					style={{ paddingLeft: `${paddingLeft + 12}px` }}
-					onClick={() => onEndpointClick?.(endpoint)}
+					onClick={() =>
+						!isEditing && onEndpointClick?.(endpoint)
+					}
 					role="button"
 					tabIndex={0}
 					onKeyDown={(e) => {
 						if (e.key === 'Enter' || e.key === ' ') {
 							e.preventDefault();
-							onEndpointClick?.(endpoint);
+							!isEditing && onEndpointClick?.(endpoint);
 						}
 					}}
-					e
 				>
 					<FileText className="h-4 w-4 text-blue-600" />
 					<div className="flex flex-1 items-center justify-between">
 						<div className="flex flex-col">
-							<span className="text-sm font-medium">
-								{endpoint.name ?? endpoint.url}
-							</span>
+							{isEditing ? (
+								<InlineEditInput
+									value={endpoint.name ?? endpoint.url}
+									onSave={handleSaveRename}
+									onCancel={handleCancelRename}
+									placeholder="Endpoint name"
+								/>
+							) : (
+								<span className="text-sm font-medium">
+									{endpoint.name ?? endpoint.url}
+								</span>
+							)}
 						</div>
-						<Badge
-							variant="secondary"
-							className="ml-2 text-xs"
-						>
-							<MethodText method={endpoint.method} />
-						</Badge>
+						{!isEditing && (
+							<Badge
+								variant="secondary"
+								className="ml-2 text-xs"
+							>
+								<MethodText method={endpoint.method} />
+							</Badge>
+						)}
 					</div>
 				</div>
 			</ContextMenuTrigger>
-			<EndpointContextMenu endpoint={endpoint} />
+			<EndpointContextMenu
+				endpoint={endpoint}
+				onRename={handleRename}
+			/>
 		</ContextMenu>
 	);
 }
@@ -391,10 +510,32 @@ function CollectionItem({
 	onEndpointClick?: (endpoint: CollectionEndpoint) => void;
 }) {
 	const [isOpen, setIsOpen] = useState(true);
+	const [isEditing, setIsEditing] = useState(false);
+	const dispatch = useAppDispatch();
 
 	const handleOpenChange = (open: boolean) => {
 		setIsOpen(open);
 		// No need to load items - they're already provided by the backend
+	};
+
+	const handleRename = () => {
+		setIsEditing(true);
+	};
+
+	const handleSaveRename = async (newName: string) => {
+		if (newName && newName !== collection.name) {
+			await dispatch(
+				renameCollection({
+					uuid: collection.uuid,
+					newName,
+				}),
+			);
+		}
+		setIsEditing(false);
+	};
+
+	const handleCancelRename = () => {
+		setIsEditing(false);
 	};
 
 	return (
@@ -412,11 +553,23 @@ function CollectionItem({
 								<ChevronRight className="h-4 w-4 text-muted-foreground" />
 							)}
 							<Folder className="h-4 w-4 text-purple-600" />
-							<span>{collection.name}</span>
+							{isEditing ? (
+								<InlineEditInput
+									value={collection.name}
+									onSave={handleSaveRename}
+									onCancel={handleCancelRename}
+									placeholder="Collection name"
+								/>
+							) : (
+								<span>{collection.name}</span>
+							)}
 						</div>
 					</CollapsibleTrigger>
 				</ContextMenuTrigger>
-				<CollectionContextMenu collection={collection} />
+				<CollectionContextMenu
+					collection={collection}
+					onRename={handleRename}
+				/>
 			</ContextMenu>
 			<CollapsibleContent>
 				<div className="space-y-1">
