@@ -94,6 +94,26 @@ export const getCollections = createAsyncThunk(
 	},
 );
 
+export const createBlankCollection = createAsyncThunk(
+	'collection/createBlankCollection',
+	async (_, { rejectWithValue }) => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE,
+		);
+
+		if (result && result.success && result.data) {
+			return result.data as Collection;
+		}
+
+		console.error('Create blank collection API failed:', result);
+		return rejectWithValue(
+			result?.data?.error ||
+				result?.error ||
+				'Failed to create blank collection',
+		);
+	},
+);
+
 export const collectionSlice = createSlice({
 	name: 'collection',
 	initialState,

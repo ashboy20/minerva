@@ -16,12 +16,17 @@ class EndpointManagementService:
             collections = session.exec(statement).all()
             return collections
 
-    async def create_collection(self, collection: Collection) -> Collection:
-        """Create a new collection"""
+    async def create_blank_collection(self) -> bool:
+        """Create a blank collection"""
         with Session(engine) as session:
+            collection = Collection(
+                uuid=str(uuid_lib.uuid4()),
+                name="New Collection",
+                description="",
+                variables=[],
+            )
             session.add(collection)
             session.commit()
-            session.refresh(collection)
             return collection
 
     async def remove_collection(self, uuid: str) -> bool:

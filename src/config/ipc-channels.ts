@@ -26,8 +26,8 @@ const OPEN_CHILD_WINDOW = 'open-child-window';
 // Backend API channels
 const BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET =
 	'backend:endpoint-management:collections:get';
-const BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_ITEMS_GET =
-	'backend:endpoint-management:collection-items:get';
+const BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE =
+	'backend:endpoint-management:collection:create';
 const BACKEND_API_CALL_ENDPOINT =
 	'backend:api-call:endpoint';
 
@@ -53,6 +53,6 @@ export const ipcChannels = {
 
 	// Backend API channels
 	BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
-	BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_ITEMS_GET,
+	BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE,
 	BACKEND_API_CALL_ENDPOINT,
 } as const;

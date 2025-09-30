@@ -24,7 +24,7 @@ import {
 	updateActiveEndpoint,
 	updateActiveCase,
 } from '@/store/slices/endpointsSlice';
-import { getCollections } from '@/store/slices/collectionSlice';
+import { createBlankCollection, getCollections } from '@/store/slices/collectionSlice';
 
 interface ApiResponse {
 	status: number;
@@ -179,14 +179,12 @@ export function RequestBuilder() {
 		console.log('Collections fetched:', collections);
 	}, [dispatch]);
 
-	// Debug collections state
-	useEffect(() => {
-		console.log('RequestBuilder collections state:', {
-			collections,
-			collectionsLoading,
-			collectionsError,
-		});
-	}, [collections, collectionsLoading, collectionsError]);
+
+	// Handler functions for collection list
+	const handleCreateCollection = () => {
+		dispatch(createBlankCollection());
+		dispatch(getCollections());
+	};
 
 	// Handler functions for RequestSection
 	const handleMethodChange = (method: string) => {
@@ -236,6 +234,7 @@ export function RequestBuilder() {
 					collections={collections}
 					loading={collectionsLoading}
 					error={collectionsError}
+					onCreateCollection={handleCreateCollection}
 					// onEndpointClick={handleEndpointClick}
 				/>
 			</ResizablePanel>

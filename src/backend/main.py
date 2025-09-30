@@ -1,8 +1,7 @@
 import argparse
 import os
 from fastapi import FastAPI
-from app.api.endpoint_management import router as endpoint_management_router
-# from app.api.call_endpoint import router as call_endpoint_router
+from app.routes.endpoint_management import router as endpoint_management_router
 from app.db.connection import create_db_and_tables, DATABASE_PATH, add_seed_data
 import uvicorn
 

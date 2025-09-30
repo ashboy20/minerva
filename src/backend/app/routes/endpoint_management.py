@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException
-from typing import List
 
 from app.models.endpoint_management import (
     CollectionSchema,
@@ -93,12 +92,16 @@ async def get_collections():
 
 
 @router.post("/collection/create", response_model=PostCollectionResponse)
-async def create_collection():
-    """Create a new collection"""
+async def create_blank_collection():
+    """Create a new blank collection"""
     try:
-        await endpoint_service.create_blank_collection()
+        collection = await endpoint_service.create_blank_collection()
         return PostCollectionResponse(
             success=True,
+            data={
+                "message": "Collection created successfully",
+                "collection": collection,
+            },
         )
     except Exception as e:
         raise HTTPException(

@@ -225,6 +225,7 @@ interface CollectionListProps {
 	collections: Collection[];
 	loading: boolean;
 	error: string | null;
+	onCreateCollection: () => void;
 	onEndpointClick?: (endpoint: CollectionEndpoint) => void;
 }
 
@@ -444,6 +445,7 @@ export function CollectionList({
 	loading,
 	error,
 	onEndpointClick,
+	onCreateCollection,
 }: CollectionListProps) {
 	if (loading) {
 		return (
@@ -462,11 +464,7 @@ export function CollectionList({
 												variant="ghost"
 												size="icon"
 												className="h-7 w-7"
-												onClick={() =>
-													console.log(
-														'Create new collection',
-													)
-												}
+												onClick={onCreateCollection}
 											>
 												<Plus className="h-4 w-4" />
 											</Button>
@@ -523,11 +521,7 @@ export function CollectionList({
 												variant="ghost"
 												size="icon"
 												className="h-7 w-7"
-												onClick={() =>
-													console.log(
-														'Create new collection',
-													)
-												}
+												onClick={onCreateCollection}
 											>
 												<Plus className="h-4 w-4" />
 											</Button>
@@ -583,9 +577,7 @@ export function CollectionList({
 											variant="ghost"
 											size="icon"
 											className="h-7 w-7"
-											onClick={() =>
-												console.log('Create new collection')
-											}
+											onClick={onCreateCollection}
 										>
 											<Plus className="h-4 w-4" />
 										</Button>

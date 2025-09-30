@@ -47,8 +47,8 @@ a = Analysis(
         'pydantic.fields',
         # Our app modules - explicit imports
         'app',
-        'app.api',
-        'app.api.endpoint_management',
+        'app.routes',
+        'app.routes.endpoint_management',
         'app.models',
         'app.models.endpoint',
         'app.services',

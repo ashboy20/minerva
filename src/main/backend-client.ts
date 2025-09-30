@@ -10,14 +10,18 @@ import { ipcChannels } from '../config/ipc-channels';
 
 interface EndpointConfig {
 	ipcChannel: string;
-	handler: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => Promise<any>;
+	handler: (
+		event: Electron.IpcMainInvokeEvent,
+		...args: any[]
+	) => Promise<any>;
 }
 
 export class BackendClient {
 	private baseUrl: string;
 
 	constructor(baseUrl?: string) {
-		this.baseUrl = baseUrl || getBackendService().getServerUrl();
+		this.baseUrl =
+			baseUrl || getBackendService().getServerUrl();
 	}
 
 	/**
@@ -30,7 +34,9 @@ export class BackendClient {
 			'Content-Type': 'application/json',
 		};
 
-		log.info(`API Request: ${options.method || 'GET'} ${url}`);
+		log.info(
+			`API Request: ${options.method || 'GET'} ${url}`,
+		);
 
 		return fetch(url, {
 			...options,
@@ -47,9 +53,11 @@ export class BackendClient {
 	private async processResponse(response: Response) {
 		if (!response.ok) {
 			// For errors, throw an exception that will be caught by the IPC handler
-			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			throw new Error(
+				`HTTP ${response.status}: ${response.statusText}`,
+			);
 		}
-		
+
 		// Return the API response directly (our BaseResponse format)
 		const apiResponse = await response.json();
 		return apiResponse;
@@ -61,22 +69,41 @@ export class BackendClient {
 	getEndpoints(): EndpointConfig[] {
 		return [
 			{
-				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
+				ipcChannel:
+					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
 				handler: async (_event, _search?: string) => {
-					const response = await this.request('/api/endpoint-management/collections');
+					const response = await this.request(
+						'/api/endpoint-management/collections',
+					);
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel:
+					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE,
+				handler: async (_event) => {
+					const response = await this.request(
+						'/api/endpoint-management/collection/create',
+						{
+							method: 'POST',
+						},
+					);
 					return this.processResponse(response);
 				},
 			},
 			{
 				ipcChannel: ipcChannels.BACKEND_API_CALL_ENDPOINT,
 				handler: async (_event, requestData: any) => {
-					const response = await this.request('/api/call-endpoint/call', {
-						method: 'POST',
-						body: JSON.stringify(requestData)
-					});
+					const response = await this.request(
+						'/api/call-endpoint/call',
+						{
+							method: 'POST',
+							body: JSON.stringify(requestData),
+						},
+					);
 					return this.processResponse(response);
 				},
-			}
+			},
 		];
 	}
 }
@@ -96,23 +123,41 @@ export function getBackendClient() {
  * Handles IPC communication between renderer and FastAPI backend
  */
 export const registerBackendHandlers = () => {
-	log.info('🔌 Registering FastAPI Backend IPC handlers...');
+	log.info(
+		'🔌 Registering FastAPI Backend IPC handlers...',
+	);
 	const backendClient = getBackendClient();
 	for (const endpointConfig of backendClient.getEndpoints()) {
-		ipcMain.handle(endpointConfig.ipcChannel, async (event, ...args) => {
-			try {
-				log.info(`🚀 IPC: Calling ${endpointConfig.ipcChannel}...`);
-				return await endpointConfig.handler(event, ...args);
-			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-				log.error(`❌ IPC ${endpointConfig.ipcChannel} error:`, error);
-				// Return error in BaseResponse format for consistency
-				return { 
-					success: false, 
-					data: { error: errorMessage } 
-				};
-			}
-		});
+		ipcMain.handle(
+			endpointConfig.ipcChannel,
+			async (event, ...args) => {
+				try {
+					log.info(
+						`🚀 IPC: Calling ${endpointConfig.ipcChannel}...`,
+					);
+					return await endpointConfig.handler(
+						event,
+						...args,
+					);
+				} catch (error) {
+					const errorMessage =
+						error instanceof Error
+							? error.message
+							: 'Unknown error';
+					log.error(
+						`❌ IPC ${endpointConfig.ipcChannel} error:`,
+						error,
+					);
+					// Return error in BaseResponse format for consistency
+					return {
+						success: false,
+						data: { error: errorMessage },
+					};
+				}
+			},
+		);
 	}
-	log.info('✅ FastAPI Backend IPC handlers registered successfully');
+	log.info(
+		'✅ FastAPI Backend IPC handlers registered successfully',
+	);
 };

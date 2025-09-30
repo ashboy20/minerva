@@ -76,7 +76,7 @@ def build_executable():
             "--hidden-import=uvicorn.server",
             "--hidden-import=uvicorn.config",
             "--hidden-import=sqlalchemy.dialects.sqlite",
-            "--hidden-import=app.api.endpoint_management",
+            "--hidden-import=app.routes.endpoint_management",
             "--hidden-import=app.models.endpoint",
             "--hidden-import=app.services.endpoint_management",
             "--hidden-import=app.db.connection",

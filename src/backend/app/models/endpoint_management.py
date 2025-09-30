@@ -231,15 +231,7 @@ class GetCollectionResponse(BaseResponse):
     data: List[CollectionSchema] = Field(description="Collection data")
 
 
-class PostCollectionRequest(BaseModel):
-    """Request model for POST /collection"""
-
-    name: str = Field(description="Collection name")
-    description: Optional[str] = Field(
-        default=None, description="Collection description"
-    )
-    variables: List[dict] = Field(description="Collection variables")
-
-
 class PostCollectionResponse(BaseResponse):
     """Response model for POST /collection"""
+
+    data: dict = Field(description="The response data payload")
