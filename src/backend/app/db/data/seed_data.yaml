@@ -1,5 +1,4 @@
 info:
-  "uuid": ""
   "name": "Testing_Collection"
   "description": "Work is organized in workspace: JSONPlaceholder, one collection: Testing_Collection, 5 folders for five different kind of requests: GET, POST, PUT, PATCH and DELETE. One environment is part of this collection: Placeholder_Environment. All variables all separated in collection, environment and global variables. Dynamic variables, random numbers, generated from function defined in Pre-request Script in Testing_Collection. Two tests are same for all tests in all request: status code and response time. All other tests are specifically made for specific cases."
 
@@ -27,7 +26,6 @@ items:
         type: "endpoint"
         method: "GET"
         description: "Get list of all users"
-        # make schema here
         cases:
           - name: "Success"
             request:

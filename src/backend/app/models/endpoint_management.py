@@ -1,28 +1,18 @@
-from typing import Dict, List, Optional, Union, Any
+from typing import List, Optional, Union
 from sqlmodel import Field, SQLModel, Column, JSON
 from pydantic import BaseModel
 from datetime import datetime
-import json
-import uuid
 
 from .base import BaseResponse
 
 
-# Collection-level models
-class CollectionInfo(BaseModel):
-    """Collection metadata information"""
-    collection_id: str = Field(description="Collection ID")
-    name: str = Field(description="Collection name")
-    description: str = Field(description="Collection description")
-
-
-class CollectionVariable(BaseModel):
-    """Collection variable definition"""
+# child components
+class Varialble(BaseModel):
+    """Variable definition"""
     key: str = Field(description="Variable key")
     value: str = Field(description="Variable value")
 
 
-# Request/Response component models
 class Header(BaseModel):
     """HTTP header definition"""
     name: str = Field(description="Header name")
@@ -43,7 +33,7 @@ class QueryParam(BaseModel):
 
 class Auth(BaseModel):
     """Authentication configuration"""
-    type: str = Field(description="Authentication type (bearer, basic, etc.)")
+    auth_type: str = Field(description="Authentication type (bearer, basic, etc.)", alias="type")
     token: Optional[str] = Field(default=None, description="Authentication token")
     username: Optional[str] = Field(default=None, description="Username for basic auth")
     password: Optional[str] = Field(default=None, description="Password for basic auth")
@@ -74,151 +64,85 @@ class Case(BaseModel):
     response: Response = Field(description="Expected response")
 
 
-# Hierarchical item models
+# Database models - Normalized structure
 class Item(BaseModel):
-    """Base item that can be either a folder or an endpoint"""
-    name: str = Field(description="Item name")
-    type: str = Field(description="Item type: 'folder' or 'endpoint'")
-    description: Optional[str] = Field(default=None, description="Item description")
+    """Item definition"""
+    uuid: str = Field(description="Item UUID")
 
 
-class Folder(Item):
-    """Folder containing other items"""
-    type: str = Field(default="folder", description="Item type")
-    items: Optional[List[Union['Folder', 'EndpointItem']]] = Field(default=None, description="Child items in folder")
-
-
-class Endpoint(Item):
-    """Endpoint item withcases"""
-    type: str = Field(default="endpoint", description="Item type")
-    method: str = Field(description="HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)")
-    cases: List[Case] = Field(description="Cases for this endpoint")
-
-
-# Database models
 class Collection(SQLModel, table=True):
     """Collection containing endpoints and folders - primary storage model"""
-    id: int = Field(default=None, primary_key=True, index=True)
+    __tablename__ = "collections"
+
     uuid: str = Field(
         unique=True,
+        index=True,
+        primary_key=True,
         description="Unique UUID for collection identification",
     )
-    info: dict = Field(description="Collection metadata", sa_column=Column(JSON))
-    variables: List[dict] = Field(description="Collection variables", sa_column=Column(JSON))
-    items: List[dict] = Field(description="Collection items (folders and endpoints)", sa_column=Column(JSON))
+    name: str = Field(description="Collection name", required=True)
+    description: str = Field(description="Collection description", nullable=True)
+    variables: List[dict] = Field(description="Collection variables", sa_column=Column(JSON), default=[])
+    items: List[dict] = Field(description="Collection items (folders and endpoints)", sa_column=Column(JSON), default=[])
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=datetime.now(datetime.UTC),
         description="Timestamp when collection was created"
     )
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=datetime.now(datetime.UTC),
         description="Timestamp when collection was last updated"
     )
 
 
+class Folder(SQLModel, table=True):
+    """Normalized folder table for efficient querying"""
+    __tablename__ = "folders"
+    
+    uuid: str = Field(unique=True, description="Unique UUID for folder identification", primary_key=True, index=True)
+    name: str = Field(description="Folder name", required=True)
+    description: Optional[str] = Field(default=None, description="Folder description", nullable=True)
+    parent_uuid: Optional[str] = Field(default=None, description="Parent UUID (collection or folder)", required=True)
+    items: List[dict] = Field(description="Folder items (endpoints)", sa_column=Column(JSON), default=[])
+    created_at: datetime = Field(
+        default_factory=datetime.now(datetime.UTC),
+        description="Timestamp when folder was created"
+    )
+    updated_at: datetime = Field(
+        default_factory=datetime.now(datetime.UTC),
+        description="Timestamp when folder was last updated"
+    )
+
+
+class Endpoint(SQLModel, table=True):
+    """Normalized endpoint table for efficient querying"""
+    __tablename__ = "endpoints"
+    
+    uuid: str = Field(unique=True, description="Unique UUID for endpoint identification", primary_key=True, index=True)
+    name: str = Field(description="Endpoint name", nullable=True)
+    description: Optional[str] = Field(default=None, description="Endpoint description", nullable=True)
+    method: str = Field(description="HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)", required=True)
+    url: str = Field(description="Endpoint URL", required=True)
+    parent_uuid: Optional[str] = Field(default=None, description="Parent UUID (collection or folder)", required=True)
+    cases: List[dict] = Field(description="Endpoint cases", sa_column=Column(JSON), default=[])
+    created_at: datetime = Field(
+        default_factory=datetime.now(datetime.UTC),
+        description="Timestamp when endpoint was created"
+    )
+    updated_at: datetime = Field(
+        default_factory=datetime.now(datetime.UTC),
+        description="Timestamp when endpoint was last updated"
+    )
+
+
+# endpoint request + response models
 class GetCollectionResponse(BaseResponse):
     """Response model for GET /collections"""
     data: List[Collection] = Field(description="Collection data")
 
 
-# # TODO: revise this
-# # API Request/Response Models
-# class CreateEndpointRequest(BaseModel):
-#     operation_id: str
-#     name: str
-#     summary: str = None
-#     description: str = None
-#     method: str
-#     path: str
-#     base_url: str
-#     cases: List[dict] = []
+class PostCollectionRequest(BaseModel):
+    """Request model for POST /collection"""
+    collection: Collection = Field(description="Collection data")
 
-
-# class UpdateEndpointRequest(BaseModel):
-#     operation_id: str = None
-#     name: str = None
-#     summary: str = None
-#     description: str = None
-#     method: str = None
-#     path: str = None
-#     base_url: str = None
-#     cases: List[dict] = None
-
-
-# # Response Models - Each endpoint has its own response model inheriting from BaseResponse
-# class GetEndpointsResponse(BaseResponse):
-#     """Response model for GET /endpoints"""
-
-#     class GetEndpointsResponseData(BaseModel):
-#         """Data structure for GET /endpoints response"""
-
-#         endpoints: List[Endpoint] = Field(description="List of all endpoints")
-
-#     data: GetEndpointsResponseData = Field(
-#         description="Response data containing endpoints list"
-#     )
-
-
-# class GetEndpointResponse(BaseResponse):
-#     """Response model for GET /endpoints/{uuid}"""
-
-#     class GetEndpointResponseData(BaseModel):
-#         """Data structure for GET /endpoints/{uuid} response"""
-
-#         endpoint: Endpoint = Field(description="The requested endpoint")
-
-#     data: GetEndpointResponseData = Field(
-#         description="Response data containing single endpoint"
-#     )
-
-
-# class CreateEndpointResponse(BaseResponse):
-#     """Response model for POST /endpoints"""
-
-#     class CreateEndpointResponseData(BaseModel):
-#         """Data structure for POST /endpoints response"""
-
-#         endpoint: Endpoint = Field(description="The created endpoint")
-
-#     data: CreateEndpointResponseData = Field(
-#         description="Response data containing created endpoint"
-#     )
-
-
-# class UpdateEndpointResponse(BaseResponse):
-#     """Response model for PUT /endpoints/{uuid}"""
-
-#     class UpdateEndpointResponseData(BaseModel):
-#         """Data structure for PUT /endpoints/{uuid} response"""
-
-#         endpoint: Endpoint = Field(description="The updated endpoint")
-
-#     data: UpdateEndpointResponseData = Field(
-#         description="Response data containing updated endpoint"
-#     )
-
-
-# class DeleteEndpointResponse(BaseResponse):
-#     """Response model for DELETE /endpoints/{uuid}"""
-
-#     class DeleteEndpointResponseData(BaseModel):
-#         """Data structure for DELETE /endpoints/{uuid} response"""
-
-#         message: str = Field(description="Deletion confirmation message")
-
-#     data: DeleteEndpointResponseData = Field(
-#         description="Response data containing deletion confirmation"
-#     )
-
-
-# class ResetDatabaseResponse(BaseResponse):
-#     """Response model for POST /reset"""
-
-#     class ResetDatabaseResponseData(BaseModel):
-#         """Data structure for POST /reset response"""
-
-#         message: str = Field(description="Reset confirmation message")
-
-#     data: ResetDatabaseResponseData = Field(
-#         description="Response data containing reset confirmation"
-#     )
+class PostCollectionResponse(BaseResponse):
+    """Response model for POST /collection"""
