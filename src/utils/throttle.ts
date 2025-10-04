@@ -30,7 +30,8 @@ export const throttle = (
 
 	const throttled = function (...props: any[]) {
 		const currentTime = now();
-		if (!previous && opts.leading === false) previous = currentTime;
+		if (!previous && opts.leading === false)
+			previous = currentTime;
 		const remaining = wait - (currentTime - previous);
 		// @ts-ignore
 		// eslint-disable-next-line @typescript-eslint/no-this-alias

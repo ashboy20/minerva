@@ -81,12 +81,17 @@ export function InputSlider({
 			<div className="flex flex-row items-start justify-between">
 				<div className="space-y-0.5">
 					{label && (
-						<label htmlFor={uuid} className="font-medium text-base">
+						<label
+							htmlFor={uuid}
+							className="text-base font-medium"
+						>
 							{label}
 						</label>
 					)}
 					{description && (
-						<p className="text-muted-foreground">{description}</p>
+						<p className="text-muted-foreground">
+							{description}
+						</p>
 					)}
 				</div>
 				{value && (
@@ -101,7 +106,7 @@ export function InputSlider({
 									}
 								}}
 								type="number"
-								className="w-auto mx-2"
+								className="mx-2 w-auto"
 								min={min}
 								max={max}
 								step={step}
@@ -109,10 +114,20 @@ export function InputSlider({
 							/>
 						) : (
 							<div className="flex flex-col items-end">
-								<p className={cn('text-muted-foreground flex')}>{value}</p>
-								{typeof defaultValue === 'number' && value !== defaultValue && (
-									<ClearButton onClick={handleClear} className="static" />
-								)}
+								<p
+									className={cn(
+										'flex text-muted-foreground',
+									)}
+								>
+									{value}
+								</p>
+								{typeof defaultValue === 'number' &&
+									value !== defaultValue && (
+										<ClearButton
+											onClick={handleClear}
+											className="static"
+										/>
+									)}
 							</div>
 						)}
 					</>
@@ -127,7 +142,11 @@ export function InputSlider({
 				step={step}
 				{...props}
 			/>
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 
 			{content && <div>{content}</div>}
 		</div>

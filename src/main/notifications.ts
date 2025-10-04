@@ -5,7 +5,9 @@ import { NotificationOptions } from '../types/notification';
 import { getSetting } from './store-actions';
 import windows from './windows';
 
-export const mainNotification = (options: NotificationOptions) => {
+export const mainNotification = (
+	options: NotificationOptions,
+) => {
 	Logger.info(
 		`Sending notification to main process: ${options.title} - ${options.body}`,
 	);
@@ -18,14 +20,21 @@ export const mainNotification = (options: NotificationOptions) => {
 	new Notification(options).show();
 };
 
-export const rendererNotification = (options: NotificationOptions) => {
+export const rendererNotification = (
+	options: NotificationOptions,
+) => {
 	Logger.info(
 		`Sending notification to renderer process: ${options.title} - ${options.body}`,
 	);
-	windows.mainWindow?.webContents.send(ipcChannels.APP_NOTIFICATION, options);
+	windows.mainWindow?.webContents.send(
+		ipcChannels.APP_NOTIFICATION,
+		options,
+	);
 };
 
-export const notification = (options: NotificationOptions) => {
+export const notification = (
+	options: NotificationOptions,
+) => {
 	// Use either the system notification or the renderer notification
 	if (getSetting('allowNotifications')) {
 		const type = getSetting('notificationType');
@@ -38,6 +47,8 @@ export const notification = (options: NotificationOptions) => {
 			rendererNotification(options);
 		}
 	} else {
-		Logger.info(`Notification not sent: ${options.title} - ${options.body}`);
+		Logger.info(
+			`Notification not sent: ${options.title} - ${options.body}`,
+		);
 	}
 };

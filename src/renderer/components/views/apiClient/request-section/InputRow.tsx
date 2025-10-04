@@ -37,19 +37,20 @@ export function InputRow({
 	const parseExtensions = () => {
 		if (isHeaderTable) {
 			return [
-				autocompletion({ override: [headerKeyCompletions] }),
-			]
+				autocompletion({
+					override: [headerKeyCompletions],
+				}),
+			];
 		}
-		return [
-			...variableExtensions
-		]
-	}
+		return [...variableExtensions];
+	};
 
 	const keyEditorRef = useRef<HTMLDivElement>(null);
 	const valueEditorRef = useRef<HTMLDivElement>(null);
-	
+
 	// Local state to track editor values
-	const [localKeyValue, setLocalKeyValue] = useState(keyValue);
+	const [localKeyValue, setLocalKeyValue] =
+		useState(keyValue);
 	const [localValue, setLocalValue] = useState(value);
 
 	// Update local state when props change
@@ -69,24 +70,22 @@ export function InputRow({
 		onChange: (newValue: string) => {
 			setLocalKeyValue(newValue);
 			onChange(id, 'keyValue', newValue);
-		}
-	}
+		},
+	};
 
 	const valueEditorOptions = {
 		doc: localValue,
 		placeholder: 'Value',
 		editable: !disabled,
-		extensions: [
-			...variableExtensions,
-		],
+		extensions: [...variableExtensions],
 		onChange: (newValue: string) => {
 			setLocalValue(newValue);
 			onChange(id, 'value', newValue);
-		}
-	}
+		},
+	};
 
-	useSingleLineEditor(keyEditorRef, keyEditorOptions)
-	useSingleLineEditor(valueEditorRef, valueEditorOptions)
+	useSingleLineEditor(keyEditorRef, keyEditorOptions);
+	useSingleLineEditor(valueEditorRef, valueEditorOptions);
 
 	const handleEnable = (checked: boolean) => {
 		if (!disabled) {
@@ -101,21 +100,23 @@ export function InputRow({
 	};
 
 	return (
-		<div className={`flex items-center flex-row gap-2 group ${disabled ? 'opacity-60' : ''}`}>
+		<div
+			className={`group flex flex-row items-center gap-2 ${disabled ? 'opacity-60' : ''}`}
+		>
 			{isPathParamTable ? (
-				<div className="w-9 h-5" />
+				<div className="h-5 w-9" />
 			) : (
-				<Checkbox 
-					checked={enabled} 
-					onCheckedChange={handleEnable} 
+				<Checkbox
+					checked={enabled}
+					onCheckedChange={handleEnable}
 					disabled={disabled}
 				/>
 			)}
-			<div 
+			<div
 				ref={keyEditorRef}
 				className={`h-9 flex-1 rounded-md border border-input px-3 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring ${disabled ? 'cursor-not-allowed bg-muted' : ''}`}
 			/>
-			<div 
+			<div
 				ref={valueEditorRef}
 				className={`h-9 flex-1 rounded-md border border-input px-3 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring ${disabled ? 'cursor-not-allowed bg-muted' : ''}`}
 			/>

@@ -25,26 +25,42 @@ export function InputSwitch({
 	const uuid = useMemo(simpleUUID, []);
 
 	return (
-		<div className={cn('flex flex-col gap-4', card && 'rounded-lg border p-4')}>
+		<div
+			className={cn(
+				'flex flex-col gap-4',
+				card && 'rounded-lg border p-4',
+			)}
+		>
 			<div className="flex items-center justify-between">
 				<div className="space-y-0.5">
 					{label && (
-						<label htmlFor={uuid} className="font-medium text-base">
+						<label
+							htmlFor={uuid}
+							className="text-base font-medium"
+						>
 							{label}
 						</label>
 					)}
 					{description && (
-						<p className="text-muted-foreground">{description}</p>
+						<p className="text-muted-foreground">
+							{description}
+						</p>
 					)}
 				</div>
 				<Switch
 					id={uuid}
 					checked={value}
-					{...(onChange ? { onCheckedChange: onChange } : {})}
+					{...(onChange
+						? { onCheckedChange: onChange }
+						: {})}
 					{...props}
 				/>
 			</div>
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 			{content && <div>{content}</div>}
 		</div>
 	);

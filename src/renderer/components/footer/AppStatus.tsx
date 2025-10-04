@@ -21,15 +21,18 @@ function AppStatus() {
 	return (
 		<Dialog>
 			<DialogTrigger>{message}</DialogTrigger>
-			<DialogContent className="sm:max-w-[425px] max-h-[60vh] overflow-auto">
+			<DialogContent className="max-h-[60vh] overflow-auto sm:max-w-[425px]">
 				<DialogHeader>
 					<DialogTitle>Application status log</DialogTitle>
 					<DialogDescription>
-						Viewing last {messages.length} messages from application processes
+						Viewing last {messages.length} messages from
+						application processes
 					</DialogDescription>
 				</DialogHeader>
 				{messages.map((m) => (
-					<DialogDescription key={simpleUUID()}>{m}</DialogDescription>
+					<DialogDescription key={simpleUUID()}>
+						{m}
+					</DialogDescription>
 				))}
 				<DialogFooter>
 					<DialogClose asChild>

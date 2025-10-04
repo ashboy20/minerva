@@ -6,7 +6,10 @@ import windows from './windows';
 
 const play = (sound: string) => {
 	if (getSetting('allowSounds')) {
-		windows.mainWindow?.webContents.send(ipcChannels.PLAY_SOUND, sound);
+		windows.mainWindow?.webContents.send(
+			ipcChannels.PLAY_SOUND,
+			sound,
+		);
 	}
 };
 

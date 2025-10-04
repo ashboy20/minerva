@@ -1,5 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card';
 import { PROTOCOL } from '@/config/config';
 import { nav } from '@/renderer/config/nav';
 import { useGlobalContext } from '@/renderer/context/global-context';
@@ -11,30 +16,34 @@ export function Home() {
 	const { settings, setSettings } = useGlobalContext();
 
 	const handleThemeChange = (value: string) => {
-		setSettings({ theme: value as 'light' | 'dark' | 'system' });
+		setSettings({
+			theme: value as 'light' | 'dark' | 'system',
+		});
 	};
 
 	return (
-		<div className="container mx-auto p-6 space-y-6">
+		<div className="container mx-auto space-y-6 p-6">
 			<img
-				className="max-w-xs mx-auto"
+				className="mx-auto max-w-xs"
 				src={`${PROTOCOL}://icon.png`}
 				alt="logo"
 			/>
 
-			<h1 className="text-3xl font-bold">Welcome to Electron Bones</h1>
+			<h1 className="text-3xl font-bold">
+				Welcome to Electron Bones
+			</h1>
 			<p className="text-muted-foreground">
-				A professional boilerplate for building cross-platform Electron
-				applications.
+				A professional boilerplate for building
+				cross-platform Electron applications.
 			</p>
 
-			<div className="flex flew-wrap justify-around gap-md">
+			<div className="flew-wrap gap-md flex justify-around">
 				<Card className={styles.example}>
 					<CardHeader>
 						<CardTitle>Features</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<ul className="list-disc list-inside">
+						<ul className="list-inside list-disc">
 							<li>Hot-reloading</li>
 							<li>React</li>
 							<li>TypeScript</li>
@@ -63,15 +72,21 @@ export function Home() {
 							description="Select your preferred application theme."
 						/>
 						<Link to={nav.settings.href} className="block">
-							<Button className="w-full mb-2">Go to Settings</Button>
+							<Button className="mb-2 w-full">
+								Go to Settings
+							</Button>
 						</Link>
 						<Link to={nav.apiClient.href} className="block">
-							<Button className="w-full mb-2">Go to API Client</Button>
+							<Button className="mb-2 w-full">
+								Go to API Client
+							</Button>
 						</Link>
 						<Button
 							className="w-full"
 							onClick={() =>
-								window.electron.ipcRenderer.send('open-child-window')
+								window.electron.ipcRenderer.send(
+									'open-child-window',
+								)
 							}
 						>
 							Open Child Window

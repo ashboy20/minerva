@@ -5,13 +5,23 @@ import {
 	TabsList,
 	TabsTrigger,
 } from '@/renderer/components/ui/tabs';
-import { Card, CardContent } from '@/renderer/components/ui/card';
+import {
+	Card,
+	CardContent,
+} from '@/renderer/components/ui/card';
 import { JsonEditorComponent } from '@/renderer/components/views/apiClient/components/JsonEditorComponent';
 import { TableForm } from '@/renderer/components/views/apiClient/request-section/InputForm';
-import { Case, Endpoint, Row } from '@/types/backend/endpoint-management/endpoint';
+import {
+	Case,
+	Endpoint,
+	Row,
+} from '@/types/backend/endpoint-management/endpoint';
 import UrlBar from '@/renderer/components/views/apiClient/request-section/UrlBar';
 import { AuthSection } from '@/renderer/components/views/apiClient/request-section/AuthSection';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+	useAppDispatch,
+	useAppSelector,
+} from '@/store/hooks';
 import {
 	initializeUrl,
 	updateFromUrl,
@@ -25,7 +35,6 @@ import {
 	updateAuth,
 	clearUpdateSource as clearHeadersAuthUpdateSource,
 } from '@/store/slices/headersAuthSlice';
-
 
 interface RequestSectionProps {
 	activeEndpoint: Endpoint | null;
@@ -73,33 +82,50 @@ export function RequestSection({
 	onSendRequest,
 }: RequestSectionProps) {
 	const dispatch = useAppDispatch();
-	const { fullUrl, pathParams, queryParams, lastUpdateSource } = useAppSelector(state => state.url);
-	const { headers, auth, lastUpdateSource: headersAuthUpdateSource } = useAppSelector(state => state.headersAuth);
+	const {
+		fullUrl,
+		pathParams,
+		queryParams,
+		lastUpdateSource,
+	} = useAppSelector((state) => state.url);
+	const {
+		headers,
+		auth,
+		lastUpdateSource: headersAuthUpdateSource,
+	} = useAppSelector((state) => state.headersAuth);
 
 	// Initialize URL and headers/auth state when endpoint/case changes
 	useEffect(() => {
 		if (activeEndpoint) {
 			const baseUrl = activeEndpoint.base_url || '';
 			const path = activeEndpoint.path || '';
-			const initialPathParams = activeCase?.request?.path_params || [];
-			const initialQueryParams = activeCase?.request?.query_params || [];
-			const initialHeaders = activeCase?.request?.headers || [];
+			const initialPathParams =
+				activeCase?.request?.path_params || [];
+			const initialQueryParams =
+				activeCase?.request?.query_params || [];
+			const initialHeaders =
+				activeCase?.request?.headers || [];
 			const initialAuth = {
-				authType: activeCase?.request?.auth?.auth_type || 'Bearer',
-				token: activeCase?.request?.auth?.token || ''
+				authType:
+					activeCase?.request?.auth?.auth_type || 'Bearer',
+				token: activeCase?.request?.auth?.token || '',
 			};
-			
-			dispatch(initializeUrl({
-				baseUrl,
-				path,
-				pathParams: initialPathParams,
-				queryParams: initialQueryParams
-			}));
-			
-			dispatch(initializeHeadersAuth({
-				headers: initialHeaders,
-				auth: initialAuth
-			}));
+
+			dispatch(
+				initializeUrl({
+					baseUrl,
+					path,
+					pathParams: initialPathParams,
+					queryParams: initialQueryParams,
+				}),
+			);
+
+			dispatch(
+				initializeHeadersAuth({
+					headers: initialHeaders,
+					auth: initialAuth,
+				}),
+			);
 		}
 	}, [activeEndpoint, activeCase, dispatch]);
 
@@ -132,77 +158,95 @@ export function RequestSection({
 	};
 
 	// Debounce path params updates to prevent infinite loops
-	const pathParamsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-	
-	const handlePathParamsChange = useCallback((newPathParams: Row[]) => {
-		// Clear previous timeout
-		if (pathParamsTimeoutRef.current) {
-			clearTimeout(pathParamsTimeoutRef.current);
-		}
-		
-		// Immediately update Redux (for UI responsiveness)
-		dispatch(updatePathParams(newPathParams));
-		
-		// Debounce parent callback to prevent cascading updates
-		pathParamsTimeoutRef.current = setTimeout(() => {
-			onPathParamsChange?.(newPathParams);
-		}, 50);
-	}, [dispatch, onPathParamsChange]);
+	const pathParamsTimeoutRef =
+		useRef<NodeJS.Timeout | null>(null);
+
+	const handlePathParamsChange = useCallback(
+		(newPathParams: Row[]) => {
+			// Clear previous timeout
+			if (pathParamsTimeoutRef.current) {
+				clearTimeout(pathParamsTimeoutRef.current);
+			}
+
+			// Immediately update Redux (for UI responsiveness)
+			dispatch(updatePathParams(newPathParams));
+
+			// Debounce parent callback to prevent cascading updates
+			pathParamsTimeoutRef.current = setTimeout(() => {
+				onPathParamsChange?.(newPathParams);
+			}, 50);
+		},
+		[dispatch, onPathParamsChange],
+	);
 
 	// Debounce query params updates to prevent infinite loops
-	const queryParamsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-	
-	const handleQueryParamsChange = useCallback((newQueryParams: Row[]) => {
-		// Clear previous timeout
-		if (queryParamsTimeoutRef.current) {
-			clearTimeout(queryParamsTimeoutRef.current);
-		}
-		
-		// Immediately update Redux (for UI responsiveness)
-		dispatch(updateQueryParams(newQueryParams));
-		
-		// Debounce parent callback to prevent cascading updates
-		queryParamsTimeoutRef.current = setTimeout(() => {
-			onQueryParamsChange?.(newQueryParams);
-		}, 50);
-	}, [dispatch, onQueryParamsChange]);
+	const queryParamsTimeoutRef =
+		useRef<NodeJS.Timeout | null>(null);
+
+	const handleQueryParamsChange = useCallback(
+		(newQueryParams: Row[]) => {
+			// Clear previous timeout
+			if (queryParamsTimeoutRef.current) {
+				clearTimeout(queryParamsTimeoutRef.current);
+			}
+
+			// Immediately update Redux (for UI responsiveness)
+			dispatch(updateQueryParams(newQueryParams));
+
+			// Debounce parent callback to prevent cascading updates
+			queryParamsTimeoutRef.current = setTimeout(() => {
+				onQueryParamsChange?.(newQueryParams);
+			}, 50);
+		},
+		[dispatch, onQueryParamsChange],
+	);
 
 	// Debounce headers updates to prevent infinite loops
-	const headersTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-	
-	const handleHeadersChange = useCallback((newHeaders: Row[]) => {
-		// Clear previous timeout
-		if (headersTimeoutRef.current) {
-			clearTimeout(headersTimeoutRef.current);
-		}
-		
-		// Immediately update Redux (for UI responsiveness)
-		dispatch(updateHeaders(newHeaders));
-		
-		// Debounce parent callback to prevent cascading updates
-		headersTimeoutRef.current = setTimeout(() => {
-			onHeadersChange?.(newHeaders);
-		}, 50);
-	}, [dispatch, onHeadersChange]);
+	const headersTimeoutRef = useRef<NodeJS.Timeout | null>(
+		null,
+	);
+
+	const handleHeadersChange = useCallback(
+		(newHeaders: Row[]) => {
+			// Clear previous timeout
+			if (headersTimeoutRef.current) {
+				clearTimeout(headersTimeoutRef.current);
+			}
+
+			// Immediately update Redux (for UI responsiveness)
+			dispatch(updateHeaders(newHeaders));
+
+			// Debounce parent callback to prevent cascading updates
+			headersTimeoutRef.current = setTimeout(() => {
+				onHeadersChange?.(newHeaders);
+			}, 50);
+		},
+		[dispatch, onHeadersChange],
+	);
 
 	// Debounce auth updates to prevent infinite loops
-	const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-	
-	const handleAuthChange = useCallback((authType: string, token: string) => {
-		// Clear previous timeout
-		if (authTimeoutRef.current) {
-			clearTimeout(authTimeoutRef.current);
-		}
-		
-		// Immediately update Redux (for UI responsiveness)
-		dispatch(updateAuth({ authType, token }));
-		
-		// Debounce parent callback to prevent cascading updates
-		authTimeoutRef.current = setTimeout(() => {
-			onAuthChange?.(authType, token);
-		}, 50);
-	}, [dispatch, onAuthChange]);
-	
+	const authTimeoutRef = useRef<NodeJS.Timeout | null>(
+		null,
+	);
+
+	const handleAuthChange = useCallback(
+		(authType: string, token: string) => {
+			// Clear previous timeout
+			if (authTimeoutRef.current) {
+				clearTimeout(authTimeoutRef.current);
+			}
+
+			// Immediately update Redux (for UI responsiveness)
+			dispatch(updateAuth({ authType, token }));
+
+			// Debounce parent callback to prevent cascading updates
+			authTimeoutRef.current = setTimeout(() => {
+				onAuthChange?.(authType, token);
+			}, 50);
+		},
+		[dispatch, onAuthChange],
+	);
+
 	// Cleanup timeouts on unmount
 	useEffect(() => {
 		return () => {
@@ -222,8 +266,8 @@ export function RequestSection({
 	}, []);
 
 	return (
-		<div className="h-full p-4 overflow-y-auto">
-			<Card className="h-full border-none flex flex-col">
+		<div className="h-full overflow-y-auto p-4">
+			<Card className="flex h-full flex-col border-none">
 				<CardContent className="space-y-4 p-4">
 					{/* URL Bar */}
 					<UrlBar
@@ -239,11 +283,15 @@ export function RequestSection({
 					<Tabs
 						value={activeTab}
 						onValueChange={onActiveTabChange}
-						className="flex-1 flex flex-col" 
+						className="flex flex-1 flex-col"
 					>
-						<TabsList className="grid w-full grid-cols-6 mb-2">
-							<TabsTrigger value="params">Params</TabsTrigger>
-							<TabsTrigger value="headers">Headers</TabsTrigger>
+						<TabsList className="mb-2 grid w-full grid-cols-6">
+							<TabsTrigger value="params">
+								Params
+							</TabsTrigger>
+							<TabsTrigger value="headers">
+								Headers
+							</TabsTrigger>
 							<TabsTrigger value="body">Body</TabsTrigger>
 							<TabsTrigger value="auth">Auth</TabsTrigger>
 							<TabsTrigger value="pre-request-scripts">
@@ -251,34 +299,50 @@ export function RequestSection({
 							</TabsTrigger>
 							<TabsTrigger value="tests">Tests</TabsTrigger>
 						</TabsList>
-						<TabsContent value="params" className="space-y-2 flex-1">
+						<TabsContent
+							value="params"
+							className="flex-1 space-y-2"
+						>
 							{showPathParams && (
-							<TableForm 
-								rows={pathParams} 
-								title="Path Params" 
-								onChange={handlePathParamsChange} 
-								isPathParamTable={true}
-							/>
+								<TableForm
+									rows={pathParams}
+									title="Path Params"
+									onChange={handlePathParamsChange}
+									isPathParamTable
+								/>
 							)}
-							<TableForm rows={queryParams} title="Query Params" onChange={handleQueryParamsChange} />
+							<TableForm
+								rows={queryParams}
+								title="Query Params"
+								onChange={handleQueryParamsChange}
+							/>
 						</TabsContent>
-						<TabsContent value="headers" className="space-y-2 flex-1">
-							<TableForm rows={headers} onChange={handleHeadersChange} isHeaderTable={true} />
+						<TabsContent
+							value="headers"
+							className="flex-1 space-y-2"
+						>
+							<TableForm
+								rows={headers}
+								onChange={handleHeadersChange}
+								isHeaderTable
+							/>
 						</TabsContent>
 						<TabsContent
 							value="body"
-							className="space-y-2 flex-1 flex flex-col max-h-screen overflow-auto"
+							className="flex max-h-screen flex-1 flex-col space-y-2 overflow-auto"
 						>
 							<JsonEditorComponent
-								placeholder='{}'
-								value={stringifyBody(activeCase?.request?.body)}
+								placeholder="{}"
+								value={stringifyBody(
+									activeCase?.request?.body,
+								)}
 								onChange={onBodyChange}
 								className="flex-1"
 								disabled={
 									activeEndpoint?.method === 'GET' ||
 									activeEndpoint?.method === 'HEAD'
 								}
-								darkTheme={true}
+								darkTheme
 							/>
 							{(activeEndpoint?.method === 'GET' ||
 								activeEndpoint?.method === 'HEAD') && (
@@ -287,17 +351,24 @@ export function RequestSection({
 								</p>
 							)}
 						</TabsContent>
-						<TabsContent value="auth" className="space-y-2 flex-1">
-							<AuthSection 
+						<TabsContent
+							value="auth"
+							className="flex-1 space-y-2"
+						>
+							<AuthSection
 								authType={auth.authType}
 								token={auth.token}
 								onAuthChange={handleAuthChange}
 							/>
 						</TabsContent>
-						<TabsContent value="pre-request-scripts" className="space-y-2 flex-1">
-						</TabsContent>
-						<TabsContent value="tests" className="space-y-2 flex-1">
-						</TabsContent>
+						<TabsContent
+							value="pre-request-scripts"
+							className="flex-1 space-y-2"
+						/>
+						<TabsContent
+							value="tests"
+							className="flex-1 space-y-2"
+						/>
 					</Tabs>
 				</CardContent>
 			</Card>

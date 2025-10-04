@@ -20,7 +20,11 @@ import { MenuItemConstructorOptions } from '@/types/app';
 import { v4 as uuidv4 } from 'uuid';
 import { DragHandle } from '../ui/DragHandle';
 
-export function Menu({ className }: { className?: string }) {
+export function Menu({
+	className,
+}: {
+	className?: string;
+}) {
 	const { app, appMenu } = useGlobalContext();
 
 	// if the label contains an ampersand followed by a character that is not an ampersand, underline the character
@@ -52,7 +56,9 @@ export function Menu({ className }: { className?: string }) {
 		return label.replace(/&&/g, '&');
 	}
 
-	function convertAcceleratorToElement(accelerator?: string | null) {
+	function convertAcceleratorToElement(
+		accelerator?: string | null,
+	) {
 		if (!accelerator) {
 			return null;
 		}
@@ -61,7 +67,9 @@ export function Menu({ className }: { className?: string }) {
 		const modifierKeys = keys.slice(0, -1);
 		const key = keys[keys.length - 1];
 
-		const CommandOrControl = app.isMac ? KEYS.COMMAND : KEYS.CONTROL;
+		const CommandOrControl = app.isMac
+			? KEYS.COMMAND
+			: KEYS.CONTROL;
 		const unicodeModifiers: { [key: string]: string } = {
 			CommandOrControl,
 			CmdOrCtrl: CommandOrControl,
@@ -76,11 +84,14 @@ export function Menu({ className }: { className?: string }) {
 			Plus: KEYS.PLUS,
 		};
 
-		const modifierElements = modifierKeys.map((modifierKey) => {
-			const unicodeKey = unicodeModifiers[modifierKey] || modifierKey;
+		const modifierElements = modifierKeys.map(
+			(modifierKey) => {
+				const unicodeKey =
+					unicodeModifiers[modifierKey] || modifierKey;
 
-			return <span key={uuidv4()}>{unicodeKey}</span>;
-		});
+				return <span key={uuidv4()}>{unicodeKey}</span>;
+			},
+		);
 
 		return (
 			<MenubarShortcut>
@@ -90,7 +101,9 @@ export function Menu({ className }: { className?: string }) {
 		);
 	}
 
-	const renderMenuItems = (menuItems: MenuItemConstructorOptions[]) => {
+	const renderMenuItems = (
+		menuItems: MenuItemConstructorOptions[],
+	) => {
 		return menuItems.map((item) => {
 			if (item.visible === false) {
 				return null;
@@ -109,7 +122,9 @@ export function Menu({ className }: { className?: string }) {
 						disabled={item.enabled === false}
 						onClick={() => {
 							if (item.id) {
-								window.electron.triggerAppMenuItemById(item.id);
+								window.electron.triggerAppMenuItemById(
+									item.id,
+								);
 							}
 						}}
 					>
@@ -120,13 +135,18 @@ export function Menu({ className }: { className?: string }) {
 
 			if (item.type === 'radio') {
 				return (
-					<MenubarRadioGroup key={key} value={item.checked ? key : ''}>
+					<MenubarRadioGroup
+						key={key}
+						value={item.checked ? key : ''}
+					>
 						<MenubarRadioItem
 							value={key}
 							disabled={item.enabled === false}
 							onClick={() => {
 								if (item.id) {
-									window.electron.triggerAppMenuItemById(item.id);
+									window.electron.triggerAppMenuItemById(
+										item.id,
+									);
 								}
 							}}
 						>
@@ -143,14 +163,17 @@ export function Menu({ className }: { className?: string }) {
 							disabled={item.enabled === false}
 							onClick={() => {
 								if (item.id) {
-									window.electron.triggerAppMenuItemById(item.id);
+									window.electron.triggerAppMenuItemById(
+										item.id,
+									);
 								}
 							}}
 						>
 							{formatLabel(item.label)}
 						</MenubarSubTrigger>
 						<MenubarSubContent>
-							{Array.isArray(item.submenu) && renderMenuItems(item.submenu)}
+							{Array.isArray(item.submenu) &&
+								renderMenuItems(item.submenu)}
 						</MenubarSubContent>
 					</MenubarSub>
 				);
@@ -162,7 +185,9 @@ export function Menu({ className }: { className?: string }) {
 					key={key}
 					onClick={() => {
 						if (item.id) {
-							window.electron.triggerAppMenuItemById(item.id);
+							window.electron.triggerAppMenuItemById(
+								item.id,
+							);
 						}
 					}}
 					className="gap-2"
@@ -178,7 +203,7 @@ export function Menu({ className }: { className?: string }) {
 		<Menubar
 			className={cn(
 				'drag', // Allow the titlebar to be draggable, to reposition the window. Useful when using frameless windows.
-				'rounded-none border-b border-none px-4 w-full overflow-hidden text-ellipsis items-stretch',
+				'w-full items-stretch overflow-hidden text-ellipsis rounded-none border-b border-none px-4',
 				app.isMac && 'pl-20',
 				className,
 			)}
@@ -198,7 +223,9 @@ export function Menu({ className }: { className?: string }) {
 							>
 								{formatLabel(item.label)}
 							</MenubarTrigger>
-							<MenubarContent>{renderMenuItems(item.submenu)}</MenubarContent>
+							<MenubarContent>
+								{renderMenuItems(item.submenu)}
+							</MenubarContent>
 						</MenubarMenu>
 					);
 				})}

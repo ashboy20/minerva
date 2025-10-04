@@ -9,21 +9,31 @@ import tray from './tray';
 import { forEachWindow } from './utils/window-utils';
 import windows from './windows';
 
-const synchronizeApp = (changedSettings?: Partial<SettingsType>) => {
+const synchronizeApp = (
+	changedSettings?: Partial<SettingsType>,
+) => {
 	// Sync with main
 	if (changedSettings) {
 		const keys = Object.keys(changedSettings);
 
-		if (keys.includes('accentColor') || keys.includes('theme')) {
-			const mainWindow = windows.mainWindow as BrowserWindow | null;
+		if (
+			keys.includes('accentColor') ||
+			keys.includes('theme')
+		) {
+			const mainWindow =
+				windows.mainWindow as BrowserWindow | null;
 			if (
 				mainWindow &&
 				!mainWindow.isDestroyed() &&
 				typeof mainWindow.setTitleBarOverlay === 'function'
 			) {
 				mainWindow.setTitleBarOverlay({
-					color: changedSettings.theme === 'dark' ? '#020817' : '#ffffff',
-					symbolColor: changedSettings.accentColor || '#000000',
+					color:
+						changedSettings.theme === 'dark'
+							? '#020817'
+							: '#ffffff',
+					symbolColor:
+						changedSettings.accentColor || '#000000',
 				});
 			}
 		}
@@ -34,7 +44,9 @@ const synchronizeApp = (changedSettings?: Partial<SettingsType>) => {
 				typeof app.dock.show === 'function' &&
 				typeof app.dock.hide === 'function'
 			) {
-				app.dock[changedSettings.showDockIcon ? 'show' : 'hide']();
+				app.dock[
+					changedSettings.showDockIcon ? 'show' : 'hide'
+				]();
 			}
 		}
 
@@ -83,7 +95,9 @@ export const getSettings = () => {
 	return store.get('settings');
 };
 
-export const setSettings = (settings: Partial<SettingsType>) => {
+export const setSettings = (
+	settings: Partial<SettingsType>,
+) => {
 	store.set('settings', {
 		...getSettings(),
 		...settings,
@@ -96,7 +110,10 @@ export const setSettings = (settings: Partial<SettingsType>) => {
 export const addAppMessage = (message: AppMessageType) => {
 	let appMessageLog = store.get('appMessageLog');
 	if (appMessageLog.length > APP_MESSAGES_MAX) {
-		appMessageLog = appMessageLog.slice(0, Math.ceil(APP_MESSAGES_MAX / 2));
+		appMessageLog = appMessageLog.slice(
+			0,
+			Math.ceil(APP_MESSAGES_MAX / 2),
+		);
 	}
 	appMessageLog.push(message);
 	store.set('appMessageLog', appMessageLog);

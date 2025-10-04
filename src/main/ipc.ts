@@ -16,7 +16,10 @@ import {
 	setSettings,
 } from './store-actions';
 import { is } from './util';
-import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
+import {
+	serializeMenu,
+	triggerMenuItemById,
+} from './utils/menu-utils';
 import windows from './windows';
 
 export default {
@@ -54,7 +57,11 @@ export default {
 		// These do not send data back to the renderer process
 		ipcMain.on(
 			ipcChannels.SET_KEYBIND,
-			(_event, keybind: keyof CustomAcceleratorsType, accelerator: string) => {
+			(
+				_event,
+				keybind: keyof CustomAcceleratorsType,
+				accelerator: string,
+			) => {
 				kb.setKeybind(keybind, accelerator);
 			},
 		);
@@ -67,14 +74,20 @@ export default {
 		);
 
 		// Show a notification
-		ipcMain.on(ipcChannels.APP_NOTIFICATION, (_event, options: any) => {
-			notification(options);
-		});
+		ipcMain.on(
+			ipcChannels.APP_NOTIFICATION,
+			(_event, options: any) => {
+				notification(options);
+			},
+		);
 
 		// Play a sound
-		ipcMain.on(ipcChannels.PLAY_SOUND, (_event: any, sound: string) => {
-			sounds.play(sound);
-		});
+		ipcMain.on(
+			ipcChannels.PLAY_SOUND,
+			(_event: any, sound: string) => {
+				sounds.play(sound);
+			},
+		);
 
 		// Trigger an app menu item by its id
 		ipcMain.on(
@@ -85,13 +98,19 @@ export default {
 		);
 
 		// Open a URL in the default browser
-		ipcMain.on(ipcChannels.OPEN_URL, (_event: any, url: string) => {
-			shell.openExternal(url);
-		});
+		ipcMain.on(
+			ipcChannels.OPEN_URL,
+			(_event: any, url: string) => {
+				shell.openExternal(url);
+			},
+		);
 
 		// Open a child window
 		ipcMain.on(ipcChannels.OPEN_CHILD_WINDOW, async () => {
-			if (!windows.childWindow || windows.childWindow.isDestroyed()) {
+			if (
+				!windows.childWindow ||
+				windows.childWindow.isDestroyed()
+			) {
 				windows.childWindow = await createChildWindow();
 			} else {
 				windows.childWindow.focus();

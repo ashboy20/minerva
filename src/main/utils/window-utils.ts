@@ -1,5 +1,10 @@
 // https://github.com/sindresorhus/electron-util/blob/main/source/main/window.ts
-import { BrowserWindow, Rectangle, Size, screen } from 'electron';
+import {
+	BrowserWindow,
+	Rectangle,
+	Size,
+	screen,
+} from 'electron';
 import { is } from '../util';
 
 export type GetWindowBoundsCenteredOptions = {
@@ -67,7 +72,8 @@ export type CenterWindowOptions = {
 	readonly useFullBounds?: boolean;
 };
 
-export const activeWindow = () => BrowserWindow.getFocusedWindow();
+export const activeWindow = () =>
+	BrowserWindow.getFocusedWindow();
 
 /**
 @returns The height of the menu bar on macOS, or `0` if not macOS.
@@ -89,15 +95,21 @@ export const getWindowBoundsCentered = (
 	}
 
 	const [width, height] = window.getSize();
-	const windowSize = (options?.size ?? { width, height }) as Size;
+	const windowSize = (options?.size ?? {
+		width,
+		height,
+	}) as Size;
 	const screenSize = screen.getDisplayNearestPoint(
 		screen.getCursorScreenPoint(),
 	).workArea;
 	const x = Math.floor(
-		screenSize.x + screenSize.width / 2 - (windowSize.width ?? 0) / 2,
+		screenSize.x +
+			screenSize.width / 2 -
+			(windowSize.width ?? 0) / 2,
 	);
 	const y = Math.floor(
-		(screenSize.height + screenSize.y) / 2 - (windowSize.height ?? 0) / 2,
+		(screenSize.height + screenSize.y) / 2 -
+			(windowSize.height ?? 0) / 2,
 	);
 
 	return {
@@ -110,7 +122,9 @@ export const getWindowBoundsCentered = (
 /**
 Center a window on the screen.
 */
-export const centerWindow = (options?: CenterWindowOptions) => {
+export const centerWindow = (
+	options?: CenterWindowOptions,
+) => {
 	const window = options?.window ?? activeWindow();
 	if (!window) {
 		throw new Error('No active window');
@@ -126,7 +140,9 @@ export const centerWindow = (options?: CenterWindowOptions) => {
 	window.setBounds(bounds, opts.animated);
 };
 
-export const forEachWindow = (callback: (window: BrowserWindow) => void) => {
+export const forEachWindow = (
+	callback: (window: BrowserWindow) => void,
+) => {
 	BrowserWindow.getAllWindows().forEach((win) => {
 		callback(win);
 	});

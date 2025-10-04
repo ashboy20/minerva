@@ -18,7 +18,8 @@ import {
 import { getSetting, setSettings } from './store-actions';
 import { is } from './util';
 
-interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
+interface DarwinMenuItemConstructorOptions
+	extends MenuItemConstructorOptions {
 	selector?: string;
 	submenu?: DarwinMenuItemConstructorOptions[] | Menu;
 }
@@ -75,7 +76,9 @@ export default class MenuBuilder {
 				id: 'showDockIcon',
 				checked: () => getSetting('showDockIcon'),
 				click: () => {
-					setSettings({ showDockIcon: !getSetting('showDockIcon') });
+					setSettings({
+						showDockIcon: !getSetting('showDockIcon'),
+					});
 				},
 			},
 			{
@@ -84,7 +87,9 @@ export default class MenuBuilder {
 				id: 'showTrayIcon',
 				checked: () => getSetting('showTrayIcon'),
 				click: () => {
-					setSettings({ showTrayIcon: !getSetting('showTrayIcon') });
+					setSettings({
+						showTrayIcon: !getSetting('showTrayIcon'),
+					});
 				},
 			},
 			{
@@ -94,7 +99,9 @@ export default class MenuBuilder {
 				checked: getSetting('quitOnWindowClose'),
 				click: () => {
 					setSettings({
-						quitOnWindowClose: !getSetting('quitOnWindowClose'),
+						quitOnWindowClose: !getSetting(
+							'quitOnWindowClose',
+						),
 					});
 				},
 			},
@@ -176,7 +183,12 @@ export default class MenuBuilder {
 					id: 'redo',
 				},
 				{ type: 'separator' },
-				{ label: 'Cut', accelerator: 'Command+X', selector: 'cut:', id: 'cut' },
+				{
+					label: 'Cut',
+					accelerator: 'Command+X',
+					selector: 'cut:',
+					id: 'cut',
+				},
 				{
 					label: 'Copy',
 					accelerator: 'Command+C',
@@ -212,7 +224,9 @@ export default class MenuBuilder {
 					label: 'Toggle Full Screen',
 					accelerator: 'Ctrl+Command+F',
 					click: () => {
-						this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+						this.mainWindow.setFullScreen(
+							!this.mainWindow.isFullScreen(),
+						);
 					},
 					id: 'toggleFullScreen',
 				},
@@ -225,35 +239,38 @@ export default class MenuBuilder {
 					label: 'Toggle Full Screen',
 					accelerator: 'Ctrl+Command+F',
 					click: () => {
-						this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+						this.mainWindow.setFullScreen(
+							!this.mainWindow.isFullScreen(),
+						);
 					},
 					id: 'toggleFullScreen',
 				},
 			],
 		};
-		const subMenuWindow: DarwinMenuItemConstructorOptions = {
-			label: 'Window',
-			submenu: [
-				{
-					label: 'Minimize',
-					accelerator: 'Command+M',
-					selector: 'performMiniaturize:',
-					id: 'minimize',
-				},
-				{
-					label: 'Close',
-					accelerator: 'Command+W',
-					selector: 'performClose:',
-					id: 'close',
-				},
-				{ type: 'separator' },
-				{
-					label: 'Bring All to Front',
-					selector: 'arrangeInFront:',
-					id: 'bringToFront',
-				},
-			],
-		};
+		const subMenuWindow: DarwinMenuItemConstructorOptions =
+			{
+				label: 'Window',
+				submenu: [
+					{
+						label: 'Minimize',
+						accelerator: 'Command+M',
+						selector: 'performMiniaturize:',
+						id: 'minimize',
+					},
+					{
+						label: 'Close',
+						accelerator: 'Command+W',
+						selector: 'performClose:',
+						id: 'close',
+					},
+					{ type: 'separator' },
+					{
+						label: 'Bring All to Front',
+						selector: 'arrangeInFront:',
+						id: 'bringToFront',
+					},
+				],
+			};
 
 		const subMenuView =
 			process.env.NODE_ENV === 'development' ||
@@ -350,7 +367,10 @@ export default class MenuBuilder {
 
 export const setupDockMenu = () => {
 	if (!is.macos) return;
-	const dockMenu = Menu.buildFromTemplate([aboutMenuItem, quitMenuItem]);
+	const dockMenu = Menu.buildFromTemplate([
+		aboutMenuItem,
+		quitMenuItem,
+	]);
 	app.dock.setMenu(dockMenu);
 	dock.initialize();
 };

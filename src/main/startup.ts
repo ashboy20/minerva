@@ -5,9 +5,15 @@ import analytics from './analytics';
 import appFlags from './app-flags';
 import appListeners from './app-listeners';
 import { AutoUpdate } from './auto-update';
-import { getBackendService, setupBackendServiceLifecycle } from './backend-service';
+import {
+	getBackendService,
+	setupBackendServiceLifecycle,
+} from './backend-service';
 import { registerBackendHandlers } from './backend-client';
-import { createChildWindow, createMainWindow } from './create-window';
+import {
+	createChildWindow,
+	createMainWindow,
+} from './create-window';
 import debugging from './debugging';
 import errorHandling from './error-handling';
 import kb from './keyboard';
@@ -53,20 +59,34 @@ export const startup = () => {
 	setupBackendServiceLifecycle();
 
 	// Initialize FastAPI backend service early in startup
-	console.log('🚀 Initializing FastAPI backend service during startup...');
+	console.log(
+		'🚀 Initializing FastAPI backend service during startup...',
+	);
 
 	const backendService = getBackendService();
-	backendService.start().then((success: boolean) => {
-		if (success) {
-			Logger.info('✅ FastAPI backend service initialized at startup');
-			Logger.info(`🌐 Backend server running at: ${backendService.getServerUrl()}`);
-			registerBackendHandlers();
-		} else {
-			Logger.warn('⚠️ FastAPI backend service failed to initialize');
-		}
-	}).catch((error: any) => {
-		Logger.error('❌ FastAPI backend service startup error:', error);
-	});
+	backendService
+		.start()
+		.then((success: boolean) => {
+			if (success) {
+				Logger.info(
+					'✅ FastAPI backend service initialized at startup',
+				);
+				Logger.info(
+					`🌐 Backend server running at: ${backendService.getServerUrl()}`,
+				);
+				registerBackendHandlers();
+			} else {
+				Logger.warn(
+					'⚠️ FastAPI backend service failed to initialize',
+				);
+			}
+		})
+		.catch((error: any) => {
+			Logger.error(
+				'❌ FastAPI backend service startup error:',
+				error,
+			);
+		});
 
 	Logger.status($init.started);
 	console.timeLog(app.name, $init.started);
@@ -125,6 +145,11 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-	Logger.error('Unhandled rejection at:', promise, 'reason:', reason);
+	Logger.error(
+		'Unhandled rejection at:',
+		promise,
+		'reason:',
+		reason,
+	);
 	// Optionally, you can show an error dialog to the user here
 });

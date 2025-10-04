@@ -25,7 +25,11 @@ export function InputSwitchForm({
 	details,
 	content,
 }: {
-	items: { value: string; label: string; description?: string }[];
+	items: {
+		value: string;
+		label: string;
+		description?: string;
+	}[];
 	value?: string[];
 	onChange?: (value: string[]) => void;
 	label?: string;
@@ -50,10 +54,15 @@ export function InputSwitchForm({
 
 	return (
 		<Form {...form}>
-			<form onChange={form.handleSubmit(onSubmit)} className="space-y-6">
+			<form
+				onChange={form.handleSubmit(onSubmit)}
+				className="space-y-6"
+			>
 				<div>
 					<h3 className="text-lg font-medium">{label}</h3>
-					<p className="text-sm text-muted-foreground mb-4">{description}</p>
+					<p className="mb-4 text-sm text-muted-foreground">
+						{description}
+					</p>
 					<div className="space-y-4">
 						<FormField
 							control={form.control}
@@ -78,8 +87,12 @@ export function InputSwitchForm({
 														</div>
 														<FormControl>
 															<Switch
-																checked={field.value.includes(item.value)}
-																onCheckedChange={(checked) => {
+																checked={field.value.includes(
+																	item.value,
+																)}
+																onCheckedChange={(
+																	checked,
+																) => {
 																	if (checked) {
 																		form.setValue('items', [
 																			...field.value,
@@ -89,7 +102,8 @@ export function InputSwitchForm({
 																		form.setValue(
 																			'items',
 																			field.value.filter(
-																				(i) => i !== item.value,
+																				(i) =>
+																					i !== item.value,
 																			),
 																		);
 																	}
@@ -107,7 +121,11 @@ export function InputSwitchForm({
 					</div>
 				</div>
 			</form>
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 			{content && <div>{content}</div>}
 		</Form>
 	);

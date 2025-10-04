@@ -48,10 +48,16 @@ const register = () => {
 	app.on('web-contents-created', (_event, webContents) => {
 		// Security #13: Prevent navigation
 		// https://www.electronjs.org/docs/latest/tutorial/security#13-disable-or-limit-navigation
-		webContents.on('will-navigate', (event, _navigationUrl) => {
-			Logger.warn($errors.blockedNavigation, _navigationUrl);
-			event.preventDefault();
-		});
+		webContents.on(
+			'will-navigate',
+			(event, _navigationUrl) => {
+				Logger.warn(
+					$errors.blockedNavigation,
+					_navigationUrl,
+				);
+				event.preventDefault();
+			},
+		);
 	});
 };
 
@@ -59,7 +65,10 @@ const ready = () => {
 	app.on('activate', async () => {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		if (windows.mainWindow === null || windows.mainWindow?.isDestroyed()) {
+		if (
+			windows.mainWindow === null ||
+			windows.mainWindow?.isDestroyed()
+		) {
 			// Because we're adding these listeners outside the main.ts file, the window object doesn't get set to null
 			// when the window is closed. So we check `windows.mainWindow?.isDestroyed()` and explicitly set it to null
 			windows.mainWindow = null;
@@ -71,7 +80,8 @@ const ready = () => {
 		// Someone tried to run a second instance, we should focus our window.
 		if (windows.mainWindow) {
 			// If the window is minimized, we should restore it and focus it.
-			if (windows.mainWindow.isMinimized()) windows.mainWindow.restore();
+			if (windows.mainWindow.isMinimized())
+				windows.mainWindow.restore();
 			windows.mainWindow.focus();
 		}
 	});

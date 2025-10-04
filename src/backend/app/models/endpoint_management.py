@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union, Dict, Any
 import uuid
 from sqlmodel import Field, SQLModel, Column, JSON, Relationship
 from pydantic import BaseModel
@@ -211,10 +211,9 @@ class PartialItemSchema(BaseModel):
 
     uuid: str = Field(description="Item UUID")
     name: str = Field(description="Item name")
-    type: Literal["folder", "endpoint"] = Field(
-        description="Item type"
-    )
+    type: Literal["folder", "endpoint"] = Field(description="Item type")
     parent_uuid: Optional[str] = Field(default=None, description="Parent UUID")
+
 
 class ItemSchema(PartialItemSchema):
     """Base item schema"""
@@ -231,6 +230,7 @@ class PartialFolderSchema(PartialItemSchema):
     items: List[Union["PartialFolderSchema", "PartialEndpointSchema"]] = Field(
         default=[], description="Folder items"
     )
+
 
 class FolderSchema(ItemSchema):
     """Folder schema for API responses"""
@@ -268,11 +268,30 @@ class PostCollectionResponse(BaseResponse):
 
 class ReorderRequest(BaseModel):
     """Request model for PUT /reorder"""
+
     dragged_uuid: str = Field(description="Dragged UUID")
-    old_parent_uuid: Union[str, int] = Field(default=None, description="Old parent UUID")
+    old_parent_uuid: Union[str, int] = Field(
+        default=None, description="Old parent UUID"
+    )
     new_parent_uuid: Optional[str] = Field(default=None, description="Parent UUID")
     relative_index: int = Field(description="Relative index")
 
 
 class ReorderResponse(BaseResponse):
     """Response model for PUT /reorder"""
+
+
+class UpdateItemRequest(BaseModel):
+    """Request model for updating any item (collection, folder, or endpoint)"""
+
+    type: Literal["collection", "folder", "endpoint"] = Field(
+        description="Type of item to update"
+    )
+    uuid: str = Field(description="UUID of the item to update")
+    fields: Dict[str, Any] = Field(description="Fields to update and their new values")
+
+
+class UpdateItemResponse(BaseResponse):
+    """Response model for update operations"""
+
+    data: dict = Field(description="The response data payload")

@@ -8,17 +8,27 @@ interface LayoutSwitcherProps {
 	className?: string;
 }
 
-export function LayoutSwitcher({ className }: LayoutSwitcherProps) {
+export function LayoutSwitcher({
+	className,
+}: LayoutSwitcherProps) {
 	const { settings, setSettings } = useGlobalContext();
 
-	const handleLayoutChange = (layout: ApiClientLayoutType) => {
+	const handleLayoutChange = (
+		layout: ApiClientLayoutType,
+	) => {
 		setSettings({ apiClientLayout: layout });
 	};
 
 	return (
-		<div className={`flex items-center gap-1 ${className || ''}`}>
+		<div
+			className={`flex items-center gap-1 ${className || ''}`}
+		>
 			<Button
-				variant={settings.apiClientLayout === 'vertical' ? 'default' : 'outline'}
+				variant={
+					settings.apiClientLayout === 'vertical'
+						? 'default'
+						: 'outline'
+				}
 				size="sm"
 				onClick={() => handleLayoutChange('vertical')}
 				className="h-6 w-6 p-0"
@@ -27,7 +37,11 @@ export function LayoutSwitcher({ className }: LayoutSwitcherProps) {
 				<Rows3 className="h-3 w-3" />
 			</Button>
 			<Button
-				variant={settings.apiClientLayout === 'horizontal' ? 'default' : 'outline'}
+				variant={
+					settings.apiClientLayout === 'horizontal'
+						? 'default'
+						: 'outline'
+				}
 				size="sm"
 				onClick={() => handleLayoutChange('horizontal')}
 				className="h-6 w-6 p-0"

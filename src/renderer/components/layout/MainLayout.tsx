@@ -8,19 +8,23 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 
 // We can't use the ScrollArea here or the scroll will persist between navigations
-export function MainLayout({ children }: { children?: React.ReactNode }) {
+export function MainLayout({
+	children,
+}: {
+	children?: React.ReactNode;
+}) {
 	const { settings } = useGlobalContext();
 
 	return (
-		<div className="w-full h-full flex flex-col">
+		<div className="flex h-full w-full flex-col">
 			<style>{`
 				* {
 					border-color: ${settings.accentColor};
 				}
 			`}</style>
 			<Menu className="shrink-0" />
-			<div className="border-t grow flex min-h-0">
-				<div className="grow min-w-0 overflow-y-auto">
+			<div className="flex min-h-0 grow border-t">
+				<div className="min-w-0 grow overflow-y-auto">
 					{children || <Outlet />}
 				</div>
 			</div>

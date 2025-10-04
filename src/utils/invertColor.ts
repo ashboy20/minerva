@@ -13,7 +13,8 @@ export const invertColor = (hex: string, bw?: boolean) => {
 	}
 	// convert 3-digit hex to 6-digits.
 	if (hex.length === 3) {
-		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+		hex =
+			hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
 	}
 	if (hex.length !== 6) {
 		throw new Error('Invalid HEX color.');
@@ -24,7 +25,9 @@ export const invertColor = (hex: string, bw?: boolean) => {
 
 	if (bw) {
 		// https://stackoverflow.com/a/3943023/112731
-		return rn * 0.299 + gn * 0.587 + bn * 0.114 > 186 ? '#000000' : '#FFFFFF';
+		return rn * 0.299 + gn * 0.587 + bn * 0.114 > 186
+			? '#000000'
+			: '#FFFFFF';
 	}
 
 	// invert color components

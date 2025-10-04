@@ -7,7 +7,8 @@ export const __assets = app.isPackaged
 	: path.join(__dirname, '../../assets');
 
 export const __app = app.getAppPath();
-export const __sounds = path.join(__assets, 'sounds') + path.sep;
+export const __sounds =
+	path.join(__assets, 'sounds') + path.sep;
 
 export const rendererPaths = {
 	sounds: __sounds,

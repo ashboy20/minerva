@@ -17,9 +17,11 @@ import {
 import { cn } from '@/lib/utils';
 
 const FormSchema = z.object({
-	items: z.array(z.string()).refine((value) => value.some((item) => item), {
-		message: 'You have to select at least one item.',
-	}),
+	items: z
+		.array(z.string())
+		.refine((value) => value.some((item) => item), {
+			message: 'You have to select at least one item.',
+		}),
 });
 
 export function InputCheckboxGroup({
@@ -62,15 +64,26 @@ export function InputCheckboxGroup({
 
 	return (
 		<Form {...form}>
-			<form onChange={form.handleSubmit(onSubmit)} className="space-y-8">
+			<form
+				onChange={form.handleSubmit(onSubmit)}
+				className="space-y-8"
+			>
 				<FormField
 					control={form.control}
 					name="items"
 					render={() => (
-						<FormItem className={cn(card && 'rounded-md border p-4')}>
+						<FormItem
+							className={cn(
+								card && 'rounded-md border p-4',
+							)}
+						>
 							<div className="mb-4">
-								<FormLabel className="text-base">{label}</FormLabel>
-								<FormDescription>{description}</FormDescription>
+								<FormLabel className="text-base">
+									{label}
+								</FormLabel>
+								<FormDescription>
+									{description}
+								</FormDescription>
 							</div>
 							{items.map((item) => (
 								<FormField
@@ -85,13 +98,19 @@ export function InputCheckboxGroup({
 											>
 												<FormControl>
 													<Checkbox
-														checked={field.value?.includes(item.value)}
+														checked={field.value?.includes(
+															item.value,
+														)}
 														onCheckedChange={(checked) => {
 															return checked
-																? field.onChange([...field.value, item.value])
+																? field.onChange([
+																		...field.value,
+																		item.value,
+																	])
 																: field.onChange(
 																		field.value?.filter(
-																			(val) => val !== item.value,
+																			(val) =>
+																				val !== item.value,
 																		),
 																	);
 														}}
@@ -110,7 +129,11 @@ export function InputCheckboxGroup({
 					)}
 				/>
 			</form>
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 			{content && <div>{content}</div>}
 		</Form>
 	);

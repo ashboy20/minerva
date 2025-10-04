@@ -18,7 +18,6 @@ import {
 	NodeModel,
 	DropOptions,
 } from '@minoru/react-dnd-treeview';
-import { TreeItem } from './TreeItem';
 import {
 	ContextMenu,
 	ContextMenuTrigger,
@@ -26,12 +25,13 @@ import {
 import { UnifiedContextMenu } from '@/renderer/components/views/apiClient/collection-list/UnifiedContextMenu';
 import { useAppDispatch } from '@/store/hooks';
 import { DropdownMenuSeparator } from '@radix-ui/react-dropdown-menu';
+import { TreeItem } from './TreeItem';
 
 const parseTreeData = (
 	items: Collection[] | (Folder | Endpoint)[],
 	parentId: string | number = 0,
 ) => {
-	let treeData: NodeModel<any>[] = [];
+	const treeData: NodeModel<any>[] = [];
 
 	items.forEach((item) => {
 		// Handle collections
@@ -178,21 +178,25 @@ export function CollectionList({
 		}
 	};
 
-	const handleDrop = (newTree: NodeModel<any>[], options: DropOptions<any>) => {
+	const handleDrop = (
+		newTree: NodeModel<any>[],
+		options: DropOptions<any>,
+	) => {
 		setTreeData(newTree as any);
 
-		dispatch(reorder({
-			draggedUuid: options.dragSource?.id as string,
-			oldParentUuid: options.dragSource?.parent as string,
-			newParentUuid: options.dropTarget?.id as string,
-			relativeIndex: options.relativeIndex as number,
-		}))
+		dispatch(
+			reorder({
+				draggedUuid: options.dragSource?.id as string,
+				oldParentUuid: options.dragSource?.parent as string,
+				newParentUuid: options.dropTarget?.id as string,
+				relativeIndex: options.relativeIndex as number,
+			}),
+		);
 
 		const draggedItem = newTree.find(
 			(item) => item.id === options.dragSource?.id,
 		);
 		if (!draggedItem) return;
-
 	};
 
 	// Header at the top
@@ -241,7 +245,7 @@ export function CollectionList({
 											rootId={0}
 											onDrop={handleDrop}
 											sort={false}
-											enableAnimateExpand={true}
+											enableAnimateExpand
 											canDrop={handleCanDrop}
 											dropTargetOffset={5}
 											placeholderRender={(

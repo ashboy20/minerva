@@ -1,7 +1,17 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/renderer/components/ui/card';
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from '@/renderer/components/ui/card';
 import { Badge } from '@/renderer/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/renderer/components/ui/tabs';
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from '@/renderer/components/ui/tabs';
 import { CopyIcon, PlayIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 
@@ -18,23 +28,30 @@ interface ResponseSectionProps {
 	response: ApiResponse | null;
 }
 
-export function ResponseSection({ response }: ResponseSectionProps) {
+export function ResponseSection({
+	response,
+}: ResponseSectionProps) {
 	const getStatusColor = (status: number) => {
-		if (status >= 200 && status < 300) return 'bg-green-500';
-		if (status >= 300 && status < 400) return 'bg-yellow-500';
-		if (status >= 400 && status < 500) return 'bg-orange-500';
+		if (status >= 200 && status < 300)
+			return 'bg-green-500';
+		if (status >= 300 && status < 400)
+			return 'bg-yellow-500';
+		if (status >= 400 && status < 500)
+			return 'bg-orange-500';
 		if (status >= 500) return 'bg-red-500';
 		return 'bg-gray-500';
 	};
 
 	const handleCopy = () => {
 		if (response) {
-			navigator.clipboard.writeText(JSON.stringify(response.data, null, 2));
+			navigator.clipboard.writeText(
+				JSON.stringify(response.data, null, 2),
+			);
 		}
 	};
 
 	return (
-		<div className="h-full p-4 overflow-y-auto">
+		<div className="h-full overflow-y-auto p-4">
 			{response && (
 				<Card className="h-full border-none">
 					<CardHeader>
@@ -50,7 +67,8 @@ export function ResponseSection({ response }: ResponseSectionProps) {
 									Time: {response.time}ms
 								</span>
 								<span className="text-muted-foreground">
-									Size: {(response.size / 1024).toFixed(2)} KB
+									Size: {(response.size / 1024).toFixed(2)}{' '}
+									KB
 								</span>
 							</div>
 						</div>
@@ -59,35 +77,45 @@ export function ResponseSection({ response }: ResponseSectionProps) {
 						<Tabs defaultValue="body" className="h-full">
 							<TabsList>
 								<TabsTrigger value="body">Body</TabsTrigger>
-								<TabsTrigger value="headers">Headers</TabsTrigger>
+								<TabsTrigger value="headers">
+									Headers
+								</TabsTrigger>
 							</TabsList>
 							<TabsContent value="body" className="mt-4">
 								<div className="flex justify-end">
-									<Button size="sm" className="px-2" onClick={handleCopy}>
+									<Button
+										size="sm"
+										className="px-2"
+										onClick={handleCopy}
+									>
 										<CopyIcon />
 									</Button>
 								</div>
-								<div className="bg-muted rounded-md p-4 max-h-screen overflow-auto">
-									<pre className="text-sm font-mono whitespace-pre-wrap">
+								<div className="max-h-screen overflow-auto rounded-md bg-muted p-4">
+									<pre className="whitespace-pre-wrap font-mono text-sm">
 										{typeof response.data === 'object'
-											? JSON.stringify(response.data, null, 2)
+											? JSON.stringify(
+													response.data,
+													null,
+													2,
+												)
 											: response.data}
 									</pre>
 								</div>
 							</TabsContent>
 
 							<TabsContent value="headers" className="mt-4">
-								<div className="space-y-2 max-h-96 overflow-auto">
+								<div className="max-h-96 space-y-2 overflow-auto">
 									{Object.entries(response.headers).map(
 										([key, value]) => (
 											<div
 												key={key}
-												className="flex justify-between items-start py-1 border-b"
+												className="flex items-start justify-between border-b py-1"
 											>
-												<span className="font-medium text-sm">
+												<span className="text-sm font-medium">
 													{key}:
 												</span>
-												<span className="text-sm text-muted-foreground ml-4 break-all">
+												<span className="ml-4 break-all text-sm text-muted-foreground">
 													{value}
 												</span>
 											</div>
@@ -101,10 +129,10 @@ export function ResponseSection({ response }: ResponseSectionProps) {
 			)}
 
 			{!response && (
-				<Card className="h-full flex items-center justify-center border-none">
+				<Card className="flex h-full items-center justify-center border-none">
 					<CardContent>
 						<div className="text-center text-muted-foreground">
-							<PlayIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+							<PlayIcon className="mx-auto mb-2 h-12 w-12 opacity-50" />
 							<p>Send a request to see the response here</p>
 						</div>
 					</CardContent>

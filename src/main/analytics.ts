@@ -1,4 +1,7 @@
-import { initialize as aptabase, trackEvent } from '@aptabase/electron/main';
+import {
+	initialize as aptabase,
+	trackEvent,
+} from '@aptabase/electron/main';
 import Logger from 'electron-log';
 import { $init } from '../config/strings';
 import { getSetting } from './store-actions';

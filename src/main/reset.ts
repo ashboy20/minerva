@@ -3,7 +3,10 @@ import Logger from 'electron-log';
 import { $init } from '../config/strings';
 import { notification } from './notifications';
 import sounds from './sounds';
-import { resetStore, resetStoreSettings } from './store-actions';
+import {
+	resetStore,
+	resetStoreSettings,
+} from './store-actions';
 
 export const restartApp = () => {
 	app.relaunch(); // ONLY CALL THIS FUNCTION ONCE, or else it will cause multiple instances of the app to run

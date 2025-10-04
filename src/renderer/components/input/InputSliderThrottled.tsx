@@ -5,7 +5,12 @@ import { cn } from '@/lib/utils';
 import { debounce } from '@/utils/debounce';
 import { simpleUUID } from '@/utils/getUUID';
 import { throttle } from '@/utils/throttle';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { ClearButton } from './ClearButton';
 
 export function InputSliderThrottled({
@@ -113,12 +118,17 @@ export function InputSliderThrottled({
 			<div className="flex flex-row items-center justify-between">
 				<div className="space-y-0.5">
 					{label && (
-						<label htmlFor={uuid} className="font-medium text-base">
+						<label
+							htmlFor={uuid}
+							className="text-base font-medium"
+						>
 							{label}
 						</label>
 					)}
 					{description && (
-						<p className="text-muted-foreground">{description}</p>
+						<p className="text-muted-foreground">
+							{description}
+						</p>
 					)}
 				</div>
 				{currentValue && (
@@ -133,18 +143,23 @@ export function InputSliderThrottled({
 									}
 								}}
 								type="number"
-								className="w-auto mx-2"
+								className="mx-2 w-auto"
 								min={min}
 								max={max}
 								step={step}
 								{...props}
 							/>
 						) : (
-							<p className={cn('text-muted-foreground flex')}>
+							<p
+								className={cn('flex text-muted-foreground')}
+							>
 								{currentValue}
 								{typeof defaultValue === 'number' &&
 									currentValue[0] !== defaultValue && (
-										<ClearButton onClick={handleClear} className="static" />
+										<ClearButton
+											onClick={handleClear}
+											className="static"
+										/>
 									)}
 							</p>
 						)}
@@ -160,7 +175,11 @@ export function InputSliderThrottled({
 				step={step}
 				{...props}
 			/>
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 
 			{content && <div>{content}</div>}
 		</div>

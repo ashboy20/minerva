@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import React, {
+	createContext,
+	useContext,
+	useEffect,
+	useMemo,
+} from 'react';
 import { useGlobalContext } from '@/renderer/context/global-context';
 
 type Theme = 'dark' | 'light' | 'system';
@@ -17,9 +22,13 @@ const initialState: ThemeProviderState = {
 	setTheme: () => null,
 };
 
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext =
+	createContext<ThemeProviderState>(initialState);
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+export function ThemeProvider({
+	children,
+	...props
+}: ThemeProviderProps) {
 	const { settings } = useGlobalContext();
 
 	useEffect(() => {
@@ -28,8 +37,9 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 		root.classList.remove('light', 'dark');
 
 		if (settings.theme === 'system') {
-			const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-				.matches
+			const systemTheme = window.matchMedia(
+				'(prefers-color-scheme: dark)',
+			).matches
 				? 'dark'
 				: 'light';
 
@@ -62,7 +72,9 @@ export const useTheme = () => {
 	const context = useContext(ThemeProviderContext);
 
 	if (context === undefined)
-		throw new Error('useTheme must be used within a ThemeProvider');
+		throw new Error(
+			'useTheme must be used within a ThemeProvider',
+		);
 
 	return context;
 };

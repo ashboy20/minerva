@@ -37,7 +37,10 @@ export function InputColorThrottled({
 
 	const uuid = useMemo(simpleUUID, []);
 
-	const backgroundColor = useMemo(() => color.slice(0, 7), [color]);
+	const backgroundColor = useMemo(
+		() => color.slice(0, 7),
+		[color],
+	);
 
 	const foregroundColor = useMemo(() => {
 		try {
@@ -74,12 +77,17 @@ export function InputColorThrottled({
 					<div className="flex flex-row items-center justify-between">
 						<div className="space-y-0.5">
 							{label && (
-								<label htmlFor={uuid} className="font-medium text-base">
+								<label
+									htmlFor={uuid}
+									className="text-base font-medium"
+								>
 									{label}
 								</label>
 							)}
 							{description && (
-								<p className="text-muted-foreground">{description}</p>
+								<p className="text-muted-foreground">
+									{description}
+								</p>
 							)}
 						</div>
 					</div>
@@ -112,7 +120,9 @@ export function InputColorThrottled({
 					</PopoverContent>
 
 					{details && (
-						<p className="text-sm text-muted-foreground">{details}</p>
+						<p className="text-sm text-muted-foreground">
+							{details}
+						</p>
 					)}
 				</div>
 			</Popover>

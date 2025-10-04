@@ -1,21 +1,25 @@
 export const $settings = {
 	title: 'Settings',
-	description: 'Manage your account settings and application preferences',
+	description:
+		'Manage your account settings and application preferences',
 	app: {
-		githubUrl: 'https://github.com/lacymorrow/electron-bones',
+		githubUrl:
+			'https://github.com/lacymorrow/electron-bones',
 		repo: 'lacymorrow/electron-bones',
 		description: 'A boilerplate for Electron applications',
 	},
 	appearance: {
 		themeLabel: 'Theme',
-		themeDescription: 'Select the theme for the application',
+		themeDescription:
+			'Select the theme for the application',
 		light: 'Light',
 		dark: 'Dark',
 		system: 'System',
 	},
 	theme: {
 		themeLabel: 'Theme',
-		themeDescription: 'Select the theme for the application',
+		themeDescription:
+			'Select the theme for the application',
 		light: 'Light',
 		dark: 'Dark',
 		system: 'System',

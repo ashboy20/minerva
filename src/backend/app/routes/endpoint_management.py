@@ -9,6 +9,8 @@ from app.models.endpoint_management import (
     PostCollectionResponse,
     ReorderRequest,
     ReorderResponse,
+    UpdateItemRequest,
+    UpdateItemResponse,
 )
 from app.services.endpoint_management import endpoint_service
 
@@ -121,6 +123,41 @@ async def reorder_items(request: ReorderRequest):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to reorder collections: {str(e)}"
+        )
+
+
+@router.put("/item/update", response_model=UpdateItemResponse)
+async def update_item(request: UpdateItemRequest):
+    """Update an item's fields by UUID"""
+    try:
+        success = False
+        if request.type == "collection":
+            success = await endpoint_service.update_collection(
+                request.uuid, request.fields
+            )
+        elif request.type == "folder":
+            success = await endpoint_service.update_folder(
+                request.uuid, **request.fields
+            )
+        elif request.type == "endpoint":
+            success = await endpoint_service.update_endpoint(
+                request.uuid, **request.fields
+            )
+
+        if not success:
+            raise HTTPException(
+                status_code=404, detail=f"{request.type.title()} not found"
+            )
+
+        return UpdateItemResponse(
+            success=True,
+            data={"message": f"{request.type.title()} updated successfully"},
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update {request.type}: {str(e)}"
         )
 
 

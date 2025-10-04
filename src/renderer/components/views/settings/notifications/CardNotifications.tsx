@@ -1,6 +1,10 @@
 // https://github.com/shadcn-ui/ui/tree/main/apps/www/app/examples/forms
 
-import { BellIcon, CardStackIcon, DesktopIcon } from '@radix-ui/react-icons';
+import {
+	BellIcon,
+	CardStackIcon,
+	DesktopIcon,
+} from '@radix-ui/react-icons';
 
 import {
 	Card,
@@ -45,7 +49,7 @@ export function CardNotifications() {
 				>
 					<BellIcon className="mt-px h-5 w-5" />
 					<div className="space-y-1">
-						<p className="text-sm font-medium leading-none text-left">
+						<p className="text-left text-sm font-medium leading-none">
 							Everywhere
 						</p>
 						<p className="text-sm text-muted-foreground">
@@ -65,7 +69,7 @@ export function CardNotifications() {
 				>
 					<DesktopIcon className="mt-px h-5 w-5" />
 					<div className="space-y-1">
-						<p className="text-sm font-medium leading-none text-left">
+						<p className="text-left text-sm font-medium leading-none">
 							System notifications
 						</p>
 						<p className="text-sm text-muted-foreground">
@@ -85,7 +89,7 @@ export function CardNotifications() {
 				>
 					<CardStackIcon className="mt-px h-5 w-5" />
 					<div className="space-y-1">
-						<p className="text-sm font-medium leading-none text-left">
+						<p className="text-left text-sm font-medium leading-none">
 							App-only
 						</p>
 						<p className="text-sm text-muted-foreground">
@@ -104,7 +108,7 @@ export function CardNotifications() {
 				>
 					<BellOffIcon className="mt-px h-5 w-5" />
 					<div className="space-y-1">
-						<p className="text-sm font-medium leading-none text-left">
+						<p className="text-left text-sm font-medium leading-none">
 							Ignoring
 						</p>
 						<p className="text-sm text-muted-foreground">

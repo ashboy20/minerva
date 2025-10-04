@@ -1,4 +1,8 @@
-import { CircleIcon, StarFilledIcon, StarIcon } from '@radix-ui/react-icons';
+import {
+	CircleIcon,
+	StarFilledIcon,
+	StarIcon,
+} from '@radix-ui/react-icons';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -46,13 +50,19 @@ export function CardGithub() {
 			<CardHeader className="grid grid-cols-[1fr_110px] items-start gap-4 space-y-0">
 				<div className="space-y-1">
 					<CardTitle>
-						{githubData?.full_name || githubData?.name || $settings.app.repo}
+						{githubData?.full_name ||
+							githubData?.name ||
+							$settings.app.repo}
 					</CardTitle>
 					<CardDescription>
-						{githubData?.description || $settings.app.description}
+						{githubData?.description ||
+							$settings.app.description}
 					</CardDescription>
 				</div>
-				<Button variant="secondary" onClick={handleClickStar}>
+				<Button
+					variant="secondary"
+					onClick={handleClickStar}
+				>
 					<StarFilledIcon className="mr-2 h-4 w-4" />
 					Star
 				</Button>
@@ -73,7 +83,12 @@ export function CardGithub() {
 						</div>
 					)}
 					{githubData?.updated_at && (
-						<div>Updated {new Date(githubData.updated_at).toDateString()}</div>
+						<div>
+							Updated{' '}
+							{new Date(
+								githubData.updated_at,
+							).toDateString()}
+						</div>
 					)}
 				</div>
 			</CardContent>

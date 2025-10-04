@@ -1,4 +1,8 @@
-const browseIcon = ({ className }: { className?: string }) => (
+const browseIcon = ({
+	className,
+}: {
+	className?: string;
+}) => (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		viewBox="0 0 24 24"
@@ -16,7 +20,11 @@ const browseIcon = ({ className }: { className?: string }) => (
 	</svg>
 );
 
-const closeIcon = ({ className }: { className?: string }) => (
+const closeIcon = ({
+	className,
+}: {
+	className?: string;
+}) => (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		className={className}
@@ -33,7 +41,11 @@ const closeIcon = ({ className }: { className?: string }) => (
 	</svg>
 );
 
-const playIcon = ({ className }: { className?: string }) => (
+const playIcon = ({
+	className,
+}: {
+	className?: string;
+}) => (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		viewBox="0 0 24 24"
@@ -49,7 +61,11 @@ const playIcon = ({ className }: { className?: string }) => (
 	</svg>
 );
 
-const podcastIcon = ({ className }: { className?: string }) => (
+const podcastIcon = ({
+	className,
+}: {
+	className?: string;
+}) => (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		fill="none"
@@ -66,7 +82,11 @@ const podcastIcon = ({ className }: { className?: string }) => (
 	</svg>
 );
 
-const stacksIcon = ({ className }: { className?: string }) => (
+const stacksIcon = ({
+	className,
+}: {
+	className?: string;
+}) => (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		viewBox="0 0 24 24"

@@ -18,9 +18,14 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const port = process.env.PORT || 1212;
-const manifest = path.resolve(webpackPaths.dllPath, 'renderer.json');
+const manifest = path.resolve(
+	webpackPaths.dllPath,
+	'renderer.json',
+);
 const skipDLLs =
-	module.parent?.filename.includes('webpack.config.renderer.dev.dll') ||
+	module.parent?.filename.includes(
+		'webpack.config.renderer.dev.dll',
+	) ||
 	module.parent?.filename.includes('webpack.config.eslint');
 
 /**
@@ -28,7 +33,10 @@ const skipDLLs =
  */
 if (
 	!skipDLLs &&
-	!(fs.existsSync(webpackPaths.dllPath) && fs.existsSync(manifest))
+	!(
+		fs.existsSync(webpackPaths.dllPath) &&
+		fs.existsSync(manifest)
+	)
 ) {
 	console.log(
 		chalk.black.bgYellow.bold(
@@ -49,10 +57,16 @@ const configuration: webpack.Configuration = {
 		webpack1: `webpack-dev-server/client?http://localhost:${port}/dist`,
 		webpack2: 'webpack/hot/only-dev-server',
 		app: {
-			import: path.join(webpackPaths.srcRendererPath, 'index.tsx'),
+			import: path.join(
+				webpackPaths.srcRendererPath,
+				'index.tsx',
+			),
 		},
 		child: {
-			import: path.join(webpackPaths.srcRendererPath, 'child.tsx'),
+			import: path.join(
+				webpackPaths.srcRendererPath,
+				'child.tsx',
+			),
 		},
 	},
 	output: {
@@ -84,7 +98,12 @@ const configuration: webpack.Configuration = {
 			},
 			{
 				test: /\.s?css$/,
-				use: ['style-loader', 'css-loader', 'sass-loader', 'postcss-loader'],
+				use: [
+					'style-loader',
+					'css-loader',
+					'sass-loader',
+					'postcss-loader',
+				],
 				exclude: /\.module\.s?(c|a)ss$/,
 			},
 			// Fonts
@@ -156,7 +175,10 @@ const configuration: webpack.Configuration = {
 		new HtmlWebpackPlugin({
 			chunks: ['app'],
 			filename: path.join('index.html'),
-			template: path.join(webpackPaths.srcRendererPath, 'index.ejs'),
+			template: path.join(
+				webpackPaths.srcRendererPath,
+				'index.ejs',
+			),
 			minify: {
 				collapseWhitespace: true,
 				removeAttributeQuotes: true,
@@ -171,7 +193,10 @@ const configuration: webpack.Configuration = {
 		new HtmlWebpackPlugin({
 			chunks: ['child'],
 			filename: path.join('child.html'),
-			template: path.join(webpackPaths.srcRendererPath, 'index.ejs'),
+			template: path.join(
+				webpackPaths.srcRendererPath,
+				'index.ejs',
+			),
 			minify: {
 				collapseWhitespace: true,
 				removeAttributeQuotes: true,
@@ -202,18 +227,29 @@ const configuration: webpack.Configuration = {
 		},
 		setupMiddlewares(middlewares) {
 			console.log('Starting preload.js builder...');
-			const preloadProcess = spawn('npm', ['run', 'start:preload'], {
-				shell: true,
-				stdio: 'inherit',
-			})
+			const preloadProcess = spawn(
+				'npm',
+				['run', 'start:preload'],
+				{
+					shell: true,
+					stdio: 'inherit',
+				},
+			)
 				.on('close', (code: number) => process.exit(code!))
-				.on('error', (spawnError) => console.error(spawnError));
+				.on('error', (spawnError) =>
+					console.error(spawnError),
+				);
 
 			console.log('Starting Main Process...');
 			let args = ['run', 'start:main'];
 			if (process.env.MAIN_ARGS) {
 				args = args.concat(
-					['--', ...process.env.MAIN_ARGS.matchAll(/"[^"]+"|[^\s"]+/g)].flat(),
+					[
+						'--',
+						...process.env.MAIN_ARGS.matchAll(
+							/"[^"]+"|[^\s"]+/g,
+						),
+					].flat(),
 				);
 			}
 			spawn('npm', args, {
@@ -224,7 +260,9 @@ const configuration: webpack.Configuration = {
 					preloadProcess.kill();
 					process.exit(code!);
 				})
-				.on('error', (spawnError) => console.error(spawnError));
+				.on('error', (spawnError) =>
+					console.error(spawnError),
+				);
 			return middlewares;
 		},
 	},

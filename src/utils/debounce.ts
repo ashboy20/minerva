@@ -26,7 +26,9 @@ export function restArguments<T extends any[], R>(
 			case 2:
 				return func.call(this, args[0], args[1], rest);
 			default:
-				const _args: [...T, R[]] = Array(startIndex + 1) as [...T, R[]];
+				const _args: [...T, R[]] = Array(
+					startIndex + 1,
+				) as [...T, R[]];
 				for (index = 0; index < startIndex; index += 1) {
 					_args[index] = args[index];
 				}
@@ -61,7 +63,10 @@ export function debounce<T extends any[], R>(
 		}
 	};
 
-	const debounced = restArguments(function (this: any, _args: T) {
+	const debounced = restArguments(function (
+		this: any,
+		_args: T,
+	) {
 		context = this;
 		args = _args;
 		previous = now();

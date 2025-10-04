@@ -2,7 +2,10 @@ module.exports = {
 	extends: 'erb',
 	plugins: ['@typescript-eslint'],
 	// Ignore shadcn/ui components
-	ignorePatterns: ['**/components/ui/**', '**/renderer/lib/**'],
+	ignorePatterns: [
+		'**/components/ui/**',
+		'**/renderer/lib/**',
+	],
 	rules: {
 		// A temporary hack related to IDE not resolving correct package.json
 		// 'import/no-extraneous-dependencies': 'off',
@@ -45,7 +48,9 @@ module.exports = {
 				moduleDirectory: ['node_modules', 'src/'],
 			},
 			webpack: {
-				config: require.resolve('./.erb/configs/webpack.config.eslint.ts'),
+				config: require.resolve(
+					'./.erb/configs/webpack.config.eslint.ts',
+				),
 			},
 			typescript: {},
 		},

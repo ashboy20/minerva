@@ -71,10 +71,12 @@ export const iohoookMouseButtons = {
 	6: '7',
 };
 
-export const modifierKeyCodes = new Set([16, 17, 18, 91, 92, 93]);
+export const modifierKeyCodes = new Set([
+	16, 17, 18, 91, 92, 93,
+]);
 export const specialKeyCodes = new Set([
-	0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28,
-	29, 30, 31, 91, 92, 93, 94, 95,
+	0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 16, 17, 18, 21, 22, 23,
+	24, 25, 26, 27, 28, 29, 30, 31, 91, 92, 93, 94, 95,
 ]);
 
 export const iohookKeycodes = {
