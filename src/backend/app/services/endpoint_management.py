@@ -200,7 +200,9 @@ class EndpointManagementService:
                 return True
             return False
 
-    async def update_item(self, uuid: str, items: dict) -> Union[Collection, Folder, Endpoint, None]:
+    async def update_item(
+        self, uuid: str, items: dict
+    ) -> Union[Collection, Folder, Endpoint, None]:
         """Update an item by UUID. Works for collections, folders, and endpoints.
 
         Args:
@@ -373,36 +375,18 @@ class EndpointManagementService:
 
     async def rename_collection(self, uuid: str, new_name: str) -> bool:
         """Rename a collection by UUID"""
-        with Session(engine) as session:
-            collection = session.get(Collection, uuid)
-            if not collection:
-                return False
-
-            collection.name = new_name
-            session.commit()
-            return True
+        result = await self.update_item(uuid, {"name": new_name})
+        return result is not None
 
     async def rename_folder(self, uuid: str, new_name: str) -> bool:
         """Rename a folder by UUID"""
-        with Session(engine) as session:
-            folder = session.get(Folder, uuid)
-            if not folder:
-                return False
-
-            folder.name = new_name
-            session.commit()
-            return True
+        result = await self.update_item(uuid, {"name": new_name})
+        return result is not None
 
     async def rename_endpoint(self, uuid: str, new_name: str) -> bool:
         """Rename an endpoint by UUID"""
-        with Session(engine) as session:
-            endpoint = session.get(Endpoint, uuid)
-            if not endpoint:
-                return False
-
-            endpoint.name = new_name
-            session.commit()
-            return True
+        result = await self.update_item(uuid, {"name": new_name})
+        return result is not None
 
 
 # Global service instance
