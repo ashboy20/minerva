@@ -88,7 +88,8 @@ const sampleCollections: Collection[] = [
 	{
 		id: '2',
 		name: 'Authentication API',
-		description: 'User authentication and authorization requests',
+		description:
+			'User authentication and authorization requests',
 		createdAt: new Date('2024-01-20'),
 		requests: [
 			{
@@ -112,10 +113,17 @@ const sampleCollections: Collection[] = [
 ];
 
 export function Collections() {
-	const [collections, setCollections] = useState<Collection[]>(sampleCollections);
-	const [newCollectionName, setNewCollectionName] = useState('');
-	const [newCollectionDescription, setNewCollectionDescription] = useState('');
-	const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+	const [collections, setCollections] = useState<
+		Collection[]
+	>(sampleCollections);
+	const [newCollectionName, setNewCollectionName] =
+		useState('');
+	const [
+		newCollectionDescription,
+		setNewCollectionDescription,
+	] = useState('');
+	const [isCreateDialogOpen, setIsCreateDialogOpen] =
+		useState(false);
 
 	const createCollection = () => {
 		if (!newCollectionName.trim()) return;
@@ -135,17 +143,25 @@ export function Collections() {
 	};
 
 	const deleteCollection = (collectionId: string) => {
-		setCollections(collections.filter(c => c.id !== collectionId));
+		setCollections(
+			collections.filter((c) => c.id !== collectionId),
+		);
 	};
 
 	const getMethodColor = (method: string) => {
 		switch (method.toUpperCase()) {
-			case 'GET': return 'bg-green-500';
-			case 'POST': return 'bg-blue-500';
-			case 'PUT': return 'bg-orange-500';
-			case 'PATCH': return 'bg-yellow-500';
-			case 'DELETE': return 'bg-red-500';
-			default: return 'bg-gray-500';
+			case 'GET':
+				return 'bg-green-500';
+			case 'POST':
+				return 'bg-blue-500';
+			case 'PUT':
+				return 'bg-orange-500';
+			case 'PATCH':
+				return 'bg-yellow-500';
+			case 'DELETE':
+				return 'bg-red-500';
+			default:
+				return 'bg-gray-500';
 		}
 	};
 
@@ -162,23 +178,31 @@ export function Collections() {
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold">Collections</h1>
+					<h1 className="text-2xl font-bold">
+						Collections
+					</h1>
 					<p className="text-muted-foreground">
 						Organize your API requests into collections
 					</p>
 				</div>
-				<Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+				<Dialog
+					open={isCreateDialogOpen}
+					onOpenChange={setIsCreateDialogOpen}
+				>
 					<DialogTrigger asChild>
 						<Button>
-							<PlusIcon className="w-4 h-4 mr-2" />
+							<PlusIcon className="mr-2 h-4 w-4" />
 							New Collection
 						</Button>
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Create New Collection</DialogTitle>
+							<DialogTitle>
+								Create New Collection
+							</DialogTitle>
 							<DialogDescription>
-								Create a new collection to organize your API requests.
+								Create a new collection to organize your API
+								requests.
 							</DialogDescription>
 						</DialogHeader>
 						<div className="space-y-4">
@@ -188,16 +212,24 @@ export function Collections() {
 									id="name"
 									placeholder="Enter collection name"
 									value={newCollectionName}
-									onChange={(e) => setNewCollectionName(e.target.value)}
+									onChange={(e) =>
+										setNewCollectionName(e.target.value)
+									}
 								/>
 							</div>
 							<div>
-								<Label htmlFor="description">Description</Label>
+								<Label htmlFor="description">
+									Description
+								</Label>
 								<Input
 									id="description"
 									placeholder="Enter collection description"
 									value={newCollectionDescription}
-									onChange={(e) => setNewCollectionDescription(e.target.value)}
+									onChange={(e) =>
+										setNewCollectionDescription(
+											e.target.value,
+										)
+									}
 								/>
 							</div>
 						</div>
@@ -208,7 +240,10 @@ export function Collections() {
 							>
 								Cancel
 							</Button>
-							<Button onClick={createCollection} disabled={!newCollectionName.trim()}>
+							<Button
+								onClick={createCollection}
+								disabled={!newCollectionName.trim()}
+							>
 								Create Collection
 							</Button>
 						</DialogFooter>
@@ -218,87 +253,114 @@ export function Collections() {
 
 			{/* Collections Grid */}
 			{collections.length === 0 ? (
-				<Card className="flex items-center justify-center h-64">
+				<Card className="flex h-64 items-center justify-center">
 					<CardContent>
 						<div className="text-center text-muted-foreground">
-							<ArchiveIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-							<p className="text-lg font-medium">No collections yet</p>
-							<p className="text-sm">Create your first collection to get started</p>
+							<ArchiveIcon className="mx-auto mb-2 h-12 w-12 opacity-50" />
+							<p className="text-lg font-medium">
+								No collections yet
+							</p>
+							<p className="text-sm">
+								Create your first collection to get started
+							</p>
 						</div>
 					</CardContent>
 				</Card>
 			) : (
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{collections.map((collection) => (
-						<Card key={collection.id} className="hover:shadow-md transition-shadow">
+						<Card
+							key={collection.id}
+							className="transition-shadow hover:shadow-md"
+						>
 							<CardHeader>
 								<div className="flex items-start justify-between">
 									<div className="flex items-center space-x-2">
-										<ArchiveIcon className="w-5 h-5 text-muted-foreground" />
-										<CardTitle className="text-lg">{collection.name}</CardTitle>
+										<ArchiveIcon className="h-5 w-5 text-muted-foreground" />
+										<CardTitle className="text-lg">
+											{collection.name}
+										</CardTitle>
 									</div>
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
 											<Button variant="ghost" size="sm">
-												<DotsVerticalIcon className="w-4 h-4" />
+												<DotsVerticalIcon className="h-4 w-4" />
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end">
-											<DropdownMenuItem>Edit Collection</DropdownMenuItem>
-											<DropdownMenuItem>Duplicate</DropdownMenuItem>
-											<DropdownMenuItem>Export</DropdownMenuItem>
+											<DropdownMenuItem>
+												Edit Collection
+											</DropdownMenuItem>
+											<DropdownMenuItem>
+												Duplicate
+											</DropdownMenuItem>
+											<DropdownMenuItem>
+												Export
+											</DropdownMenuItem>
 											<Separator className="my-1" />
 											<DropdownMenuItem
 												className="text-destructive"
-												onClick={() => deleteCollection(collection.id)}
+												onClick={() =>
+													deleteCollection(collection.id)
+												}
 											>
-												<TrashIcon className="w-4 h-4 mr-2" />
+												<TrashIcon className="mr-2 h-4 w-4" />
 												Delete
 											</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>
 								</div>
-								<CardDescription>{collection.description}</CardDescription>
+								<CardDescription>
+									{collection.description}
+								</CardDescription>
 								<div className="flex items-center justify-between text-sm text-muted-foreground">
-									<span>{collection.requests.length} requests</span>
-									<span>Created {formatDate(collection.createdAt)}</span>
+									<span>
+										{collection.requests.length} requests
+									</span>
+									<span>
+										Created{' '}
+										{formatDate(collection.createdAt)}
+									</span>
 								</div>
 							</CardHeader>
 
 							{collection.requests.length > 0 && (
 								<CardContent className="pt-0">
 									<div className="space-y-2">
-										<Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+										<Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
 											Recent Requests
 										</Label>
 										<div className="space-y-1">
-											{collection.requests.slice(0, 3).map((request) => (
-												<div
-													key={request.id}
-													className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 cursor-pointer group"
-												>
-													<div className="flex items-center space-x-2 flex-1 min-w-0">
-														<Badge
-															className={`${getMethodColor(request.method)} text-white text-xs px-1.5 py-0.5`}
-														>
-															{request.method}
-														</Badge>
-														<span className="text-sm font-medium truncate">
-															{request.name}
-														</span>
-													</div>
-													<Button
-														variant="ghost"
-														size="sm"
-														className="opacity-0 group-hover:opacity-100 transition-opacity"
+											{collection.requests
+												.slice(0, 3)
+												.map((request) => (
+													<div
+														key={request.id}
+														className="group flex cursor-pointer items-center justify-between rounded-md p-2 hover:bg-muted/50"
 													>
-														<PlayIcon className="w-3 h-3" />
-													</Button>
-												</div>
-											))}
+														<div className="flex min-w-0 flex-1 items-center space-x-2">
+															<Badge
+																className={`${getMethodColor(request.method)} px-1.5 py-0.5 text-xs text-white`}
+															>
+																{request.method}
+															</Badge>
+															<span className="truncate text-sm font-medium">
+																{request.name}
+															</span>
+														</div>
+														<Button
+															variant="ghost"
+															size="sm"
+															className="opacity-0 transition-opacity group-hover:opacity-100"
+														>
+															<PlayIcon className="h-3 w-3" />
+														</Button>
+													</div>
+												))}
 											{collection.requests.length > 3 && (
-												<div className="text-xs text-muted-foreground text-center pt-1">
-													+{collection.requests.length - 3} more requests
+												<div className="pt-1 text-center text-xs text-muted-foreground">
+													+{collection.requests.length - 3}{' '}
+													more requests
 												</div>
 											)}
 										</div>
@@ -308,9 +370,11 @@ export function Collections() {
 
 							{collection.requests.length === 0 && (
 								<CardContent className="pt-0">
-									<div className="text-center text-muted-foreground py-4">
-										<FileTextIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-										<p className="text-sm">No requests in this collection</p>
+									<div className="py-4 text-center text-muted-foreground">
+										<FileTextIcon className="mx-auto mb-2 h-8 w-8 opacity-50" />
+										<p className="text-sm">
+											No requests in this collection
+										</p>
 									</div>
 								</CardContent>
 							)}
@@ -322,33 +386,60 @@ export function Collections() {
 			{/* Summary Stats */}
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-lg">Collection Summary</CardTitle>
+					<CardTitle className="text-lg">
+						Collection Summary
+					</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+					<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
 						<div className="text-center">
 							<div className="text-2xl font-bold text-blue-600">
 								{collections.length}
 							</div>
-							<div className="text-sm text-muted-foreground">Collections</div>
+							<div className="text-sm text-muted-foreground">
+								Collections
+							</div>
 						</div>
 						<div className="text-center">
 							<div className="text-2xl font-bold text-green-600">
-								{collections.reduce((total, c) => total + c.requests.length, 0)}
+								{collections.reduce(
+									(total, c) => total + c.requests.length,
+									0,
+								)}
 							</div>
-							<div className="text-sm text-muted-foreground">Total Requests</div>
+							<div className="text-sm text-muted-foreground">
+								Total Requests
+							</div>
 						</div>
 						<div className="text-center">
 							<div className="text-2xl font-bold text-purple-600">
-								{collections.reduce((total, c) => total + c.requests.filter(r => r.method === 'GET').length, 0)}
+								{collections.reduce(
+									(total, c) =>
+										total +
+										c.requests.filter(
+											(r) => r.method === 'GET',
+										).length,
+									0,
+								)}
 							</div>
-							<div className="text-sm text-muted-foreground">GET Requests</div>
+							<div className="text-sm text-muted-foreground">
+								GET Requests
+							</div>
 						</div>
 						<div className="text-center">
 							<div className="text-2xl font-bold text-orange-600">
-								{collections.reduce((total, c) => total + c.requests.filter(r => r.method === 'POST').length, 0)}
+								{collections.reduce(
+									(total, c) =>
+										total +
+										c.requests.filter(
+											(r) => r.method === 'POST',
+										).length,
+									0,
+								)}
 							</div>
-							<div className="text-sm text-muted-foreground">POST Requests</div>
+							<div className="text-sm text-muted-foreground">
+								POST Requests
+							</div>
 						</div>
 					</div>
 				</CardContent>

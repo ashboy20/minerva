@@ -1,7 +1,9 @@
+import os
 from sqlmodel import SQLModel, create_engine, Session
 from pathlib import Path
-from app.models.endpoint_management import Endpoint, Request, Response, Case
+from app.models.endpoint_management import Collection, Folder, Endpoint
 import uuid
+import yaml
 
 # Database configuration
 DATABASE_DIR = Path(__file__).parent / "data"
@@ -13,6 +15,9 @@ DATABASE_DIR.mkdir(exist_ok=True)
 
 # SQLite connection string
 DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+
+SEED_DATA_FILE = "seed_data.yaml"
+SEED_DATA_PATH = DATABASE_DIR / SEED_DATA_FILE
 
 # Create engine
 engine = create_engine(
@@ -27,304 +32,77 @@ def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
 
-def seed_data():
-    """Seed data into the database using the new cases-based structure"""
+def add_seed_data():
+    """Add seed data to the database after tables are created"""
+    # Ensure database and tables exist first
+    create_db_and_tables()
+
+    with open(SEED_DATA_PATH, "r") as f:
+        seed_data = yaml.safe_load(f)
+
+    if not seed_data.get("uuid"):
+        seed_data["uuid"] = str(uuid.uuid4())
+
     with Session(engine) as session:
-
-        # Create Get Users endpoint
-        users_endpoint = Endpoint(
-            operation_id="getAllUsers",
-            name="Get Users",
-            summary="Retrieve all users",
-            description="Fetch all users from JSONPlaceholder API with their basic information",
-            method="GET",
-            path="/users",
-            base_url="https://jsonplaceholder.typicode.com",
-            cases=[
-                Case(
-                    name="Basic retrieval",
-                    description="Retrieve all users with default settings",
-                    request=Request(
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Accept",
-                                "value": "application/json",
-                                "enabled": True,
-                            }
-                        ],
-                        query_params=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "limit",
-                                "value": "10",
-                                "enabled": True,
-                            }
-                        ],
-                        path_params=[],
-                        body=None,
-                    ).dict(),
-                    response=Response(
-                        status_code=200,
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Content-Type",
-                                "value": "application/json",
-                                "enabled": True,
-                            }
-                        ],
-                        body={
-                            "data": '[{"id": 1, "name": "Leanne Graham", "email": "Sincere@april.biz", "username": "Bret"}]'
-                        },
-                    ).dict(),
-                ).dict()
-            ],
+        # 1. Insert Collection
+        collection = Collection(
+            uuid=seed_data["uuid"],
+            name=seed_data.get("name", "Default Collection"),
+            description=seed_data.get("description", ""),
+            variables=seed_data.get("variables", []),
+            position=1,
+            items=[],  # We'll populate this separately
         )
-        session.add(users_endpoint)
+        session.add(collection)
         session.commit()
-        session.refresh(users_endpoint)
 
-        # Create Post endpoint
-        create_post_endpoint = Endpoint(
-            operation_id="createPost",
-            name="Create Post",
-            summary="Create a new post",
-            description="Create a new post in the JSONPlaceholder API",
-            method="POST",
-            path="/posts",
-            base_url="https://jsonplaceholder.typicode.com",
-            cases=[
-                Case(
-                    name="Basic creation",
-                    description="Create a post with title and body",
-                    request=Request(
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Content-Type",
-                                "value": "application/json",
-                                "enabled": True,
-                            },
-                            {
-                                "row_id": 2,
-                                "keyValue": "Accept",
-                                "value": "application/json",
-                                "enabled": True,
-                            },
-                        ],
-                        query_params=[],
-                        path_params=[],
-                        body={"title": "foo", "body": "bar", "userId": 1},
-                    ).dict(),
-                    response=Response(
-                        status_code=201,
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Content-Type",
-                                "value": "application/json",
-                                "enabled": True,
-                            }
-                        ],
-                        body={
-                            "data": '{"id": 101, "title": "foo", "body": "bar", "userId": 1}'
-                        },
-                    ).dict(),
-                ).dict()
-            ],
-        )
-        session.add(create_post_endpoint)
-        session.commit()
-        session.refresh(create_post_endpoint)
+        # 2. Process items (folders and endpoints)
+        collection_uuid = collection.uuid
+        process_items(session, seed_data.get("items", []), collection_uuid)
 
-        # Create Get Posts endpoint
-        posts_endpoint = Endpoint(
-            operation_id="getAllPosts",
-            name="Get Posts",
-            summary="Retrieve all posts",
-            description="Fetch all posts from JSONPlaceholder API with optional filtering",
-            method="GET",
-            path="/posts",
-            base_url="https://jsonplaceholder.typicode.com",
-            cases=[
-                Case(
-                    name="Filtered retrieval",
-                    description="Retrieve posts filtered by userId",
-                    request=Request(
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Accept",
-                                "value": "application/json",
-                                "enabled": True,
-                            }
-                        ],
-                        query_params=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "userId",
-                                "value": "1",
-                                "enabled": True,
-                            },
-                            {
-                                "row_id": 2,
-                                "keyValue": "limit",
-                                "value": "10",
-                                "enabled": True,
-                            },
-                        ],
-                        path_params=[],
-                        body=None,
-                    ).dict(),
-                    response=Response(
-                        status_code=200,
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Content-Type",
-                                "value": "application/json",
-                                "enabled": True,
-                            }
-                        ],
-                        body={
-                            "data": '[{"userId": 1, "id": 1, "title": "sunt aut facere", "body": "quia et suscipit"}]'
-                        },
-                    ).dict(),
-                ).dict()
-            ],
-        )
-        session.add(posts_endpoint)
         session.commit()
-        session.refresh(posts_endpoint)
 
-        # Create Get User by ID endpoint with path parameter
-        user_by_id_endpoint = Endpoint(
-            operation_id="getUserById",
-            name="Get User by ID",
-            summary="Retrieve a specific user",
-            description="Fetch a specific user by their ID from JSONPlaceholder API",
-            method="GET",
-            path="/users/:id",
-            base_url="https://jsonplaceholder.typicode.com",
-            cases=[
-                Case(
-                    name="Get specific user",
-                    description="Retrieve user with ID 1",
-                    request=Request(
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Accept",
-                                "value": "application/json",
-                                "enabled": True,
-                            }
-                        ],
-                        query_params=[],
-                        path_params=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "id",
-                                "value": "1",
-                                "enabled": True,
-                            }
-                        ],
-                        body=None,
-                    ).dict(),
-                    response=Response(
-                        status_code=200,
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Content-Type",
-                                "value": "application/json",
-                                "enabled": True,
-                            }
-                        ],
-                        body={
-                            "data": '{"id": 1, "name": "Leanne Graham", "username": "Bret", "email": "Sincere@april.biz", "address": {"street": "Kulas Light", "suite": "Apt. 556", "city": "Gwenborough", "zipcode": "92998-3874", "geo": {"lat": "-37.3159", "lng": "81.1496"}}, "phone": "1-770-736-8031 x56442", "website": "hildegard.org", "company": {"name": "Romaguera-Crona", "catchPhrase": "Multi-layered client-server neural-net", "bs": "harness real-time e-markets"}}'
-                        },
-                    ).dict(),
-                ).dict()
-            ],
-        )
-        session.add(user_by_id_endpoint)
-        session.commit()
-        session.refresh(user_by_id_endpoint)
 
-        # Create Update User endpoint with path parameter
-        update_user_endpoint = Endpoint(
-            operation_id="updateUser",
-            name="Update User",
-            summary="Update a user",
-            description="Update a specific user by their ID",
-            method="PUT",
-            path="/users/:id",
-            base_url="https://jsonplaceholder.typicode.com",
-            cases=[
-                Case(
-                    name="Update user info",
-                    description="Update user with ID 1",
-                    request=Request(
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Content-Type",
-                                "value": "application/json",
-                                "enabled": True,
-                            },
-                            {
-                                "row_id": 2,
-                                "keyValue": "Accept",
-                                "value": "application/json",
-                                "enabled": True,
-                            },
-                        ],
-                        query_params=[],
-                        path_params=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "id",
-                                "value": "1",
-                                "enabled": True,
-                            }
-                        ],
-                        body={
-                            "id": 1,
-                            "name": "Updated Name",
-                            "username": "updateduser",
-                            "email": "updated@example.com",
-                        },
-                    ).dict(),
-                    response=Response(
-                        status_code=200,
-                        headers=[
-                            {
-                                "row_id": 1,
-                                "keyValue": "Content-Type",
-                                "value": "application/json",
-                                "enabled": True,
-                            }
-                        ],
-                        body={
-                            "data": '{"id": 1, "name": "Updated Name", "username": "updateduser", "email": "updated@example.com"}'
-                        },
-                    ).dict(),
-                ).dict()
-            ],
-        )
-        session.add(update_user_endpoint)
-        session.commit()
-        session.refresh(update_user_endpoint)
+def process_items(session: Session, items: list, parent_uuid: str):
+    """Recursively process items (folders and endpoints) and insert into appropriate tables"""
+    position_counter = {}
+    for item in items:
+        if item.get("type") == "folder":
+            # Create folder
+            folder_uuid = str(uuid.uuid4())
+            position_counter[parent_uuid] = position_counter.get(parent_uuid, 0) + 1
+            folder = Folder(
+                uuid=folder_uuid,
+                name=item.get("name", ""),
+                description=item.get("description", ""),
+                parent_uuid=parent_uuid,
+                position=position_counter[parent_uuid],
+            )
+            session.add(folder)
+            session.flush()  # Flush to get the folder ID
 
-        # Commit all changes
-        session.commit()
+            # Process folder's items (endpoints and sub-folders)
+            process_items(session, item.get("items", []), folder_uuid)
+
+        else:
+            # Create endpoint
+            endpoint_uuid = str(uuid.uuid4())
+            position_counter[parent_uuid] = position_counter.get(parent_uuid, 0) + 1
+            endpoint = Endpoint(
+                uuid=endpoint_uuid,
+                name=item.get("name", ""),
+                description=item.get("description", ""),
+                method=item.get("method", "GET"),
+                url=item.get("url", ""),
+                parent_uuid=parent_uuid,
+                position=position_counter[parent_uuid],
+                cases=item.get("cases", []),
+            )
+            session.add(endpoint)
 
 
 def reset_database():
     """Reset database by dropping all tables and recreating them with seed data"""
-    import os
-
     # Close all connections to the database
     engine.dispose()
 
@@ -333,13 +111,9 @@ def reset_database():
         os.remove(DATABASE_PATH)
         print(f"Removed database file: {DATABASE_PATH}")
 
-    # Recreate database and tables
-    create_db_and_tables()
-    print("Recreated database and tables")
-
-    # Seed with initial data
-    seed_data()
-    print("Seeded database with initial data")
+    # Seed with initial data (this will also create the database and tables)
+    add_seed_data()
+    print("Recreated database and tables with seed data")
 
 
 def get_session():

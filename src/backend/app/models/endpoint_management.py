@@ -1,176 +1,278 @@
-from typing import Dict, List, Optional
-from sqlmodel import Field, SQLModel, Column, JSON
-from pydantic import BaseModel
-import json
+from typing import List, Literal, Optional, Union
 import uuid
+from sqlmodel import Field, SQLModel, Column, JSON, Relationship
+from pydantic import BaseModel
+from datetime import datetime, UTC
 
 from .base import BaseResponse
 
 
-class Row(BaseModel):
-    row_id: int = Field(description="ID of the row")
-    keyValue: str = Field(description="Key value of the row")
-    value: str = Field(description="Value of the row")
-    enabled: bool = Field(description="Enabled of the row")
+# child components
+class Varialble(BaseModel):
+    """Variable definition"""
+
+    key: str = Field(description="Variable key")
+    value: str = Field(description="Variable value")
+
+
+class Header(BaseModel):
+    """HTTP header definition"""
+
+    name: str = Field(description="Header name")
+    value: str = Field(description="Header value")
+
+
+class PathParam(BaseModel):
+    """Path parameter definition"""
+
+    name: str = Field(description="Parameter name")
+    value: str = Field(description="Parameter value")
+
+
+class QueryParam(BaseModel):
+    """Query parameter definition"""
+
+    name: str = Field(description="Parameter name")
+    value: str = Field(description="Parameter value")
 
 
 class Auth(BaseModel):
-    auth_type: str = Field(description="Type of the auth", alias="auth")
-    token: str = Field(description="Token of the auth")
+    """Authentication configuration"""
+
+    auth_type: str = Field(
+        description="Authentication type (bearer, basic, etc.)", alias="type"
+    )
+    token: Optional[str] = Field(default=None, description="Authentication token")
+    username: Optional[str] = Field(default=None, description="Username for basic auth")
+    password: Optional[str] = Field(default=None, description="Password for basic auth")
 
 
 class Request(BaseModel):
-    headers: Optional[List[dict]] = Field(
-        default=None, description="Headers of the request"
+    """Request configuration for a test case"""
+
+    url: Optional[str] = Field(default=None, description="Request URL")
+    headers: Optional[List[Header]] = Field(default=None, description="Request headers")
+    query: Optional[List[QueryParam]] = Field(
+        default=None, description="Query parameters"
     )
-    query_params: Optional[List[dict]] = Field(
-        default=None, description="Query params of the request"
+    path_params: Optional[List[PathParam]] = Field(
+        default=None, description="Path parameters"
     )
-    path_params: Optional[List[dict]] = Field(
-        default=None, description="Path params of the request"
+    body: Optional[Union[str, dict]] = Field(default=None, description="Request body")
+    auth: Optional[Auth] = Field(
+        default=None, description="Authentication configuration"
     )
-    body: Optional[dict] = Field(default=None, description="Body of the request")
-    auth: Optional[dict] = Field(default=None, description="Auth of the request")
 
 
 class Response(BaseModel):
-    status_code: int = Field(description="Status code of the response")
-    headers: Optional[List[dict]] = Field(
-        default=None, description="Headers of the response"
+    """Expected response for a test case"""
+
+    status_code: int = Field(description="Expected HTTP status code")
+    headers: Optional[List[Header]] = Field(
+        default=None, description="Expected response headers"
     )
-    body: Optional[dict] = Field(default=None, description="Body of the response")
+    body: Optional[Union[str, dict]] = Field(
+        default=None, description="Expected response body"
+    )
 
 
 class Case(BaseModel):
-    name: str = Field(description="Name of the case")
-    description: Optional[str] = Field(
-        default=None, description="Description of the case"
+    """Case definition"""
+
+    name: str = Field(description="Case name")
+    description: Optional[str] = Field(default=None, description="Case description")
+    request: Request = Field(description="Request configuration")
+    response: Response = Field(description="Expected response")
+
+
+class Collection(SQLModel, table=True):
+    """Collection containing endpoints and folders - primary storage model"""
+
+    __tablename__ = "collections"
+
+    uuid: str = Field(
+        unique=True,
+        index=True,
+        primary_key=True,
+        description="Unique UUID for collection identification",
+        default_factory=lambda: str(uuid.uuid4()),
     )
-    request: Optional[dict] = Field(default=None, description="Request of the case")
-    response: Optional[dict] = Field(default=None, description="Response of the case")
+    name: str = Field(description="Collection name")
+    description: str = Field(description="Collection description", nullable=True)
+    variables: List[dict] = Field(
+        description="Collection variables", sa_column=Column(JSON), default=[]
+    )
+    position: int = Field(description="Collection position")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="Timestamp when collection was created",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="Timestamp when collection was last updated",
+    )
+
+
+class Folder(SQLModel, table=True):
+    """Folder table for organizing endpoints"""
+
+    __tablename__ = "folders"
+
+    uuid: str = Field(
+        unique=True,
+        description="Unique UUID for folder identification",
+        primary_key=True,
+        index=True,
+        default_factory=lambda: str(uuid.uuid4()),
+    )
+    name: str = Field(description="Folder name", nullable=False)
+    description: Optional[str] = Field(
+        default=None, description="Folder description", nullable=True
+    )
+    parent_uuid: Optional[str] = Field(
+        default=None, description="Parent UUID (collection or folder)"
+    )
+    position: int = Field(description="Position in parent")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="Timestamp when folder was created",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="Timestamp when folder was last updated",
+    )
 
 
 class Endpoint(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    """Endpoint table for API endpoints"""
+
+    __tablename__ = "endpoints"
+
     uuid: str = Field(
-        default_factory=lambda: str(uuid.uuid4()),
         unique=True,
-        index=True,
         description="Unique UUID for endpoint identification",
+        primary_key=True,
+        index=True,
+        default_factory=lambda: str(uuid.uuid4()),
     )
-    operation_id: str = Field(description="Operation ID of the endpoint")
-    name: str = Field(description="Name of the endpoint")
-    summary: Optional[str] = Field(default=None, description="Summary of the endpoint")
+    name: str = Field(description="Endpoint name", nullable=False)
     description: Optional[str] = Field(
-        default=None, description="Description of the endpoint"
+        default=None, description="Endpoint description", nullable=True
     )
     method: str = Field(
         description="HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)"
     )
-    path: str = Field(description="Path of the endpoint")
-    base_url: str = Field(description="Base URL of the endpoint")
+    url: str = Field(description="Endpoint URL")
     cases: List[dict] = Field(
-        description="Cases of the endpoint", sa_column=Column(JSON)
+        description="Endpoint cases", sa_column=Column(JSON), default=[]
+    )
+    parent_uuid: Optional[str] = Field(
+        default=None, description="Parent UUID (collection or folder)"
+    )
+    position: int = Field(description="Position in parent")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="Timestamp when endpoint was created",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="Timestamp when endpoint was last updated",
     )
 
 
-# API Request/Response Models
-class CreateEndpointRequest(BaseModel):
-    operation_id: str
-    name: str
-    summary: str = None
-    description: str = None
-    method: str
-    path: str
-    base_url: str
-    cases: List[dict] = []
+# endpoint request + response models
+class PartialCollectionSchema(BaseModel):
+    """Partial collection schema for API responses"""
 
-
-class UpdateEndpointRequest(BaseModel):
-    operation_id: str = None
-    name: str = None
-    summary: str = None
-    description: str = None
-    method: str = None
-    path: str = None
-    base_url: str = None
-    cases: List[dict] = None
-
-
-# Response Models - Each endpoint has its own response model inheriting from BaseResponse
-class GetEndpointsResponse(BaseResponse):
-    """Response model for GET /endpoints"""
-
-    class GetEndpointsResponseData(BaseModel):
-        """Data structure for GET /endpoints response"""
-
-        endpoints: List[Endpoint] = Field(description="List of all endpoints")
-
-    data: GetEndpointsResponseData = Field(
-        description="Response data containing endpoints list"
+    uuid: str = Field(description="Collection UUID")
+    name: str = Field(description="Collection name")
+    type: str = Field(description="Collection type", default="collection")
+    items: List[Union["PartialFolderSchema", "PartialEndpointSchema"]] = Field(
+        description="Collection items"
     )
 
 
-class GetEndpointResponse(BaseResponse):
-    """Response model for GET /endpoints/{uuid}"""
+class CollectionSchema(PartialCollectionSchema):
+    """Collection schema for API responses"""
 
-    class GetEndpointResponseData(BaseModel):
-        """Data structure for GET /endpoints/{uuid} response"""
+    description: Optional[str] = Field(
+        default=None, description="Collection description"
+    )
+    variables: List[dict] = Field(description="Collection variables")
+    items: List[Union["FolderSchema", "EndpointSchema"]] = Field(
+        default=[], description="Collection items"
+    )
+    created_at: datetime = Field(description="Collection creation timestamp")
+    updated_at: datetime = Field(description="Collection update timestamp")
 
-        endpoint: Endpoint = Field(description="The requested endpoint")
 
-    data: GetEndpointResponseData = Field(
-        description="Response data containing single endpoint"
+class PartialItemSchema(BaseModel):
+    """Partial item schema for API responses"""
+
+    uuid: str = Field(description="Item UUID")
+    name: str = Field(description="Item name")
+    type: Literal["folder", "endpoint"] = Field(
+        description="Item type"
+    )
+    parent_uuid: Optional[str] = Field(default=None, description="Parent UUID")
+
+class ItemSchema(PartialItemSchema):
+    """Base item schema"""
+
+    description: Optional[str] = Field(default=None, description="Item description")
+    created_at: datetime = Field(description="Item creation timestamp")
+    updated_at: datetime = Field(description="Item update timestamp")
+
+
+class PartialFolderSchema(PartialItemSchema):
+    """Partial folder schema for API responses"""
+
+    type: str = Field(description="Item type", default="folder")
+    items: List[Union["PartialFolderSchema", "PartialEndpointSchema"]] = Field(
+        default=[], description="Folder items"
+    )
+
+class FolderSchema(ItemSchema):
+    """Folder schema for API responses"""
+
+    items: List[Union["FolderSchema", "EndpointSchema"]] = Field(
+        default=[], description="Folder items"
     )
 
 
-class CreateEndpointResponse(BaseResponse):
-    """Response model for POST /endpoints"""
+class PartialEndpointSchema(PartialItemSchema):
+    """Partial endpoint schema for API responses"""
 
-    class CreateEndpointResponseData(BaseModel):
-        """Data structure for POST /endpoints response"""
-
-        endpoint: Endpoint = Field(description="The created endpoint")
-
-    data: CreateEndpointResponseData = Field(
-        description="Response data containing created endpoint"
-    )
+    type: str = Field(description="Item type", default="endpoint")
+    method: str = Field(description="HTTP method")
+    url: str = Field(description="Endpoint URL")
 
 
-class UpdateEndpointResponse(BaseResponse):
-    """Response model for PUT /endpoints/{uuid}"""
+class EndpointSchema(ItemSchema, PartialEndpointSchema):
+    """Endpoint schema for API responses"""
 
-    class UpdateEndpointResponseData(BaseModel):
-        """Data structure for PUT /endpoints/{uuid} response"""
-
-        endpoint: Endpoint = Field(description="The updated endpoint")
-
-    data: UpdateEndpointResponseData = Field(
-        description="Response data containing updated endpoint"
-    )
+    cases: List[dict] = Field(default=[], description="Endpoint cases")
 
 
-class DeleteEndpointResponse(BaseResponse):
-    """Response model for DELETE /endpoints/{uuid}"""
+class GetCollectionsResponse(BaseResponse):
+    """Response model for GET /collections"""
 
-    class DeleteEndpointResponseData(BaseModel):
-        """Data structure for DELETE /endpoints/{uuid} response"""
-
-        message: str = Field(description="Deletion confirmation message")
-
-    data: DeleteEndpointResponseData = Field(
-        description="Response data containing deletion confirmation"
-    )
+    data: List[PartialCollectionSchema] = Field(description="Collection data")
 
 
-class ResetDatabaseResponse(BaseResponse):
-    """Response model for POST /reset"""
+class PostCollectionResponse(BaseResponse):
+    """Response model for POST /collection"""
 
-    class ResetDatabaseResponseData(BaseModel):
-        """Data structure for POST /reset response"""
+    data: dict = Field(description="The response data payload")
 
-        message: str = Field(description="Reset confirmation message")
 
-    data: ResetDatabaseResponseData = Field(
-        description="Response data containing reset confirmation"
-    )
+class ReorderRequest(BaseModel):
+    """Request model for PUT /reorder"""
+    dragged_uuid: str = Field(description="Dragged UUID")
+    old_parent_uuid: Union[str, int] = Field(default=None, description="Old parent UUID")
+    new_parent_uuid: Optional[str] = Field(default=None, description="Parent UUID")
+    relative_index: int = Field(description="Relative index")
+
+
+class ReorderResponse(BaseResponse):
+    """Response model for PUT /reorder"""

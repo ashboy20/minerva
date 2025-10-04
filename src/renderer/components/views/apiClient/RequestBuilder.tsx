@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import {
+	useAppSelector,
+	useAppDispatch,
+} from '@/store/hooks';
 import { useGlobalContext } from '@/renderer/context/global-context';
 import {
 	ResizableHandle,
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@/renderer/components/ui/resizable';
-import { EndpointList } from '@/renderer/components/views/apiClient/components/EndpointList';
+import { CollectionList } from '@/renderer/components/views/apiClient/collection-list/CollectionList';
 import { RequestSection } from '@/renderer/components/views/apiClient/request-section/RequestSection';
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
 import { LayoutSwitcher } from '@/renderer/components/views/apiClient/top-nav-bar/LayoutSwitcher';
@@ -16,12 +19,15 @@ import {
 	Row,
 	Endpoint,
 } from '@/types/backend/endpoint-management/endpoint';
-import { 
-	fetchEndpoints, 
-	setActiveEndpoint, 
-	updateActiveEndpoint, 
-	updateActiveCase 
+import {
+	setActiveEndpoint,
+	updateActiveEndpoint,
+	updateActiveCase,
 } from '@/store/slices/endpointsSlice';
+import {
+	createBlankCollection,
+	getCollections,
+} from '@/store/slices/collectionSlice';
 
 interface ApiResponse {
 	status: number;
@@ -34,19 +40,35 @@ interface ApiResponse {
 
 export function RequestBuilder() {
 	const dispatch = useAppDispatch();
-	const [response, setResponse] = useState<ApiResponse | null>(null);
+	const {
+		collections,
+		loading: collectionsLoading,
+		error: collectionsError,
+	} = useAppSelector((state) => state.collections);
+
+	const [response, setResponse] =
+		useState<ApiResponse | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [activeTab, setActiveTab] = useState('headers');
-	
+
 	// Get global settings including layout preference
 	const { settings } = useGlobalContext();
-	
+
 	// Get URL state from Redux
-	const { pathParams, queryParams } = useAppSelector(state => state.url);
+	const { pathParams, queryParams } = useAppSelector(
+		(state) => state.url,
+	);
 	// Get headers and auth state from Redux
-	const { headers, auth } = useAppSelector(state => state.headersAuth);
+	const { headers, auth } = useAppSelector(
+		(state) => state.headersAuth,
+	);
 	// Get endpoints state from Redux
-	const { endpoints, activeEndpoint, activeCase, loading: endpointsLoading } = useAppSelector(state => state.endpoints);
+	const {
+		endpoints,
+		activeEndpoint,
+		activeCase,
+		loading: endpointsLoading,
+	} = useAppSelector((state) => state.endpoints);
 
 	const handleEndpointClick = (endpoint: Endpoint) => {
 		dispatch(setActiveEndpoint({ endpoint }));
@@ -61,7 +83,11 @@ export function RequestBuilder() {
 			// Build headers object from Redux state
 			const requestHeaders: Record<string, string> = {};
 			headers.forEach((header: Row) => {
-				if (header.enabled && header.keyValue && header.value) {
+				if (
+					header.enabled &&
+					header.keyValue &&
+					header.value
+				) {
 					requestHeaders[header.keyValue] = header.value;
 				}
 			});
@@ -69,13 +95,18 @@ export function RequestBuilder() {
 			// Build query parameters from Redux state
 			const requestQueryParams: Record<string, string> = {};
 			queryParams.forEach((param: Row) => {
-				if (param.enabled && param.keyValue && param.value) {
+				if (
+					param.enabled &&
+					param.keyValue &&
+					param.value
+				) {
 					requestQueryParams[param.keyValue] = param.value;
 				}
 			});
 
 			// Construct the full URL
-			const baseUrl = activeEndpoint.base_url + activeEndpoint.path;
+			const baseUrl =
+				activeEndpoint.base_url + activeEndpoint.path;
 
 			// Prepare request body for non-GET requests
 			let requestBody: string | object | undefined;
@@ -88,38 +119,53 @@ export function RequestBuilder() {
 			}
 
 			// Prepare auth configuration
-			const authConfig = auth.authType !== 'None' && auth.token ? {
-				auth_type: auth.authType,
-				token: auth.token
-			} : undefined;
+			const authConfig =
+				auth.authType !== 'None' && auth.token
+					? {
+							auth_type: auth.authType,
+							token: auth.token,
+						}
+					: undefined;
 
 			// Call API through Python backend
-			const backendResponse = await ApiCallService.callEndpoint({
-				method: activeEndpoint.method,
-				url: baseUrl,
-				headers: Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
-				query_params: Object.keys(requestQueryParams).length > 0 ? requestQueryParams : undefined,
-				body: requestBody,
-				auth: authConfig
-			});
+			const backendResponse =
+				await ApiCallService.callEndpoint({
+					method: activeEndpoint.method,
+					url: baseUrl,
+					headers:
+						Object.keys(requestHeaders).length > 0
+							? requestHeaders
+							: undefined,
+					query_params:
+						Object.keys(requestQueryParams).length > 0
+							? requestQueryParams
+							: undefined,
+					body: requestBody,
+					auth: authConfig,
+				});
 
 			// Convert backend response to frontend format
 			setResponse({
 				status: backendResponse.status_code,
-				statusText: backendResponse.status_code >= 400 ? 'Error' : 'OK',
+				statusText:
+					backendResponse.status_code >= 400
+						? 'Error'
+						: 'OK',
 				headers: backendResponse.headers,
 				data: backendResponse.body,
 				time: backendResponse.response_time,
 				size: backendResponse.size,
 			});
-
 		} catch (error) {
 			setResponse({
 				status: 0,
 				statusText: 'Network Error',
 				headers: {},
 				data: {
-					error: error instanceof Error ? error.message : 'Unknown error',
+					error:
+						error instanceof Error
+							? error.message
+							: 'Unknown error',
 				},
 				time: 0,
 				size: 0,
@@ -129,10 +175,18 @@ export function RequestBuilder() {
 		}
 	};
 
-	// Fetch endpoints from FastAPI backend service on mount
+	// Fetch collections from FastAPI backend service on mount
 	useEffect(() => {
-		dispatch(fetchEndpoints());
+		console.log('RequestBuilder: fetching collections');
+		dispatch(getCollections());
+		console.log('Collections fetched:', collections);
 	}, [dispatch]);
+
+	// Handler functions for collection list
+	const handleCreateCollection = () => {
+		dispatch(createBlankCollection());
+		dispatch(getCollections());
+	};
 
 	// Handler functions for RequestSection
 	const handleMethodChange = (method: string) => {
@@ -145,7 +199,9 @@ export function RequestBuilder() {
 			const urlObj = new URL(url);
 			const basePath = urlObj.origin;
 			const path = urlObj.pathname + urlObj.search;
-			dispatch(updateActiveEndpoint({ base_url: basePath, path }));
+			dispatch(
+				updateActiveEndpoint({ base_url: basePath, path }),
+			);
 		} catch {
 			// If URL parsing fails, just update the path
 			dispatch(updateActiveEndpoint({ path: url }));
@@ -154,12 +210,14 @@ export function RequestBuilder() {
 
 	const handleBodyChange = (body: string) => {
 		if (activeCase) {
-			dispatch(updateActiveCase({
-				request: {
-					...activeCase.request,
-					body: body as any, // Allow string or object for body
-				},
-			}));
+			dispatch(
+				updateActiveCase({
+					request: {
+						...activeCase.request,
+						body: body as any, // Allow string or object for body
+					},
+				}),
+			);
 		}
 	};
 
@@ -169,20 +227,27 @@ export function RequestBuilder() {
 			className="min-h-[calc(100vh-200px)]"
 		>
 			{/* Left Sidebar - Endpoints List */}
-			<ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
-				<EndpointList
-					endpoints={endpoints}
-					onEndpointClick={handleEndpointClick}
+			<ResizablePanel
+				defaultSize={25}
+				minSize={15}
+				maxSize={40}
+			>
+				<CollectionList
+					collections={collections}
+					loading={collectionsLoading}
+					error={collectionsError}
+					onCreateCollection={handleCreateCollection}
+					// onEndpointClick={handleEndpointClick}
 				/>
 			</ResizablePanel>
 
 			<ResizableHandle />
 			{/* Right Side - Main Content */}
 			<ResizablePanel defaultSize={75} minSize={60}>
-				<div className="flex flex-col h-full">
+				<div className="flex h-full flex-col">
 					{/* Top Bar with Tabs */}
 					<div className="flex flex-col">
-						<div className="flex items-center justify-between p-4 border-b border-border h-12">
+						<div className="flex h-12 items-center justify-between border-b border-border p-4">
 							<TabBar />
 							<LayoutSwitcher />
 						</div>
@@ -190,8 +255,12 @@ export function RequestBuilder() {
 
 					{/* Request/Response Content */}
 					<div className="flex-1">
-						<ResizablePanelGroup 
-							direction={settings.apiClientLayout === 'horizontal' ? 'horizontal' : 'vertical'} 
+						<ResizablePanelGroup
+							direction={
+								settings.apiClientLayout === 'horizontal'
+									? 'horizontal'
+									: 'vertical'
+							}
 							className="h-full"
 						>
 							<ResizablePanel defaultSize={60} minSize={30}>
