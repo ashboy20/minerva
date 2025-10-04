@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 import uuid
 from sqlmodel import Field, SQLModel, Column, JSON, Relationship
 from pydantic import BaseModel
@@ -102,6 +102,7 @@ class Collection(SQLModel, table=True):
     variables: List[dict] = Field(
         description="Collection variables", sa_column=Column(JSON), default=[]
     )
+    position: int = Field(description="Collection position")
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Timestamp when collection was created",
@@ -131,6 +132,7 @@ class Folder(SQLModel, table=True):
     parent_uuid: Optional[str] = Field(
         default=None, description="Parent UUID (collection or folder)"
     )
+    position: int = Field(description="Position in parent")
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Timestamp when folder was created",
@@ -167,6 +169,7 @@ class Endpoint(SQLModel, table=True):
     parent_uuid: Optional[str] = Field(
         default=None, description="Parent UUID (collection or folder)"
     )
+    position: int = Field(description="Position in parent")
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Timestamp when endpoint was created",
@@ -178,60 +181,98 @@ class Endpoint(SQLModel, table=True):
 
 
 # endpoint request + response models
-class CollectionSchema(BaseModel):
-    """Collection schema for API responses"""
+class PartialCollectionSchema(BaseModel):
+    """Partial collection schema for API responses"""
 
     uuid: str = Field(description="Collection UUID")
     name: str = Field(description="Collection name")
+    type: str = Field(description="Collection type", default="collection")
+    items: List[Union["PartialFolderSchema", "PartialEndpointSchema"]] = Field(
+        description="Collection items"
+    )
+
+
+class CollectionSchema(PartialCollectionSchema):
+    """Collection schema for API responses"""
+
     description: Optional[str] = Field(
         default=None, description="Collection description"
     )
     variables: List[dict] = Field(description="Collection variables")
     items: List[Union["FolderSchema", "EndpointSchema"]] = Field(
-        description="Collection items"
+        default=[], description="Collection items"
     )
     created_at: datetime = Field(description="Collection creation timestamp")
     updated_at: datetime = Field(description="Collection update timestamp")
 
 
-class ItemSchema(BaseModel):
-    """Base item schema"""
+class PartialItemSchema(BaseModel):
+    """Partial item schema for API responses"""
 
     uuid: str = Field(description="Item UUID")
     name: str = Field(description="Item name")
-    description: Optional[str] = Field(default=None, description="Item description")
+    type: Literal["folder", "endpoint"] = Field(
+        description="Item type"
+    )
     parent_uuid: Optional[str] = Field(default=None, description="Parent UUID")
+
+class ItemSchema(PartialItemSchema):
+    """Base item schema"""
+
+    description: Optional[str] = Field(default=None, description="Item description")
     created_at: datetime = Field(description="Item creation timestamp")
     updated_at: datetime = Field(description="Item update timestamp")
 
 
+class PartialFolderSchema(PartialItemSchema):
+    """Partial folder schema for API responses"""
+
+    type: str = Field(description="Item type", default="folder")
+    items: List[Union["PartialFolderSchema", "PartialEndpointSchema"]] = Field(
+        default=[], description="Folder items"
+    )
+
 class FolderSchema(ItemSchema):
     """Folder schema for API responses"""
-
-    type: str = Field(default="folder", description="Item type")
 
     items: List[Union["FolderSchema", "EndpointSchema"]] = Field(
         default=[], description="Folder items"
     )
 
 
-class EndpointSchema(ItemSchema):
-    """Endpoint schema for API responses"""
+class PartialEndpointSchema(PartialItemSchema):
+    """Partial endpoint schema for API responses"""
 
-    type: str = Field(default="endpoint", description="Item type")
-
+    type: str = Field(description="Item type", default="endpoint")
     method: str = Field(description="HTTP method")
     url: str = Field(description="Endpoint URL")
+
+
+class EndpointSchema(ItemSchema, PartialEndpointSchema):
+    """Endpoint schema for API responses"""
+
     cases: List[dict] = Field(default=[], description="Endpoint cases")
 
 
-class GetCollectionResponse(BaseResponse):
+class GetCollectionsResponse(BaseResponse):
     """Response model for GET /collections"""
 
-    data: List[CollectionSchema] = Field(description="Collection data")
+    data: List[PartialCollectionSchema] = Field(description="Collection data")
 
 
 class PostCollectionResponse(BaseResponse):
     """Response model for POST /collection"""
 
     data: dict = Field(description="The response data payload")
+
+
+class ReorderRequest(BaseModel):
+    """Request model for PUT /reorder"""
+    dragged_uuid: str = Field(description="Dragged UUID")
+    old_parent_uuid: Union[str, int] = Field(default=None, description="Old parent UUID")
+    new_parent_uuid: Optional[str] = Field(default=None, description="Parent UUID")
+    relative_index: int = Field(description="Relative index")
+
+
+class ReorderResponse(BaseResponse):
+    """Response model for PUT /reorder"""

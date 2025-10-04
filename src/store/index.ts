@@ -6,13 +6,13 @@ import tabsReducer from '@/store/slices/tabsSlice';
 import collectionsReducer from '@/store/slices/collectionSlice';
 
 export const store = configureStore({
-  reducer: {
-    url: urlReducer,
-    headersAuth: headersAuthReducer,
-    endpoints: endpointsReducer,
-    tabs: tabsReducer,  
-    collections: collectionsReducer,
-  },
+	reducer: {
+		url: urlReducer,
+		headersAuth: headersAuthReducer,
+		endpoints: endpointsReducer,
+		tabs: tabsReducer,
+		collections: collectionsReducer,
+	},
 });
 
 export type RootState = ReturnType<typeof store.getState>;

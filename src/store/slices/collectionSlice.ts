@@ -55,6 +55,7 @@ export interface Endpoint extends Item {
 export interface Collection {
 	uuid: string;
 	name: string;
+	type: 'collection';
 	description?: string;
 	variables: Variable[];
 	items?: (Folder | Endpoint)[]; // This will be populated when needed
@@ -113,6 +114,37 @@ export const createBlankCollection = createAsyncThunk(
 			result?.data?.error ||
 				result?.error ||
 				'Failed to create blank collection',
+		);
+	},
+);
+
+export const reorder = createAsyncThunk(
+	'collection/reorder',
+	async (
+		{
+			draggedUuid,
+			oldParentUuid,
+			newParentUuid,
+			relativeIndex,
+		}: {
+			draggedUuid: string;
+			oldParentUuid: string;
+			newParentUuid: string;
+			relativeIndex: number;
+		},
+		{ rejectWithValue },
+	) => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_REORDER,
+			draggedUuid,
+			oldParentUuid,
+			newParentUuid,
+			relativeIndex,
+		);
+		return rejectWithValue(
+			result?.data?.error ||
+				result?.error ||
+				'Failed to reorder collections',
 		);
 	},
 );
@@ -188,6 +220,35 @@ export const renameEndpoint = createAsyncThunk(
 			result?.data?.error ||
 				result?.error ||
 				'Failed to rename endpoint',
+		);
+	},
+);
+
+export const renameItem = createAsyncThunk(
+	'collection/renameItem',
+	async (
+		{ uuid, newName }: { uuid: string; newName: string },
+		{ rejectWithValue },
+	) => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ITEM_RENAME,
+			uuid,
+			newName,
+		);
+
+		if (result && result.success) {
+			return {
+				uuid,
+				newName,
+				itemType: result.data?.item_type,
+			};
+		}
+
+		console.error('Rename item API failed:', result);
+		return rejectWithValue(
+			result?.data?.error ||
+				result?.error ||
+				'Failed to rename item',
 		);
 	},
 );

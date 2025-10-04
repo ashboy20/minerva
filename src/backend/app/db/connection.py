@@ -1,3 +1,4 @@
+import os
 from sqlmodel import SQLModel, create_engine, Session
 from pathlib import Path
 from app.models.endpoint_management import Collection, Folder, Endpoint
@@ -49,6 +50,7 @@ def add_seed_data():
             name=seed_data.get("name", "Default Collection"),
             description=seed_data.get("description", ""),
             variables=seed_data.get("variables", []),
+            position=1,
             items=[],  # We'll populate this separately
         )
         session.add(collection)
@@ -63,15 +65,18 @@ def add_seed_data():
 
 def process_items(session: Session, items: list, parent_uuid: str):
     """Recursively process items (folders and endpoints) and insert into appropriate tables"""
+    position_counter = {}
     for item in items:
         if item.get("type") == "folder":
             # Create folder
             folder_uuid = str(uuid.uuid4())
+            position_counter[parent_uuid] = position_counter.get(parent_uuid, 0) + 1
             folder = Folder(
                 uuid=folder_uuid,
                 name=item.get("name", ""),
                 description=item.get("description", ""),
                 parent_uuid=parent_uuid,
+                position=position_counter[parent_uuid],
             )
             session.add(folder)
             session.flush()  # Flush to get the folder ID
@@ -82,6 +87,7 @@ def process_items(session: Session, items: list, parent_uuid: str):
         else:
             # Create endpoint
             endpoint_uuid = str(uuid.uuid4())
+            position_counter[parent_uuid] = position_counter.get(parent_uuid, 0) + 1
             endpoint = Endpoint(
                 uuid=endpoint_uuid,
                 name=item.get("name", ""),
@@ -89,6 +95,7 @@ def process_items(session: Session, items: list, parent_uuid: str):
                 method=item.get("method", "GET"),
                 url=item.get("url", ""),
                 parent_uuid=parent_uuid,
+                position=position_counter[parent_uuid],
                 cases=item.get("cases", []),
             )
             session.add(endpoint)
@@ -96,8 +103,6 @@ def process_items(session: Session, items: list, parent_uuid: str):
 
 def reset_database():
     """Reset database by dropping all tables and recreating them with seed data"""
-    import os
-
     # Close all connections to the database
     engine.dispose()
 

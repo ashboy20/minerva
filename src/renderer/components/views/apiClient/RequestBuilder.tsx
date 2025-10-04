@@ -9,7 +9,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@/renderer/components/ui/resizable';
-import { CollectionList } from '@/renderer/components/views/apiClient/components/CollectionList';
+import { CollectionList } from '@/renderer/components/views/apiClient/collection-list/CollectionList';
 import { RequestSection } from '@/renderer/components/views/apiClient/request-section/RequestSection';
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
 import { LayoutSwitcher } from '@/renderer/components/views/apiClient/top-nav-bar/LayoutSwitcher';
@@ -24,7 +24,10 @@ import {
 	updateActiveEndpoint,
 	updateActiveCase,
 } from '@/store/slices/endpointsSlice';
-import { createBlankCollection, getCollections } from '@/store/slices/collectionSlice';
+import {
+	createBlankCollection,
+	getCollections,
+} from '@/store/slices/collectionSlice';
 
 interface ApiResponse {
 	status: number;
@@ -178,7 +181,6 @@ export function RequestBuilder() {
 		dispatch(getCollections());
 		console.log('Collections fetched:', collections);
 	}, [dispatch]);
-
 
 	// Handler functions for collection list
 	const handleCreateCollection = () => {

@@ -93,6 +93,20 @@ export class BackendClient {
 			},
 			{
 				ipcChannel:
+					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_REORDER,
+				handler: async (_event, draggedUuid: string, oldParentUuid: string, newParentUuid: string, relativeIndex: number) => {
+					const response = await this.request(
+						`/api/endpoint-management/reorder`,
+						{ method: 'PUT', body: JSON.stringify({ 
+							dragged_uuid: draggedUuid, old_parent_uuid: oldParentUuid, new_parent_uuid: newParentUuid, relative_index: relativeIndex }) },
+					);
+					console.log(JSON.stringify({ 
+						dragged_uuid: draggedUuid, old_parent_uuid: oldParentUuid, new_parent_uuid: newParentUuid, relative_index: relativeIndex }))
+					return this.processResponse(response);
+				},
+			},
+			{
+				ipcChannel:
 					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_RENAME,
 				handler: async (
 					_event,
