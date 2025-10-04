@@ -100,8 +100,6 @@ export class BackendClient {
 						{ method: 'PUT', body: JSON.stringify({ 
 							dragged_uuid: draggedUuid, old_parent_uuid: oldParentUuid, new_parent_uuid: newParentUuid, relative_index: relativeIndex }) },
 					);
-					console.log(JSON.stringify({ 
-						dragged_uuid: draggedUuid, old_parent_uuid: oldParentUuid, new_parent_uuid: newParentUuid, relative_index: relativeIndex }))
 					return this.processResponse(response);
 				},
 			},
