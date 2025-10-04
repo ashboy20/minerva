@@ -18,20 +18,23 @@ import {
 	NodeModel,
 	DropOptions,
 } from '@minoru/react-dnd-treeview';
-import {
-	ContextMenu,
-	ContextMenuTrigger,
-} from '@/renderer/components/ui/context-menu';
-import { UnifiedContextMenu } from '@/renderer/components/views/apiClient/collection-list/UnifiedContextMenu';
 import { useAppDispatch } from '@/store/hooks';
-import { DropdownMenuSeparator } from '@radix-ui/react-dropdown-menu';
-import { TreeItem } from './TreeItem';
+import { TreeItem } from '@/renderer/components/views/apiClient/collection-list/TreeItem';
+
+export interface MinervaNodeModel extends NodeModel<any> {
+	data: {
+		type: string | 'collection' | 'folder' | 'endpoint';
+		isEditing?: boolean;
+		method?: string;
+		url?: string;
+	};
+}
 
 const parseTreeData = (
 	items: Collection[] | (Folder | Endpoint)[],
 	parentId: string | number = 0,
 ) => {
-	const treeData: NodeModel<any>[] = [];
+	const treeData: MinervaNodeModel[] = [];
 
 	items.forEach((item) => {
 		// Handle collections
@@ -43,6 +46,7 @@ const parseTreeData = (
 				text: item.name,
 				data: {
 					type: 'collection',
+					isEditing: false,
 				},
 			};
 			treeData.push(collectionNode);
@@ -70,6 +74,7 @@ const parseTreeData = (
 						: typedItem.name,
 				data: {
 					type: typedItem.type,
+					isEditing: false,
 					...(typedItem.type === 'endpoint' && {
 						method: (typedItem as Endpoint).method,
 						url: (typedItem as Endpoint).url,
@@ -238,58 +243,50 @@ export function CollectionList({
 								backend={MultiBackend}
 								options={getBackendOptions()}
 							>
-								<ContextMenu>
-									<ContextMenuTrigger>
-										<Tree
-											tree={treeData}
-											rootId={0}
-											onDrop={handleDrop}
-											sort={false}
-											enableAnimateExpand
-											canDrop={handleCanDrop}
-											dropTargetOffset={5}
-											placeholderRender={(
-												node,
-												{ depth },
-											) => (
-												<div
-													className="h-[2px] w-full bg-blue-600 bg-muted"
-													key={node.id}
-												/>
-											)}
-											dragPreviewRender={(monitorProps) => (
-												<div style={{ opacity: 0.5 }}>
-													<TreeItem
-														node={monitorProps.item}
-														depth={0}
-														isOpen={false}
-														onToggle={() => {}}
-													/>
-												</div>
-											)}
-											render={(
-												node,
-												{
-													depth,
-													isOpen,
-													onToggle,
-													isDragging,
-													isDropTarget,
-												},
-											) => (
-												<TreeItem
-													node={node}
-													depth={depth}
-													isOpen={isOpen}
-													onToggle={onToggle}
-													isDragging={isDragging}
-													isDropTarget={isDropTarget}
-												/>
-											)}
+								<Tree
+									tree={treeData}
+									rootId={0}
+									onDrop={handleDrop}
+									sort={false}
+									enableAnimateExpand
+									canDrop={handleCanDrop}
+									dropTargetOffset={5}
+									placeholderRender={(node, { depth }) => (
+										<div
+											className="h-[2px] w-full bg-blue-600 bg-muted"
+											key={node.id}
 										/>
-									</ContextMenuTrigger>
-									<UnifiedContextMenu item="collection" />
-								</ContextMenu>
+									)}
+									dragPreviewRender={(monitorProps) => (
+										<div style={{ opacity: 0.5 }}>
+											<TreeItem
+												node={monitorProps.item}
+												depth={0}
+												isOpen={false}
+												onToggle={() => {}}
+											/>
+										</div>
+									)}
+									render={(
+										node,
+										{
+											depth,
+											isOpen,
+											onToggle,
+											isDragging,
+											isDropTarget,
+										},
+									) => (
+										<TreeItem
+											node={node as MinervaNodeModel}
+											depth={depth}
+											isOpen={isOpen}
+											onToggle={onToggle}
+											isDragging={isDragging}
+											isDropTarget={isDropTarget}
+										/>
+									)}
+								/>
 							</DndProvider>
 						</>
 					)}

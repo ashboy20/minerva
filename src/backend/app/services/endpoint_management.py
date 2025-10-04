@@ -35,7 +35,7 @@ class EndpointManagementService:
             print(e)
             raise e
 
-    async def _get_type_by_uuid(self, uuid: str) -> str:
+    async def get_type_by_uuid(self, uuid: str) -> str:
         """Get the type of an item by UUID"""
         with Session(engine) as session:
             statement = select(Collection).where(Collection.uuid == uuid)
@@ -116,7 +116,7 @@ class EndpointManagementService:
         Returns:
             True if reordering was successful
         """
-        item_type = await self._get_type_by_uuid(dragged_uuid)
+        item_type = await self.get_type_by_uuid(dragged_uuid)
         if not item_type:
             raise ValueError(f"Item not found for UUID: {dragged_uuid}")
 
@@ -212,7 +212,7 @@ class EndpointManagementService:
         Returns:
             The updated item or None if not found
         """
-        item_type = await self._get_type_by_uuid(uuid)
+        item_type = await self.get_type_by_uuid(uuid)
         if not item_type:
             return None
 

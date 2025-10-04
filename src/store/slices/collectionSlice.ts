@@ -224,23 +224,22 @@ export const renameEndpoint = createAsyncThunk(
 	},
 );
 
-export const renameItem = createAsyncThunk(
-	'collection/renameItem',
+export const updateItem = createAsyncThunk(
+	'collection/updateItem',
 	async (
-		{ uuid, newName }: { uuid: string; newName: string },
+		{ uuid, fields }: { uuid: string; fields: any },
 		{ rejectWithValue },
 	) => {
 		const result = await window.electron.ipcRenderer.invoke(
-			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ITEM_RENAME,
+			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE,
 			uuid,
-			newName,
+			fields,
 		);
 
 		if (result && result.success) {
 			return {
 				uuid,
-				newName,
-				itemType: result.data?.item_type,
+				fields,
 			};
 		}
 

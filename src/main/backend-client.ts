@@ -118,52 +118,26 @@ export class BackendClient {
 			},
 			{
 				ipcChannel:
-					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_RENAME,
-				handler: async (
-					_event,
-					uuid: string,
-					newName: string,
-				) => {
+					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE,
+				handler: async (_event, uuid: string, fields: any) => {
 					const response = await this.request(
-						`/api/endpoint-management/collection/${uuid}/rename?new_name=${encodeURIComponent(newName)}`,
+						`/api/endpoint-management/item/update`,
 						{
 							method: 'PUT',
+							body: JSON.stringify({
+								uuid,
+								fields: {
+									...fields,
+								},
+							}),
 						},
 					);
-					return this.processResponse(response);
-				},
-			},
-			{
-				ipcChannel:
-					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_FOLDER_RENAME,
-				handler: async (
-					_event,
-					uuid: string,
-					newName: string,
-				) => {
-					const response = await this.request(
-						`/api/endpoint-management/folder/${uuid}/rename?new_name=${encodeURIComponent(newName)}`,
-						{
-							method: 'PUT',
-						},
-					);
-					return this.processResponse(response);
-				},
-			},
-			{
-				ipcChannel:
-					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_RENAME,
-				handler: async (
-					_event,
-					uuid: string,
-					newName: string,
-				) => {
-					const response = await this.request(
-						`/api/endpoint-management/endpoint/${uuid}/rename?new_name=${encodeURIComponent(newName)}`,
-						{
-							method: 'PUT',
-						},
-					);
+					console.log(JSON.stringify({
+						uuid,
+						fields: {
+							...fields,
+						}
+					}));
 					return this.processResponse(response);
 				},
 			},

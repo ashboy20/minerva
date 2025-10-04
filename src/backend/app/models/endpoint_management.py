@@ -284,9 +284,6 @@ class ReorderResponse(BaseResponse):
 class UpdateItemRequest(BaseModel):
     """Request model for updating any item (collection, folder, or endpoint)"""
 
-    type: Literal["collection", "folder", "endpoint"] = Field(
-        description="Type of item to update"
-    )
     uuid: str = Field(description="UUID of the item to update")
     fields: Dict[str, Any] = Field(description="Fields to update and their new values")
 
