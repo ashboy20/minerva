@@ -27,7 +27,9 @@ const getMethodTextColor = (methodName: string) => {
 
 export function MethodText({ method }: MethodTextProps) {
 	return (
-		<span className={`font-medium ${getMethodTextColor(method)}`}>
+		<span
+			className={`font-medium ${getMethodTextColor(method)}`}
+		>
 			{method}
 		</span>
 	);

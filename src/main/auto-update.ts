@@ -1,4 +1,7 @@
-import { ProgressInfo, autoUpdater } from 'electron-updater';
+import {
+	ProgressInfo,
+	autoUpdater,
+} from 'electron-updater';
 
 import { shell } from 'electron';
 import Logger from 'electron-log/main';
@@ -29,7 +32,9 @@ export class AutoUpdate {
 
 const install = () => autoUpdater.quitAndInstall();
 
-const onDownloadProgress = (progressObject: ProgressInfo) => {
+const onDownloadProgress = (
+	progressObject: ProgressInfo,
+) => {
 	try {
 		let message = `Download speed: ${progressObject.bytesPerSecond}`;
 		message = `${message} - Downloaded ${progressObject.percent}%`;
@@ -37,7 +42,9 @@ const onDownloadProgress = (progressObject: ProgressInfo) => {
 		Logger.info(message);
 
 		// Dock progress bar
-		windows.mainWindow?.setProgressBar(progressObject.percent / 100);
+		windows.mainWindow?.setProgressBar(
+			progressObject.percent / 100,
+		);
 	} catch (error) {
 		Logger.error('onDownloadProgress', error);
 	}
@@ -83,31 +90,22 @@ const onUpdateDownloaded = () => {
 const update = () => {
 	// We trycatch here because appx throws errors
 	try {
-
-	// Comment this before publishing your first version.
-	// It's commented out as it throws an error if there are no published versions.
-
-	// 	if (getSetting('allowAutoUpdate')) {
-	// 		Logger.info('Setting: Automatic Updates');
-
-	// 		autoUpdater.logger = Logger;
-	// 		autoUpdater.on('update-available', onUpdateAvailable);
-
-	// 		if (is.linux) {
-	// 			return;
-	// 		}
-
-	// 		autoUpdater.on('download-progress', onDownloadProgress);
-
-	// 		autoUpdater.on('update-downloaded', onUpdateDownloaded);
-
-	// 		setInterval(() => {
-	// 			autoUpdater.checkForUpdates();
-	// 		}, FOUR_HOURS);
-
-	// 		autoUpdater.checkForUpdatesAndNotify();
-	// 	}
-	
+		// Comment this before publishing your first version.
+		// It's commented out as it throws an error if there are no published versions.
+		// 	if (getSetting('allowAutoUpdate')) {
+		// 		Logger.info('Setting: Automatic Updates');
+		// 		autoUpdater.logger = Logger;
+		// 		autoUpdater.on('update-available', onUpdateAvailable);
+		// 		if (is.linux) {
+		// 			return;
+		// 		}
+		// 		autoUpdater.on('download-progress', onDownloadProgress);
+		// 		autoUpdater.on('update-downloaded', onUpdateDownloaded);
+		// 		setInterval(() => {
+		// 			autoUpdater.checkForUpdates();
+		// 		}, FOUR_HOURS);
+		// 		autoUpdater.checkForUpdatesAndNotify();
+		// 	}
 	} catch (error) {
 		Logger.error(error);
 	}

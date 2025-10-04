@@ -4,7 +4,11 @@
 		modifierRequired: By default any key can be used, if this is true, a modifier must be provided.
 	*/
 import { Input } from '@/components/ui/input';
-import { keycodeToKey, modifierKeyCodes, specialKeyCodes } from '@/config/keys';
+import {
+	keycodeToKey,
+	modifierKeyCodes,
+	specialKeyCodes,
+} from '@/config/keys';
 import { useGlobalContext } from '@/renderer/context/global-context';
 import { simpleUUID } from '@/utils/getUUID';
 import { useMemo, useState } from 'react';
@@ -76,7 +80,10 @@ export function InputKeyboardShortcut({
 		}
 
 		// Clear the value on backspace (8) or delete (46)
-		if (keys.length === 0 && (event.which === 8 || event.which === 46)) {
+		if (
+			keys.length === 0 &&
+			(event.which === 8 || event.which === 46)
+		) {
 			setPressing(false);
 			handleChange('');
 			return;
@@ -86,7 +93,10 @@ export function InputKeyboardShortcut({
 
 		// I've not tested every combo to verify it will work in electron, all the documentation they provide:
 		// https://www.electronjs.org/docs/api/accelerator#available-key-codes
-		if (!specialKeyCodes.has(event.which) && event.which in keycodeToKey) {
+		if (
+			!specialKeyCodes.has(event.which) &&
+			event.which in keycodeToKey
+		) {
 			// We allow single-keys to be set, unless `modifierRequired` is passed
 			if (modifierRequired && keys.length === 0) {
 				return;
@@ -119,12 +129,17 @@ export function InputKeyboardShortcut({
 			<div className="flex flex-row items-center justify-between">
 				<div className="space-y-0.5">
 					{label && (
-						<label htmlFor={uuid} className="font-medium text-base">
+						<label
+							htmlFor={uuid}
+							className="text-base font-medium"
+						>
 							{label}
 						</label>
 					)}
 					{description && (
-						<p className="text-muted-foreground">{description}</p>
+						<p className="text-muted-foreground">
+							{description}
+						</p>
 					)}
 				</div>
 			</div>
@@ -139,7 +154,11 @@ export function InputKeyboardShortcut({
 				{...props}
 			/>
 
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 		</div>
 	);
 }

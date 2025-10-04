@@ -53,7 +53,10 @@ export function InputCheckbox({
 
 	return (
 		<Form {...form}>
-			<form onChange={form.handleSubmit(onSubmit)} className="space-y-6">
+			<form
+				onChange={form.handleSubmit(onSubmit)}
+				className="space-y-6"
+			>
 				<FormField
 					control={form.control}
 					name="checkboxValue"
@@ -73,14 +76,20 @@ export function InputCheckbox({
 							<div className="space-y-1 leading-none">
 								{label && <FormLabel>{label}</FormLabel>}
 								{description && (
-									<FormDescription>{description}</FormDescription>
+									<FormDescription>
+										{description}
+									</FormDescription>
 								)}
 							</div>
 						</FormItem>
 					)}
 				/>
 			</form>
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 			{content && <div>{content}</div>}
 		</Form>
 	);

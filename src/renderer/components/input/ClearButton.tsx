@@ -17,12 +17,12 @@ export function ClearButton({
 			type="button"
 			onClick={onClick}
 			className={cn(
-				'text-primary hover:text-muted-foreground absolute z-10 top-0 bottom-0 right-0 px-4 py-2 grid place-content-center',
+				'absolute bottom-0 right-0 top-0 z-10 grid place-content-center px-4 py-2 text-primary hover:text-muted-foreground',
 				className,
 			)}
 			{...props}
 		>
-			<ResetIcon className="w-4 h-4" />
+			<ResetIcon className="h-4 w-4" />
 			<span className="sr-only">Clear value...</span>
 		</button>
 	);

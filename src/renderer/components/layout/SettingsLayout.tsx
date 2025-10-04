@@ -11,12 +11,14 @@ interface SettingsLayoutProps {
 	children?: React.ReactNode;
 }
 
-export default function SettingsLayout({ children }: SettingsLayoutProps) {
+export default function SettingsLayout({
+	children,
+}: SettingsLayoutProps) {
 	const { pathname: location } = useLocation(); // We use this to reset the scroll position when the location changes
 
 	return (
 		<>
-			<div className="h-full flex flex-col justify-stretch">
+			<div className="flex h-full flex-col justify-stretch">
 				<div className="space-y-0.5 p-4">
 					<h2 className="text-xl font-bold tracking-tight">
 						{$settings.title}
@@ -27,18 +29,24 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
 				</div>
 				<Separator />
 				<div className="flex h-full min-h-0">
-					<ScrollArea className="bg-secondary min-w-20 md:w-1/5 shadow-inner">
+					<ScrollArea className="min-w-20 bg-secondary shadow-inner md:w-1/5">
 						<SidebarNav
 							items={[
 								...settingsNavItems,
-								{ title: 'Back', href: '/', icon: ResetIcon },
+								{
+									title: 'Back',
+									href: '/',
+									icon: ResetIcon,
+								},
 							]}
 							className="py-2"
 						/>
 					</ScrollArea>
 					<Separator orientation="vertical" />
 					<ScrollArea className="flex-1" key={location}>
-						<div className="px-4 py-4 pb-10">{children || <Outlet />}</div>
+						<div className="px-4 py-4 pb-10">
+							{children || <Outlet />}
+						</div>
 					</ScrollArea>
 				</div>
 			</div>

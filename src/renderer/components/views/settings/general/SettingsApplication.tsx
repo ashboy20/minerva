@@ -6,14 +6,18 @@ import { useGlobalContext } from '@/renderer/context/global-context';
 export function SettingsApplication() {
 	const { app, settings } = useGlobalContext();
 
-	const handleChangeSetting = (setting: Partial<SettingsType>) => {
+	const handleChangeSetting = (
+		setting: Partial<SettingsType>,
+	) => {
 		window.electron.setSettings(setting);
 	};
 
 	return (
 		<div className="space-y-6">
 			<div>
-				<h3 className="text-lg font-medium">Application Settings</h3>
+				<h3 className="text-lg font-medium">
+					Application Settings
+				</h3>
 				<p className="text-sm text-muted-foreground">
 					Select your application preferences.
 				</p>
@@ -22,7 +26,9 @@ export function SettingsApplication() {
 			<InputSwitch
 				value={settings.allowAutoUpdate}
 				onChange={() => {
-					handleChangeSetting({ allowAutoUpdate: !settings.allowAutoUpdate });
+					handleChangeSetting({
+						allowAutoUpdate: !settings.allowAutoUpdate,
+					});
 				}}
 				label="Automatic updates"
 				description="Automatically download and install new updates."
@@ -32,7 +38,9 @@ export function SettingsApplication() {
 				<InputSwitch
 					value={settings.showDockIcon}
 					onChange={() => {
-						handleChangeSetting({ showDockIcon: !settings.showDockIcon });
+						handleChangeSetting({
+							showDockIcon: !settings.showDockIcon,
+						});
 					}}
 					label="Dock icon"
 					description="Show the app icon in the dock."
@@ -42,7 +50,9 @@ export function SettingsApplication() {
 			<InputSwitch
 				value={settings.showTrayIcon}
 				onChange={() => {
-					handleChangeSetting({ showTrayIcon: !settings.showTrayIcon });
+					handleChangeSetting({
+						showTrayIcon: !settings.showTrayIcon,
+					});
 				}}
 				label="Tray icon"
 				description="Show the app icon in the system tray."
@@ -53,7 +63,8 @@ export function SettingsApplication() {
 					value={settings.quitOnWindowClose}
 					onChange={() => {
 						handleChangeSetting({
-							quitOnWindowClose: !settings.quitOnWindowClose,
+							quitOnWindowClose:
+								!settings.quitOnWindowClose,
 						});
 					}}
 					label="Quit when all windows close"
@@ -65,7 +76,9 @@ export function SettingsApplication() {
 			<InputSwitch
 				value={settings.allowAnalytics}
 				onChange={() => {
-					handleChangeSetting({ allowAnalytics: !settings.allowAnalytics });
+					handleChangeSetting({
+						allowAnalytics: !settings.allowAnalytics,
+					});
 				}}
 				label="Enable telemetry"
 				description="Help improve the app by sending anonymous usage data."

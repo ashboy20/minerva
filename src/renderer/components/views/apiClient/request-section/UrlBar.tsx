@@ -21,17 +21,20 @@ interface UrlBarProps {
 	onSendRequest: () => void;
 }
 
-const UrlBar = ({
+function UrlBar({
 	method,
 	url,
 	loading,
 	onMethodChange,
 	onUrlChange,
 	onSendRequest,
-}: UrlBarProps) => {
+}: UrlBarProps) {
 	return (
 		<div className="flex space-x-2">
-			<Select value={method ?? 'GET'} onValueChange={onMethodChange}>
+			<Select
+				value={method ?? 'GET'}
+				onValueChange={onMethodChange}
+			>
 				<SelectTrigger className="w-32">
 					<SelectValue />
 				</SelectTrigger>
@@ -44,10 +47,7 @@ const UrlBar = ({
 				</SelectContent>
 			</Select>
 
-			<UrlInputField 
-				value={url}
-				onChange={onUrlChange}
-			/>
+			<UrlInputField value={url} onChange={onUrlChange} />
 
 			<Button
 				onClick={onSendRequest}
@@ -58,13 +58,13 @@ const UrlBar = ({
 					<>Sending...</>
 				) : (
 					<>
-						<PlayIcon className="w-4 h-4 mr-2" />
+						<PlayIcon className="mr-2 h-4 w-4" />
 						Send
 					</>
 				)}
 			</Button>
 		</div>
 	);
-};
+}
 
 export default UrlBar;

@@ -1,4 +1,7 @@
-import { CustomAcceleratorsType, KeyboardShortcut } from '@/types/keyboard';
+import {
+	CustomAcceleratorsType,
+	KeyboardShortcut,
+} from '@/types/keyboard';
 import { app, globalShortcut } from 'electron';
 import Logger from 'electron-log';
 import store from './store';
@@ -35,7 +38,9 @@ interface ShortcutType extends Electron.GlobalShortcut {
 		keybinds: keyof CustomAcceleratorsType,
 		accelerator: string,
 	) => void;
-	setKeybinds: (keybinds: Partial<CustomAcceleratorsType>) => void;
+	setKeybinds: (
+		keybinds: Partial<CustomAcceleratorsType>,
+	) => void;
 	registerKeyboardShortcuts: () => void;
 }
 
@@ -67,7 +72,10 @@ const registerKeyboardShortcuts = () => {
 const kb: ShortcutType = {
 	registerKeyboardShortcuts,
 
-	setKeybind: (keybind: keyof CustomAcceleratorsType, accelerator: string) => {
+	setKeybind: (
+		keybind: keyof CustomAcceleratorsType,
+		accelerator: string,
+	) => {
 		const keybinds = store.get('keybinds');
 
 		// Invalid keybind
@@ -75,7 +83,9 @@ const kb: ShortcutType = {
 			return;
 		}
 
-		const shortcut = keyboardShortcuts.find((s) => s.action === keybind);
+		const shortcut = keyboardShortcuts.find(
+			(s) => s.action === keybind,
+		);
 
 		// No accelerator, remove keybind if allowed
 		if (!accelerator && !shortcut?.allowUnbind) {
@@ -89,7 +99,9 @@ const kb: ShortcutType = {
 		windows.mainWindow?.webContents.send(APP_UPDATED); // TODO: ipcChannels.APP_UPDATED, we hard-coded this to prevent circular imports
 	},
 
-	setKeybinds: (keybinds: Partial<CustomAcceleratorsType>) => {
+	setKeybinds: (
+		keybinds: Partial<CustomAcceleratorsType>,
+	) => {
 		const currentKeybinds = store.get('keybinds');
 		store.set('keybinds', {
 			...currentKeybinds,

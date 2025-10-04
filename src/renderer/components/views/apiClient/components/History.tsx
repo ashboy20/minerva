@@ -123,26 +123,38 @@ const sampleHistory: HistoryEntry[] = [
 ];
 
 export function History() {
-	const [history, setHistory] = useState<HistoryEntry[]>(sampleHistory);
+	const [history, setHistory] =
+		useState<HistoryEntry[]>(sampleHistory);
 	const [searchQuery, setSearchQuery] = useState('');
-	const [methodFilter, setMethodFilter] = useState<string>('all');
-	const [statusFilter, setStatusFilter] = useState<string>('all');
+	const [methodFilter, setMethodFilter] =
+		useState<string>('all');
+	const [statusFilter, setStatusFilter] =
+		useState<string>('all');
 
 	const getMethodColor = (method: string) => {
 		switch (method.toUpperCase()) {
-			case 'GET': return 'bg-green-500';
-			case 'POST': return 'bg-blue-500';
-			case 'PUT': return 'bg-orange-500';
-			case 'PATCH': return 'bg-yellow-500';
-			case 'DELETE': return 'bg-red-500';
-			default: return 'bg-gray-500';
+			case 'GET':
+				return 'bg-green-500';
+			case 'POST':
+				return 'bg-blue-500';
+			case 'PUT':
+				return 'bg-orange-500';
+			case 'PATCH':
+				return 'bg-yellow-500';
+			case 'DELETE':
+				return 'bg-red-500';
+			default:
+				return 'bg-gray-500';
 		}
 	};
 
 	const getStatusColor = (status: number) => {
-		if (status >= 200 && status < 300) return 'bg-green-500';
-		if (status >= 300 && status < 400) return 'bg-yellow-500';
-		if (status >= 400 && status < 500) return 'bg-orange-500';
+		if (status >= 200 && status < 300)
+			return 'bg-green-500';
+		if (status >= 300 && status < 400)
+			return 'bg-yellow-500';
+		if (status >= 400 && status < 500)
+			return 'bg-orange-500';
 		if (status >= 500) return 'bg-red-500';
 		return 'bg-gray-500';
 	};
@@ -160,17 +172,33 @@ export function History() {
 		if (bytes === 0) return '0 B';
 		const sizes = ['B', 'KB', 'MB', 'GB'];
 		const i = Math.floor(Math.log(bytes) / Math.log(1024));
-		return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+		return `${
+			Math.round((bytes / 1024 ** i) * 100) / 100
+		} ${sizes[i]}`;
 	};
 
-	const filteredHistory = history.filter(entry => {
-		const matchesSearch = entry.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			entry.statusText.toLowerCase().includes(searchQuery.toLowerCase());
-		const matchesMethod = methodFilter === 'all' || entry.method === methodFilter;
-		const matchesStatus = statusFilter === 'all' ||
-			(statusFilter === '2xx' && entry.status >= 200 && entry.status < 300) ||
-			(statusFilter === '3xx' && entry.status >= 300 && entry.status < 400) ||
-			(statusFilter === '4xx' && entry.status >= 400 && entry.status < 500) ||
+	const filteredHistory = history.filter((entry) => {
+		const matchesSearch =
+			entry.url
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase()) ||
+			entry.statusText
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase());
+		const matchesMethod =
+			methodFilter === 'all' ||
+			entry.method === methodFilter;
+		const matchesStatus =
+			statusFilter === 'all' ||
+			(statusFilter === '2xx' &&
+				entry.status >= 200 &&
+				entry.status < 300) ||
+			(statusFilter === '3xx' &&
+				entry.status >= 300 &&
+				entry.status < 400) ||
+			(statusFilter === '4xx' &&
+				entry.status >= 400 &&
+				entry.status < 500) ||
 			(statusFilter === '5xx' && entry.status >= 500);
 
 		return matchesSearch && matchesMethod && matchesStatus;
@@ -181,12 +209,18 @@ export function History() {
 	};
 
 	const deleteEntry = (id: string) => {
-		setHistory(history.filter(entry => entry.id !== id));
+		setHistory(history.filter((entry) => entry.id !== id));
 	};
 
 	const exportHistory = () => {
-		const dataStr = JSON.stringify(filteredHistory, null, 2);
-		const dataBlob = new Blob([dataStr], { type: 'application/json' });
+		const dataStr = JSON.stringify(
+			filteredHistory,
+			null,
+			2,
+		);
+		const dataBlob = new Blob([dataStr], {
+			type: 'application/json',
+		});
 
 		const link = document.createElement('a');
 		link.href = URL.createObjectURL(dataBlob);
@@ -196,35 +230,45 @@ export function History() {
 
 	// Calculate stats
 	const totalRequests = history.length;
-	const successfulRequests = history.filter(h => h.status >= 200 && h.status < 400).length;
-	const averageResponseTime = totalRequests > 0
-		? Math.round(history.reduce((sum, h) => sum + h.responseTime, 0) / totalRequests)
-		: 0;
+	const successfulRequests = history.filter(
+		(h) => h.status >= 200 && h.status < 400,
+	).length;
+	const averageResponseTime =
+		totalRequests > 0
+			? Math.round(
+					history.reduce(
+						(sum, h) => sum + h.responseTime,
+						0,
+					) / totalRequests,
+				)
+			: 0;
 
 	return (
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold">Request History</h1>
+					<h1 className="text-2xl font-bold">
+						Request History
+					</h1>
 					<p className="text-muted-foreground">
 						Track and review your API request history
 					</p>
 				</div>
 				<div className="flex space-x-2">
 					<Button variant="outline" onClick={exportHistory}>
-						<DownloadIcon className="w-4 h-4 mr-2" />
+						<DownloadIcon className="mr-2 h-4 w-4" />
 						Export
 					</Button>
 					<Button variant="outline" onClick={clearHistory}>
-						<TrashIcon className="w-4 h-4 mr-2" />
+						<TrashIcon className="mr-2 h-4 w-4" />
 						Clear All
 					</Button>
 				</div>
 			</div>
 
 			{/* Stats Cards */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 				<Card>
 					<CardHeader className="pb-2">
 						<CardTitle className="text-sm font-medium text-muted-foreground">
@@ -232,7 +276,9 @@ export function History() {
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<div className="text-2xl font-bold">{totalRequests}</div>
+						<div className="text-2xl font-bold">
+							{totalRequests}
+						</div>
 					</CardContent>
 				</Card>
 				<Card>
@@ -243,7 +289,13 @@ export function History() {
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold text-green-600">
-							{totalRequests > 0 ? Math.round((successfulRequests / totalRequests) * 100) : 0}%
+							{totalRequests > 0
+								? Math.round(
+										(successfulRequests / totalRequests) *
+											100,
+									)
+								: 0}
+							%
 						</div>
 					</CardContent>
 				</Card>
@@ -267,48 +319,72 @@ export function History() {
 					<CardTitle className="text-lg">Filters</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<div className="flex flex-col md:flex-row gap-4">
+					<div className="flex flex-col gap-4 md:flex-row">
 						<div className="flex-1">
 							<Label htmlFor="search">Search</Label>
 							<div className="relative">
-								<MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+								<MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
 								<Input
 									id="search"
 									placeholder="Search by URL or status..."
 									value={searchQuery}
-									onChange={(e) => setSearchQuery(e.target.value)}
+									onChange={(e) =>
+										setSearchQuery(e.target.value)
+									}
 									className="pl-10"
 								/>
 							</div>
 						</div>
 						<div>
 							<Label>Method</Label>
-							<Select value={methodFilter} onValueChange={setMethodFilter}>
+							<Select
+								value={methodFilter}
+								onValueChange={setMethodFilter}
+							>
 								<SelectTrigger className="w-32">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="all">All Methods</SelectItem>
+									<SelectItem value="all">
+										All Methods
+									</SelectItem>
 									<SelectItem value="GET">GET</SelectItem>
 									<SelectItem value="POST">POST</SelectItem>
 									<SelectItem value="PUT">PUT</SelectItem>
-									<SelectItem value="PATCH">PATCH</SelectItem>
-									<SelectItem value="DELETE">DELETE</SelectItem>
+									<SelectItem value="PATCH">
+										PATCH
+									</SelectItem>
+									<SelectItem value="DELETE">
+										DELETE
+									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 						<div>
 							<Label>Status</Label>
-							<Select value={statusFilter} onValueChange={setStatusFilter}>
+							<Select
+								value={statusFilter}
+								onValueChange={setStatusFilter}
+							>
 								<SelectTrigger className="w-32">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="all">All Status</SelectItem>
-									<SelectItem value="2xx">2xx Success</SelectItem>
-									<SelectItem value="3xx">3xx Redirect</SelectItem>
-									<SelectItem value="4xx">4xx Client Error</SelectItem>
-									<SelectItem value="5xx">5xx Server Error</SelectItem>
+									<SelectItem value="all">
+										All Status
+									</SelectItem>
+									<SelectItem value="2xx">
+										2xx Success
+									</SelectItem>
+									<SelectItem value="3xx">
+										3xx Redirect
+									</SelectItem>
+									<SelectItem value="4xx">
+										4xx Client Error
+									</SelectItem>
+									<SelectItem value="5xx">
+										5xx Server Error
+									</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -320,15 +396,23 @@ export function History() {
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-lg">
-						History ({filteredHistory.length} {filteredHistory.length === 1 ? 'entry' : 'entries'})
+						History ({filteredHistory.length}{' '}
+						{filteredHistory.length === 1
+							? 'entry'
+							: 'entries'}
+						)
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
 					{filteredHistory.length === 0 ? (
-						<div className="text-center text-muted-foreground py-8">
-							<ClockIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-							<p className="text-lg font-medium">No history entries</p>
-							<p className="text-sm">Your API request history will appear here</p>
+						<div className="py-8 text-center text-muted-foreground">
+							<ClockIcon className="mx-auto mb-2 h-12 w-12 opacity-50" />
+							<p className="text-lg font-medium">
+								No history entries
+							</p>
+							<p className="text-sm">
+								Your API request history will appear here
+							</p>
 						</div>
 					) : (
 						<div className="rounded-md border">
@@ -341,22 +425,29 @@ export function History() {
 										<TableHead>Time</TableHead>
 										<TableHead>Size</TableHead>
 										<TableHead>Timestamp</TableHead>
-										<TableHead className="w-10"></TableHead>
+										<TableHead className="w-10" />
 									</TableRow>
 								</TableHeader>
 								<TableBody>
 									{filteredHistory.map((entry) => (
-										<TableRow key={entry.id} className="hover:bg-muted/50">
+										<TableRow
+											key={entry.id}
+											className="hover:bg-muted/50"
+										>
 											<TableCell>
-												<Badge className={`${getMethodColor(entry.method)} text-white`}>
+												<Badge
+													className={`${getMethodColor(entry.method)} text-white`}
+												>
 													{entry.method}
 												</Badge>
 											</TableCell>
-											<TableCell className="font-medium max-w-md truncate">
+											<TableCell className="max-w-md truncate font-medium">
 												{entry.url}
 											</TableCell>
 											<TableCell>
-												<Badge className={`${getStatusColor(entry.status)} text-white`}>
+												<Badge
+													className={`${getStatusColor(entry.status)} text-white`}
+												>
 													{entry.status} {entry.statusText}
 												</Badge>
 											</TableCell>
@@ -372,13 +463,16 @@ export function History() {
 											<TableCell>
 												<DropdownMenu>
 													<DropdownMenuTrigger asChild>
-														<Button variant="ghost" size="sm">
-															<DotsHorizontalIcon className="w-4 h-4" />
+														<Button
+															variant="ghost"
+															size="sm"
+														>
+															<DotsHorizontalIcon className="h-4 w-4" />
 														</Button>
 													</DropdownMenuTrigger>
 													<DropdownMenuContent align="end">
 														<DropdownMenuItem>
-															<PlayIcon className="w-4 h-4 mr-2" />
+															<PlayIcon className="mr-2 h-4 w-4" />
 															Repeat Request
 														</DropdownMenuItem>
 														<DropdownMenuItem>
@@ -387,9 +481,11 @@ export function History() {
 														<Separator className="my-1" />
 														<DropdownMenuItem
 															className="text-destructive"
-															onClick={() => deleteEntry(entry.id)}
+															onClick={() =>
+																deleteEntry(entry.id)
+															}
 														>
-															<TrashIcon className="w-4 h-4 mr-2" />
+															<TrashIcon className="mr-2 h-4 w-4" />
 															Delete
 														</DropdownMenuItem>
 													</DropdownMenuContent>

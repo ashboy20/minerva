@@ -6,13 +6,18 @@ export default function MainApp() {
 
 	useEffect(() => {
 		// Listen for messages from child windows
-		window.electron.ipcRenderer.on('child-window-message', (_, data) => {
-			setMessage(String(data));
-		});
+		window.electron.ipcRenderer.on(
+			'child-window-message',
+			(_, data) => {
+				setMessage(String(data));
+			},
+		);
 
 		// Cleanup listener on component unmount
 		return () => {
-			window.electron.ipcRenderer.removeAllListeners('child-window-message');
+			window.electron.ipcRenderer.removeAllListeners(
+				'child-window-message',
+			);
 		};
 	}, []);
 
@@ -22,12 +27,14 @@ export default function MainApp() {
 	};
 
 	return (
-		<div className="min-h-screen p-8 bg-gray-100 text-black">
-			<h1 className="text-4xl font-bold mb-6">Electron Hotplate Demo</h1>
+		<div className="min-h-screen bg-gray-100 p-8 text-black">
+			<h1 className="mb-6 text-4xl font-bold">
+				Electron Hotplate Demo
+			</h1>
 			<div className="space-y-4">
 				<button
 					onClick={openChildWindow}
-					className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+					className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600"
 					type="button"
 				>
 					Open Child Window

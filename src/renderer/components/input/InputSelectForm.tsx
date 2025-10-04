@@ -75,7 +75,9 @@ export function InputSelectForm({
 						render={({ field }) => (
 							<FormItem>
 								{description && (
-									<FormDescription>{description}</FormDescription>
+									<FormDescription>
+										{description}
+									</FormDescription>
 								)}
 								<Select
 									onValueChange={(val) => {
@@ -87,19 +89,28 @@ export function InputSelectForm({
 									<FormControl>
 										<SelectTrigger>
 											<SelectValue
-												placeholder={placeholder || 'Select an item'}
+												placeholder={
+													placeholder || 'Select an item'
+												}
 											/>
 										</SelectTrigger>
 									</FormControl>
 									<SelectContent>
 										{items.map((item) => (
-											<SelectItem key={item.value} value={item.value}>
+											<SelectItem
+												key={item.value}
+												value={item.value}
+											>
 												{item.label}
 											</SelectItem>
 										))}
 									</SelectContent>
 								</Select>
-								{details && <FormDescription>{details}</FormDescription>}
+								{details && (
+									<FormDescription>
+										{details}
+									</FormDescription>
+								)}
 								<FormMessage />
 							</FormItem>
 						)}

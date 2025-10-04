@@ -1,5 +1,8 @@
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+	RadioGroup,
+	RadioGroupItem,
+} from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import { simpleUUID } from '@/utils/getUUID';
 import React, { useCallback, useMemo } from 'react';
@@ -35,16 +38,26 @@ export function InputRadioGroup({
 	);
 
 	return (
-		<div className={cn('flex flex-col gap-4', card && 'rounded-lg border p-4')}>
+		<div
+			className={cn(
+				'flex flex-col gap-4',
+				card && 'rounded-lg border p-4',
+			)}
+		>
 			<div className="flex flex-col gap-2">
 				<div className="space-y-0.5">
 					{label && (
-						<label htmlFor={uuid} className="font-medium text-base">
+						<label
+							htmlFor={uuid}
+							className="text-base font-medium"
+						>
 							{label}
 						</label>
 					)}
 					{description && (
-						<p className="text-muted-foreground">{description}</p>
+						<p className="text-muted-foreground">
+							{description}
+						</p>
 					)}
 				</div>
 				<RadioGroup
@@ -53,14 +66,24 @@ export function InputRadioGroup({
 					{...props}
 				>
 					{items.map((option) => (
-						<div key={option.value} className="flex items-center space-x-2">
-							<RadioGroupItem value={option.value} id={uuid} />
+						<div
+							key={option.value}
+							className="flex items-center space-x-2"
+						>
+							<RadioGroupItem
+								value={option.value}
+								id={uuid}
+							/>
 							<Label htmlFor={uuid}>{option.label}</Label>
 						</div>
 					))}
 				</RadioGroup>
 			</div>
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 			{content && <div>{content}</div>}
 		</div>
 	);

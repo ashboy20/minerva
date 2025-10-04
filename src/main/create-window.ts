@@ -8,7 +8,11 @@ import {
 } from 'electron';
 import Logger from 'electron-log/main';
 import path from 'path';
-import { APP_FRAME, APP_HEIGHT, APP_WIDTH } from '../config/config';
+import {
+	APP_FRAME,
+	APP_HEIGHT,
+	APP_WIDTH,
+} from '../config/config';
 import { setupContextMenu } from './context-menu';
 import MenuBuilder from './menu';
 import { __assets } from './paths';
@@ -20,7 +24,9 @@ const getAssetPath = (...paths: string[]): string => {
 	return path.join(__assets, ...paths);
 };
 
-const createWindow = (opts?: BrowserWindowConstructorOptions) => {
+const createWindow = (
+	opts?: BrowserWindowConstructorOptions,
+) => {
 	const options: BrowserWindowConstructorOptions = {
 		title: app.name,
 		tabbingIdentifier: app.name,
@@ -74,13 +80,19 @@ const createWindow = (opts?: BrowserWindowConstructorOptions) => {
 
 	const browserWindow = new BrowserWindow(options);
 
-	browserWindow.on('unresponsive', (event: IpcMainEvent) => {
-		Logger.error(`Window unresponsive: ${event.sender}`);
-	});
+	browserWindow.on(
+		'unresponsive',
+		(event: IpcMainEvent) => {
+			Logger.error(`Window unresponsive: ${event.sender}`);
+		},
+	);
 
-	browserWindow.webContents.on('did-fail-load', (event: any) => {
-		Logger.error(`Window failed load: ${event?.sender}`);
-	});
+	browserWindow.webContents.on(
+		'did-fail-load',
+		(event: any) => {
+			Logger.error(`Window failed load: ${event?.sender}`);
+		},
+	);
 
 	browserWindow.webContents.on('did-finish-load', () => {
 		Logger.info('Window finished load');
@@ -129,8 +141,12 @@ export const createMainWindow = async () => {
 
 	if (is.windows) {
 		options.titleBarOverlay = {
-			color: getSetting('theme') === 'dark' ? '#000000' : '#ffffff',
-			symbolColor: String(getSetting('accentColor')) || '#000000',
+			color:
+				getSetting('theme') === 'dark'
+					? '#000000'
+					: '#ffffff',
+			symbolColor:
+				String(getSetting('accentColor')) || '#000000',
 			height: 34,
 		};
 	}
@@ -139,7 +155,10 @@ export const createMainWindow = async () => {
 
 	window.on('ready-to-show', () => {
 		// Setting: Start minimized
-		if (process.env.START_MINIMIZED || getSetting('startMinimized')) {
+		if (
+			process.env.START_MINIMIZED ||
+			getSetting('startMinimized')
+		) {
 			window.minimize();
 		} else {
 			window.show();
@@ -156,8 +175,12 @@ export const createChildWindow = async () => {
 	const mainWindowBounds = windows.mainWindow?.getBounds();
 	const options: BrowserWindowConstructorOptions = {
 		frame: true,
-		x: mainWindowBounds ? mainWindowBounds.x + 60 : undefined,
-		y: mainWindowBounds ? mainWindowBounds.y + 60 : undefined,
+		x: mainWindowBounds
+			? mainWindowBounds.x + 60
+			: undefined,
+		y: mainWindowBounds
+			? mainWindowBounds.y + 60
+			: undefined,
 	};
 
 	const window = createWindow(options);

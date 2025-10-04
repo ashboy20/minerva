@@ -35,10 +35,15 @@ const initialize = () => {
 	protocol.handle(PROTOCOL, (request: any) => {
 		// list all files in the directory
 		const filepath = path
-			.join(__assets, request.url.slice(`${PROTOCOL}://`.length))
+			.join(
+				__assets,
+				request.url.slice(`${PROTOCOL}://`.length),
+			)
 			.replace(/\/$/, ''); // remove trailing slash
 		const file = `file://${filepath}`;
-		Logger.info(`Protocol request: ${request.url}; File: ${file}`);
+		Logger.info(
+			`Protocol request: ${request.url}; File: ${file}`,
+		);
 		return net.fetch(file);
 	});
 };

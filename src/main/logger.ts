@@ -69,7 +69,10 @@ const initialize = () => {
 	// Hook into logger to add messages to app status
 	Logger.hooks.push((message, _transport) => {
 		// @ts-ignore
-		if (message.level === 'status' || message.level === 'error') {
+		if (
+			message.level === 'status' ||
+			message.level === 'error'
+		) {
 			addAppMessage(message.data.join(' '));
 		}
 		return message;

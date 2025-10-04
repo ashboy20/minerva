@@ -26,8 +26,14 @@ const configuration: webpack.Configuration = {
 	target: ['web', 'electron-renderer'],
 
 	entry: {
-		app: path.join(webpackPaths.srcRendererPath, 'index.tsx'),
-		child: path.join(webpackPaths.srcRendererPath, 'child.tsx'),
+		app: path.join(
+			webpackPaths.srcRendererPath,
+			'index.tsx',
+		),
+		child: path.join(
+			webpackPaths.srcRendererPath,
+			'child.tsx',
+		),
 	},
 
 	output: {
@@ -101,7 +107,10 @@ const configuration: webpack.Configuration = {
 
 	optimization: {
 		minimize: true,
-		minimizer: [new TerserPlugin(), new CssMinimizerPlugin()],
+		minimizer: [
+			new TerserPlugin(),
+			new CssMinimizerPlugin(),
+		],
 	},
 
 	plugins: [
@@ -124,14 +133,20 @@ const configuration: webpack.Configuration = {
 		}),
 
 		new BundleAnalyzerPlugin({
-			analyzerMode: process.env.ANALYZE === 'true' ? 'server' : 'disabled',
+			analyzerMode:
+				process.env.ANALYZE === 'true'
+					? 'server'
+					: 'disabled',
 			analyzerPort: 8889,
 		}),
 
 		new HtmlWebpackPlugin({
 			chunks: ['app'],
 			filename: 'index.html',
-			template: path.join(webpackPaths.srcRendererPath, 'index.ejs'),
+			template: path.join(
+				webpackPaths.srcRendererPath,
+				'index.ejs',
+			),
 			minify: {
 				collapseWhitespace: true,
 				removeAttributeQuotes: true,
@@ -144,7 +159,10 @@ const configuration: webpack.Configuration = {
 		new HtmlWebpackPlugin({
 			chunks: ['child'],
 			filename: 'child.html',
-			template: path.join(webpackPaths.srcRendererPath, 'index.ejs'),
+			template: path.join(
+				webpackPaths.srcRendererPath,
+				'index.ejs',
+			),
 			minify: {
 				collapseWhitespace: true,
 				removeAttributeQuotes: true,

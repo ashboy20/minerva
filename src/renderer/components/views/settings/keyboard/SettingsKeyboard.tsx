@@ -16,11 +16,13 @@ export function SettingsKeyboard() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h3 className="text-lg font-medium">Keyboard Shortcuts</h3>
+				<h3 className="text-lg font-medium">
+					Keyboard Shortcuts
+				</h3>
 				<p className="text-sm text-muted-foreground">
-					Customize keyboard shortcuts to control the application. Press
-					&quot;Backspace&quot; or &quot;Delete&quot; to clear the current
-					shortcut.
+					Customize keyboard shortcuts to control the
+					application. Press &quot;Backspace&quot; or
+					&quot;Delete&quot; to clear the current shortcut.
 				</p>
 			</div>
 			<Separator />

@@ -35,7 +35,7 @@ class EndpointManagementService:
             print(e)
             raise e
 
-    async def _get_type_by_uuid(self, uuid: str) -> str:
+    async def get_type_by_uuid(self, uuid: str) -> str:
         """Get the type of an item by UUID"""
         with Session(engine) as session:
             statement = select(Collection).where(Collection.uuid == uuid)
@@ -116,7 +116,7 @@ class EndpointManagementService:
         Returns:
             True if reordering was successful
         """
-        item_type = await self._get_type_by_uuid(dragged_uuid)
+        item_type = await self.get_type_by_uuid(dragged_uuid)
         if not item_type:
             raise ValueError(f"Item not found for UUID: {dragged_uuid}")
 
@@ -200,18 +200,44 @@ class EndpointManagementService:
                 return True
             return False
 
-    async def update_collection(self, uuid: str, items: dict) -> Collection:
-        """Update a collection by UUID"""
+    async def update_item(
+        self, uuid: str, items: dict
+    ) -> Union[Collection, Folder, Endpoint, None]:
+        """Update an item by UUID. Works for collections, folders, and endpoints.
+
+        Args:
+            uuid: The UUID of the item to update
+            items: Dictionary of fields to update
+
+        Returns:
+            The updated item or None if not found
+        """
+        item_type = await self.get_type_by_uuid(uuid)
+        if not item_type:
+            return None
+
         with Session(engine) as session:
-            statement = select(Collection).where(Collection.uuid == uuid)
-            collection = session.exec(statement).first()
-            if collection:
+            # Get the item based on its type
+            if item_type == "collection":
+                statement = select(Collection).where(Collection.uuid == uuid)
+                item = session.exec(statement).first()
+            elif item_type == "folder":
+                statement = select(Folder).where(Folder.uuid == uuid)
+                item = session.exec(statement).first()
+            else:  # endpoint
+                statement = select(Endpoint).where(Endpoint.uuid == uuid)
+                item = session.exec(statement).first()
+
+            if item:
+                # Update fields
                 for key, value in items.items():
-                    setattr(collection, key, value)
-                session.add(collection)
+                    if hasattr(item, key) and value is not None:
+                        setattr(item, key, value)
+                session.add(item)
                 session.commit()
-                session.refresh(collection)
-            return collection
+                session.refresh(item)
+                return item
+            return None
 
     async def find_parent_by_uuid(
         self, uuid: str
@@ -258,20 +284,6 @@ class EndpointManagementService:
             session.refresh(folder)
             return folder
 
-    async def update_folder(self, folder_uuid: str, **kwargs) -> Optional[Folder]:
-        """Update a folder by UUID"""
-        with Session(engine) as session:
-            statement = select(Folder).where(Folder.uuid == folder_uuid)
-            folder = session.exec(statement).first()
-            if folder:
-                for key, value in kwargs.items():
-                    if hasattr(folder, key) and value is not None:
-                        setattr(folder, key, value)
-                session.add(folder)
-                session.commit()
-                session.refresh(folder)
-            return folder
-
     async def delete_folder(self, folder_uuid: str) -> bool:
         """Delete a folder by UUID"""
         with Session(engine) as session:
@@ -307,20 +319,6 @@ class EndpointManagementService:
             session.add(endpoint)
             session.commit()
             session.refresh(endpoint)
-            return endpoint
-
-    async def update_endpoint(self, endpoint_uuid: str, **kwargs) -> Optional[Endpoint]:
-        """Update an endpoint by UUID"""
-        with Session(engine) as session:
-            statement = select(Endpoint).where(Endpoint.uuid == endpoint_uuid)
-            endpoint = session.exec(statement).first()
-            if endpoint:
-                for key, value in kwargs.items():
-                    if hasattr(endpoint, key) and value is not None:
-                        setattr(endpoint, key, value)
-                session.add(endpoint)
-                session.commit()
-                session.refresh(endpoint)
             return endpoint
 
     async def delete_endpoint(self, endpoint_uuid: str) -> bool:
@@ -374,39 +372,6 @@ class EndpointManagementService:
     ) -> List[Union[Folder, Endpoint]]:
         """Find all items (folders and endpoints) in a specific collection"""
         return await self.find_items_by_parent_uuid(collection_uuid)
-
-    async def rename_collection(self, uuid: str, new_name: str) -> bool:
-        """Rename a collection by UUID"""
-        with Session(engine) as session:
-            collection = session.get(Collection, uuid)
-            if not collection:
-                return False
-
-            collection.name = new_name
-            session.commit()
-            return True
-
-    async def rename_folder(self, uuid: str, new_name: str) -> bool:
-        """Rename a folder by UUID"""
-        with Session(engine) as session:
-            folder = session.get(Folder, uuid)
-            if not folder:
-                return False
-
-            folder.name = new_name
-            session.commit()
-            return True
-
-    async def rename_endpoint(self, uuid: str, new_name: str) -> bool:
-        """Rename an endpoint by UUID"""
-        with Session(engine) as session:
-            endpoint = session.get(Endpoint, uuid)
-            if not endpoint:
-                return False
-
-            endpoint.name = new_name
-            session.commit()
-            return True
 
 
 # Global service instance

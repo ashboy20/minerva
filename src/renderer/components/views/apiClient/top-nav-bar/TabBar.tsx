@@ -39,7 +39,8 @@ export function TabBar({ className }: TabBarProps) {
 		(state) => state.endpoints,
 	);
 
-	const [newEndpointLabel, setNewEndpointLabel] = useState('');
+	const [newEndpointLabel, setNewEndpointLabel] =
+		useState('');
 
 	const handleTabClick = (tabId: string) => {
 		dispatch(setActiveTab(tabId));
@@ -58,7 +59,12 @@ export function TabBar({ className }: TabBarProps) {
 	};
 
 	const handleRenameTab = (uuid: string) => {
-		dispatch(updateTabRenamingState({ tabId: uuid, isRenaming: true }));
+		dispatch(
+			updateTabRenamingState({
+				tabId: uuid,
+				isRenaming: true,
+			}),
+		);
 	};
 
 	return (
@@ -103,12 +109,19 @@ export function TabBar({ className }: TabBarProps) {
 										}
 										onKeyDown={(e) => {
 											if (e.key === 'Enter') {
-												dispatch(updateTabRenamingState({ tabId: tab.uuid, isRenaming: false }));
+												dispatch(
+													updateTabRenamingState({
+														tabId: tab.uuid,
+														isRenaming: false,
+													}),
+												);
 											}
 										}}
 									/>
 								) : (
-									<span className="min-w-0 flex-1 truncate text-sm">New Request</span>
+									<span className="min-w-0 flex-1 truncate text-sm">
+										New Request
+									</span>
 								)}
 
 								{/* Close button */}

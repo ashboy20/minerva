@@ -6,7 +6,7 @@ export default function ErrorPage() {
 
 	return (
 		<div
-			className="align-items-center bg-white d-flex flex-column flex-grow-1 justify-content-center"
+			className="align-items-center d-flex flex-column flex-grow-1 justify-content-center bg-white"
 			id="error-page"
 		>
 			<h1 className="mt-0">Oops!</h1>

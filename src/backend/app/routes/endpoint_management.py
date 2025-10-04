@@ -9,6 +9,8 @@ from app.models.endpoint_management import (
     PostCollectionResponse,
     ReorderRequest,
     ReorderResponse,
+    UpdateItemRequest,
+    UpdateItemResponse,
 )
 from app.services.endpoint_management import endpoint_service
 
@@ -124,46 +126,23 @@ async def reorder_items(request: ReorderRequest):
         )
 
 
-@router.put("/collection/{uuid}/rename")
-async def rename_collection(uuid: str, new_name: str):
-    """Rename a collection by UUID"""
+@router.put("/item/update", response_model=UpdateItemResponse)
+async def update_item(request: UpdateItemRequest):
+    """Update an item's fields by UUID"""
     try:
-        success = await endpoint_service.rename_collection(uuid, new_name)
-        if not success:
-            raise HTTPException(status_code=404, detail="Collection not found")
+        result = await endpoint_service.update_item(request.uuid, request.fields)
+        if not result:
+            raise HTTPException(
+                status_code=404, detail=f"Item not found"
+            )
 
-        return {"success": True, "message": "Collection renamed successfully"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to rename collection: {str(e)}"
+        return UpdateItemResponse(
+            success=True,
+            data={"message": f"Item updated successfully"},
         )
-
-
-@router.put("/folder/{uuid}/rename")
-async def rename_folder(uuid: str, new_name: str):
-    """Rename a folder by UUID"""
-    try:
-        success = await endpoint_service.rename_folder(uuid, new_name)
-        if not success:
-            raise HTTPException(status_code=404, detail="Folder not found")
-
-        return {"success": True, "message": "Folder renamed successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Failed to rename folder: {str(e)}"
-        )
-
-
-@router.put("/endpoint/{uuid}/rename")
-async def rename_endpoint(uuid: str, new_name: str):
-    """Rename an endpoint by UUID"""
-    try:
-        success = await endpoint_service.rename_endpoint(uuid, new_name)
-        if not success:
-            raise HTTPException(status_code=404, detail="Endpoint not found")
-
-        return {"success": True, "message": "Endpoint renamed successfully"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to rename endpoint: {str(e)}"
+            status_code=500, detail=f"Failed to update item: {str(e)}"
         )

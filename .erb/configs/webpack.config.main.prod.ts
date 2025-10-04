@@ -24,7 +24,10 @@ const configuration: webpack.Configuration = {
 
 	entry: {
 		main: path.join(webpackPaths.srcMainPath, 'main.ts'),
-		preload: path.join(webpackPaths.srcMainPath, 'preload.ts'),
+		preload: path.join(
+			webpackPaths.srcMainPath,
+			'preload.ts',
+		),
 	},
 
 	output: {
@@ -45,7 +48,10 @@ const configuration: webpack.Configuration = {
 
 	plugins: [
 		new BundleAnalyzerPlugin({
-			analyzerMode: process.env.ANALYZE === 'true' ? 'server' : 'disabled',
+			analyzerMode:
+				process.env.ANALYZE === 'true'
+					? 'server'
+					: 'disabled',
 			analyzerPort: 8888,
 		}),
 

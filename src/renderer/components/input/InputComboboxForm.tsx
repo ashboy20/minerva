@@ -91,12 +91,15 @@ export function InputComboboxForm({
 												role="combobox"
 												className={cn(
 													'w-[200px] justify-between',
-													!currentValue && 'text-muted-foreground',
+													!currentValue &&
+														'text-muted-foreground',
 												)}
 											>
 												{currentValue
-													? items.find((item) => item.value === currentValue)
-															?.label
+													? items.find(
+															(item) =>
+																item.value === currentValue,
+														)?.label
 													: placeholder || 'Select...'}
 												<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 											</Button>
@@ -105,11 +108,14 @@ export function InputComboboxForm({
 									<PopoverContent className="w-[200px] p-0">
 										<Command>
 											<CommandInput
-												placeholder={searchMessage || 'Search...'}
+												placeholder={
+													searchMessage || 'Search...'
+												}
 											/>
 											<CommandList>
 												<CommandEmpty>
-													{noValueMessage || 'No results found.'}
+													{noValueMessage ||
+														'No results found.'}
 												</CommandEmpty>
 												<CommandGroup>
 													{items.map((item) => (
@@ -117,14 +123,20 @@ export function InputComboboxForm({
 															value={item.value}
 															key={item.value}
 															onSelect={() => {
-																form.setValue('itemValue', item.value);
-																onSubmit({ itemValue: item.value });
+																form.setValue(
+																	'itemValue',
+																	item.value,
+																);
+																onSubmit({
+																	itemValue: item.value,
+																});
 															}}
 														>
 															<Check
 																className={cn(
 																	'mr-2 h-4 w-4',
-																	item.value === currentValue
+																	item.value ===
+																		currentValue
 																		? 'opacity-100'
 																		: 'opacity-0',
 																)}
@@ -138,7 +150,9 @@ export function InputComboboxForm({
 									</PopoverContent>
 								</Popover>
 								{description && (
-									<FormDescription>{description}</FormDescription>
+									<FormDescription>
+										{description}
+									</FormDescription>
 								)}
 								<FormMessage />
 							</FormItem>
@@ -146,7 +160,11 @@ export function InputComboboxForm({
 					}}
 				/>
 			</form>
-			{details && <p className="text-sm text-muted-foreground">{details}</p>}
+			{details && (
+				<p className="text-sm text-muted-foreground">
+					{details}
+				</p>
+			)}
 			{content && <div>{content}</div>}
 		</Form>
 	);

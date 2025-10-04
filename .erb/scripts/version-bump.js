@@ -2,7 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const rootPackagePath = path.join(__dirname, '..', '..', 'package.json');
+const rootPackagePath = path.join(
+	__dirname,
+	'..',
+	'..',
+	'package.json',
+);
 const appPackagePath = path.join(
 	__dirname,
 	'..',
@@ -17,13 +22,20 @@ function updateVersion(type) {
 	execSync(`npm version ${type} --no-git-tag-version`);
 
 	// Read the new version from root package.json
-	const rootPackage = JSON.parse(fs.readFileSync(rootPackagePath, 'utf8'));
+	const rootPackage = JSON.parse(
+		fs.readFileSync(rootPackagePath, 'utf8'),
+	);
 	const newVersion = rootPackage.version;
 
 	// Update app package.json
-	const appPackage = JSON.parse(fs.readFileSync(appPackagePath, 'utf8'));
+	const appPackage = JSON.parse(
+		fs.readFileSync(appPackagePath, 'utf8'),
+	);
 	appPackage.version = newVersion;
-	fs.writeFileSync(appPackagePath, JSON.stringify(appPackage, null, 2));
+	fs.writeFileSync(
+		appPackagePath,
+		JSON.stringify(appPackage, null, 2),
+	);
 
 	console.log(`Version bumped to ${newVersion}`);
 
@@ -36,7 +48,9 @@ function updateVersion(type) {
 
 const versionType = process.argv[2];
 if (!['patch', 'minor', 'major'].includes(versionType)) {
-	console.error('Please specify version type: patch, minor, or major');
+	console.error(
+		'Please specify version type: patch, minor, or major',
+	);
 	process.exit(1);
 }
 

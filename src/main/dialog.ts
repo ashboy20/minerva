@@ -45,7 +45,12 @@ const showAboutWindow = (options: any = {}) => {
 
 const openAboutDialog = () => {
 	showAboutWindow({
-		icon: path.join(__dirname, 'static', 'icons', 'icon.png'),
+		icon: path.join(
+			__dirname,
+			'static',
+			'icons',
+			'icon.png',
+		),
 		copyright: `🎯 CrossOver ${app.getVersion()} | Copyright © Lacy Morrow`,
 		text: `A crosshair overlay for any screen. Feedback and bug reports welcome. Created by Lacy Morrow. Crosshairs thanks to /u/IrisFlame. ${
 			is.development && ` | ${debugInfo()}`
@@ -84,7 +89,10 @@ const openUpdateDialog = async (action: Function) => {
 		})
 		.then((result) => {
 			const buttonIndex = validButtonIndex(result);
-			if (buttonIndex === 0 && typeof action === 'function') {
+			if (
+				buttonIndex === 0 &&
+				typeof action === 'function'
+			) {
 				action();
 			}
 		});

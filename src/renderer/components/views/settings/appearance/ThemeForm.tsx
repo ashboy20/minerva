@@ -11,7 +11,10 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+	RadioGroup,
+	RadioGroupItem,
+} from '@/components/ui/radio-group';
 import { $settings } from '@/config/strings';
 
 import { ThemeType } from '@/config/settings';
@@ -24,23 +27,25 @@ const appearanceFormSchema = z.object({
 	}),
 });
 
-type AppearanceFormValues = z.infer<typeof appearanceFormSchema>;
+type AppearanceFormValues = z.infer<
+	typeof appearanceFormSchema
+>;
 
 function LightModeIcon() {
 	return (
 		<>
 			<div className="space-y-2 rounded-sm bg-[#ecedef] p-2">
 				<div className="space-y-2 rounded-md bg-white p-2 shadow-sm">
-					<div className="h-2 sm:w-[80px] rounded-lg bg-[#ecedef]" />
-					<div className="h-2 sm:w-[100px] rounded-lg bg-[#ecedef]" />
+					<div className="h-2 rounded-lg bg-[#ecedef] sm:w-[80px]" />
+					<div className="h-2 rounded-lg bg-[#ecedef] sm:w-[100px]" />
 				</div>
 				<div className="flex items-center space-x-2 rounded-md bg-white p-2 shadow-sm">
 					<div className="h-4 w-4 rounded-full bg-[#ecedef]" />
-					<div className="h-2 sm:w-[100px] rounded-lg bg-[#ecedef]" />
+					<div className="h-2 rounded-lg bg-[#ecedef] sm:w-[100px]" />
 				</div>
 				<div className="flex items-center space-x-2 rounded-md bg-white p-2 shadow-sm">
 					<div className="h-4 w-4 rounded-full bg-[#ecedef]" />
-					<div className="h-2 sm:w-[100px] rounded-lg bg-[#ecedef]" />
+					<div className="h-2 rounded-lg bg-[#ecedef] sm:w-[100px]" />
 				</div>
 			</div>
 		</>
@@ -52,16 +57,16 @@ function DarkModeIcon() {
 		<>
 			<div className="space-y-2 rounded-sm bg-slate-950 p-2">
 				<div className="space-y-2 rounded-md bg-slate-800 p-2 shadow-sm">
-					<div className="h-2 sm:w-[80px] rounded-lg bg-slate-400" />
-					<div className="h-2 sm:w-[100px] rounded-lg bg-slate-400" />
+					<div className="h-2 rounded-lg bg-slate-400 sm:w-[80px]" />
+					<div className="h-2 rounded-lg bg-slate-400 sm:w-[100px]" />
 				</div>
 				<div className="flex items-center space-x-2 rounded-md bg-slate-800 p-2 shadow-sm">
 					<div className="h-4 w-4 rounded-full bg-slate-400" />
-					<div className="h-2 sm:w-[100px] rounded-lg bg-slate-400" />
+					<div className="h-2 rounded-lg bg-slate-400 sm:w-[100px]" />
 				</div>
 				<div className="flex items-center space-x-2 rounded-md bg-slate-800 p-2 shadow-sm">
 					<div className="h-4 w-4 rounded-full bg-slate-400" />
-					<div className="h-2 sm:w-[100px] rounded-lg bg-slate-400" />
+					<div className="h-2 rounded-lg bg-slate-400 sm:w-[100px]" />
 				</div>
 			</div>
 		</>
@@ -74,7 +79,7 @@ function SystemModeIcon() {
 			<div className="">
 				<LightModeIcon />
 			</div>
-			<div className="top-0 right-0 left-1/2 sm:w-full absolute z-10">
+			<div className="absolute left-1/2 right-0 top-0 z-10 sm:w-full">
 				<DarkModeIcon />
 			</div>
 		</div>
@@ -105,7 +110,9 @@ export function ThemeForm() {
 					name="theme"
 					render={({ field }) => (
 						<FormItem className="space-y-1">
-							<FormLabel>{$settings.appearance.themeLabel}</FormLabel>
+							<FormLabel>
+								{$settings.appearance.themeLabel}
+							</FormLabel>
 							<FormDescription>
 								{$settings.appearance.themeDescription}
 							</FormDescription>
@@ -116,17 +123,20 @@ export function ThemeForm() {
 									onThemeChange(e);
 								}}
 								defaultValue={field.value}
-								className="w-full pt-4 px-2 sm:pt-2 sm:px-0 grid grid-cols-1 sm:grid-cols-3 gap-8"
+								className="grid w-full grid-cols-1 gap-8 px-2 pt-4 sm:grid-cols-3 sm:px-0 sm:pt-2"
 							>
 								<FormItem>
 									<FormLabel className="[&:has([data-state=checked])>div]:border-primary">
 										<FormControl>
-											<RadioGroupItem value="light" className="sr-only" />
+											<RadioGroupItem
+												value="light"
+												className="sr-only"
+											/>
 										</FormControl>
 
 										<div
 											className={cn(
-												'items-center rounded-md border-2 border-muted bg-popover p-1 max-w-60 mx-auto',
+												'mx-auto max-w-60 items-center rounded-md border-2 border-muted bg-popover p-1',
 												theme !== 'light' &&
 													'hover:bg-accent hover:text-accent-foreground',
 											)}
@@ -142,12 +152,15 @@ export function ThemeForm() {
 								<FormItem>
 									<FormLabel className="[&:has([data-state=checked])>div]:border-primary">
 										<FormControl>
-											<RadioGroupItem value="dark" className="sr-only" />
+											<RadioGroupItem
+												value="dark"
+												className="sr-only"
+											/>
 										</FormControl>
 
 										<div
 											className={cn(
-												'items-center rounded-md border-2 border-muted bg-popover p-1 max-w-60 mx-auto',
+												'mx-auto max-w-60 items-center rounded-md border-2 border-muted bg-popover p-1',
 												theme !== 'dark' &&
 													'hover:bg-accent hover:text-accent-foreground',
 											)}
@@ -162,12 +175,15 @@ export function ThemeForm() {
 								<FormItem>
 									<FormLabel className="[&:has([data-state=checked])>div]:border-primary">
 										<FormControl>
-											<RadioGroupItem value="system" className="sr-only" />
+											<RadioGroupItem
+												value="system"
+												className="sr-only"
+											/>
 										</FormControl>
 
 										<div
 											className={cn(
-												'items-center rounded-md border-2 border-muted bg-popover p-1 max-w-60 mx-auto',
+												'mx-auto max-w-60 items-center rounded-md border-2 border-muted bg-popover p-1',
 												theme !== 'system' &&
 													'hover:bg-accent hover:text-accent-foreground',
 											)}

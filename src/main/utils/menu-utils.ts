@@ -21,7 +21,9 @@ export const serializeMenu = (
 			enabled: item.enabled,
 			visible: item.visible,
 			checked:
-				typeof item.checked === 'function' ? item.checked() : item.checked,
+				typeof item.checked === 'function'
+					? item.checked()
+					: item.checked,
 		};
 
 		if (item.submenu) {
@@ -33,7 +35,10 @@ export const serializeMenu = (
 };
 
 // Allow the renderer process to trigger a menu item by ID, so that the click events are triggered
-export const triggerMenuItemById = (menu: Menu | null, id: string) => {
+export const triggerMenuItemById = (
+	menu: Menu | null,
+	id: string,
+) => {
 	if (!menu) return;
 	menu.getMenuItemById(id)?.click();
 };

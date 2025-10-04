@@ -30,12 +30,8 @@ const BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE =
 	'backend:endpoint-management:collection:create';
 const BACKEND_ENDPOINT_MANAGEMENT_REORDER =
 	'backend:endpoint-management:collection:reorder';
-const BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_RENAME =
-	'backend:endpoint-management:collection:rename';
-const BACKEND_ENDPOINT_MANAGEMENT_FOLDER_RENAME =
-	'backend:endpoint-management:folder:rename';
-const BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_RENAME =
-	'backend:endpoint-management:endpoint:rename';
+const BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE =
+	'backend:endpoint-management:item:update';
 const BACKEND_API_CALL_ENDPOINT =
 	'backend:api-call:endpoint';
 
@@ -63,8 +59,6 @@ export const ipcChannels = {
 	BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
 	BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE,
 	BACKEND_ENDPOINT_MANAGEMENT_REORDER,
-	BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_RENAME,
-	BACKEND_ENDPOINT_MANAGEMENT_FOLDER_RENAME,
-	BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_RENAME,
+	BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE,
 	BACKEND_API_CALL_ENDPOINT,
 } as const;

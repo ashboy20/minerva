@@ -8,23 +8,40 @@ interface TableFormProps {
 		value: string;
 		enabled: boolean;
 		disabled?: boolean;
-	}[], 
+	}[];
 	title?: string;
-	onChange: (rows: {
-		row_id: number;
-		keyValue: string;
-		value: string;
-		enabled: boolean;
-		disabled?: boolean;
-	}[]) => void;
+	onChange: (
+		rows: {
+			row_id: number;
+			keyValue: string;
+			value: string;
+			enabled: boolean;
+			disabled?: boolean;
+		}[],
+	) => void;
 	isPathParamTable?: boolean;
 	isHeaderTable?: boolean;
 }
 
-export function TableForm({ rows, title, onChange, isPathParamTable = false, isHeaderTable = false }: TableFormProps) {
+export function TableForm({
+	rows,
+	title,
+	onChange,
+	isPathParamTable = false,
+	isHeaderTable = false,
+}: TableFormProps) {
 	const initRows = () => [
 		...rows,
-		...(!isPathParamTable ? [{ row_id: rows.length + 1, keyValue: '', value: '', enabled: true }] : []),
+		...(!isPathParamTable
+			? [
+					{
+						row_id: rows.length + 1,
+						keyValue: '',
+						value: '',
+						enabled: true,
+					},
+				]
+			: []),
 	];
 
 	const [tableRows, setTableRows] = useState(initRows());
@@ -33,7 +50,16 @@ export function TableForm({ rows, title, onChange, isPathParamTable = false, isH
 	useEffect(() => {
 		const newTableRows = [
 			...rows,
-			...(!isPathParamTable ? [{ row_id: rows.length + 1, keyValue: '', value: '', enabled: false }] : []),
+			...(!isPathParamTable
+				? [
+						{
+							row_id: rows.length + 1,
+							keyValue: '',
+							value: '',
+							enabled: false,
+						},
+					]
+				: []),
 		];
 		setTableRows(newTableRows);
 	}, [rows]);
@@ -44,16 +70,23 @@ export function TableForm({ rows, title, onChange, isPathParamTable = false, isH
 		value: string | boolean,
 	) => {
 		setTableRows((prevRows) => {
-			const rowIndex = prevRows.findIndex((row) => row.row_id === row_id);
+			const rowIndex = prevRows.findIndex(
+				(row) => row.row_id === row_id,
+			);
 			const isLastRow = rowIndex === prevRows.length - 1;
-			const shouldAddNewRow = isLastRow && field !== 'enabled' && value;
+			const shouldAddNewRow =
+				isLastRow && field !== 'enabled' && value;
 
 			// Update the current row
 			const updatedRows = prevRows.map((row) => {
 				if (row.row_id === row_id) {
 					const updatedRow = { ...row, [field]: value };
 					// Auto-enable if both key and value are filled
-					if (field !== 'enabled' && updatedRow.keyValue && updatedRow.value) {
+					if (
+						field !== 'enabled' &&
+						updatedRow.keyValue &&
+						updatedRow.value
+					) {
 						updatedRow.enabled = true;
 					}
 					return updatedRow;
@@ -63,7 +96,9 @@ export function TableForm({ rows, title, onChange, isPathParamTable = false, isH
 
 			// Add new row if needed
 			if (shouldAddNewRow && !isPathParamTable) {
-				const maxId = Math.max(...updatedRows.map((row) => row.row_id));
+				const maxId = Math.max(
+					...updatedRows.map((row) => row.row_id),
+				);
 				return [
 					...updatedRows,
 					{
@@ -76,18 +111,24 @@ export function TableForm({ rows, title, onChange, isPathParamTable = false, isH
 			}
 
 			// Notify parent of changes (exclude the empty last row)
-			const validRows = updatedRows.filter(row => row.keyValue || row.value);
+			const validRows = updatedRows.filter(
+				(row) => row.keyValue || row.value,
+			);
 			onChange(validRows);
-			
+
 			return updatedRows;
 		});
 	};
 
 	const onRowDelete = (id: number) => {
 		setTableRows((prevRows) => {
-			const filtered = prevRows.filter((row) => row.row_id !== id);
+			const filtered = prevRows.filter(
+				(row) => row.row_id !== id,
+			);
 			// Notify parent of changes (exclude the empty last row)
-			const validRows = filtered.filter(row => row.keyValue || row.value);
+			const validRows = filtered.filter(
+				(row) => row.keyValue || row.value,
+			);
 			onChange(validRows);
 			return filtered;
 		});
@@ -95,7 +136,9 @@ export function TableForm({ rows, title, onChange, isPathParamTable = false, isH
 
 	return (
 		<div className="flex flex-col gap-2">
-			{title && <h3 className="text-sm font-medium">{title}</h3>}
+			{title && (
+				<h3 className="text-sm font-medium">{title}</h3>
+			)}
 			{tableRows.map((row) => (
 				<InputRow
 					key={row.row_id}
