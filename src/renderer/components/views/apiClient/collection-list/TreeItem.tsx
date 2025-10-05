@@ -325,7 +325,7 @@ export const TreeItem = React.forwardRef<
 			<div ref={ref}>
 				<Collapsible>
 					<CollapsibleTrigger asChild>
-						<ContextMenu modal={false}>
+						<ContextMenu modal={!deleteDialogOpen}>
 							<ContextMenuTrigger>
 								{itemContent}
 							</ContextMenuTrigger>
