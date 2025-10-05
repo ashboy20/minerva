@@ -242,6 +242,26 @@ export const setOpenIds = createAsyncThunk(
 	},
 );
 
+export const deleteItem = createAsyncThunk(
+	'collection/deleteItem',
+	async (uuid: string, { rejectWithValue, dispatch }) => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ITEM_DELETE,
+			uuid,
+		);
+
+		if (result && result.success) {
+			// Refresh collections after successful deletion
+			await dispatch(getCollections());
+			return result.data;
+		}
+
+		return rejectWithValue(
+			result?.error || 'Failed to delete item',
+		);
+	},
+);
+
 export const collectionSlice = createSlice({
 	name: 'collection',
 	initialState,

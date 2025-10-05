@@ -315,3 +315,25 @@ class UpdateItemResponse(BaseResponse):
     """Response model for update operations"""
 
     data: dict = Field(description="The response data payload")
+
+
+class DeleteItemRequest(BaseModel):
+    """Request model for POST /item/delete"""
+
+    uuid: str = Field(description="UUID of the item to delete")
+
+
+class DeleteItemResponse(BaseResponse):
+    """Response model for POST /item/delete"""
+
+    class Data(BaseModel):
+        """Data model for delete response"""
+
+        uuid: str = Field(description="UUID of the deleted item")
+        type: str = Field(
+            description="Type of the deleted item (collection, folder, or endpoint)"
+        )
+        name: str = Field(description="Name of the deleted item")
+        message: str = Field(description="Success message")
+
+    data: Data = Field(description="The response data payload")

@@ -13,6 +13,8 @@ from app.models.endpoint_management import (
     UpdateItemResponse,
     CreateItemRequest,
     CreateItemResponse,
+    DeleteItemRequest,
+    DeleteItemResponse,
 )
 from app.services.endpoint_management import endpoint_service
 
@@ -205,3 +207,44 @@ async def create_item(request: CreateItemRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create item: {str(e)}")
+
+
+@router.post("/item/delete", response_model=DeleteItemResponse)
+async def delete_item(request: DeleteItemRequest):
+    """Delete an item by UUID"""
+    try:
+        # Get item type and name before deletion
+        item_type = await endpoint_service.get_type_by_uuid(request.uuid)
+        item = None
+
+        if item_type == "collection":
+            item = await endpoint_service.find_collection_by_uuid(request.uuid)
+        elif item_type == "folder":
+            item = await endpoint_service.find_folder_by_uuid(request.uuid)
+        else:  # endpoint
+            item = await endpoint_service.find_endpoint_by_uuid(request.uuid)
+
+        if not item:
+            raise HTTPException(status_code=404, detail=f"Item not found")
+
+        # Store info before deletion
+        item_name = item.name
+
+        # Delete the item
+        result = await endpoint_service.delete_item_by_uuid(request.uuid)
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Item not found")
+
+        return DeleteItemResponse(
+            success=True,
+            data=DeleteItemResponse.Data(
+                uuid=request.uuid,
+                type=item_type,
+                name=item_name,
+                message=f"{item_type.capitalize()} '{item_name}' deleted successfully",
+            ),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete item: {str(e)}")
