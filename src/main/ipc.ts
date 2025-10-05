@@ -11,8 +11,10 @@ import sounds from './sounds';
 import { idle } from './startup';
 import {
 	getAppMessages,
+	getCollectionOpenIds,
 	getKeybinds,
 	getSettings,
+	setCollectionOpenIds,
 	setSettings,
 } from './store-actions';
 import { is } from './util';
@@ -70,6 +72,20 @@ export default {
 			ipcChannels.SET_SETTINGS,
 			(_event, settings: Partial<SettingsType>) => {
 				setSettings(settings);
+			},
+		);
+
+		ipcMain.handle(
+			ipcChannels.GET_COLLECTION_OPEN_IDS,
+			() => {
+				return getCollectionOpenIds();
+			},
+		);
+
+		ipcMain.handle(
+			ipcChannels.SET_COLLECTION_OPEN_IDS,
+			(_event, openIds: string[]) => {
+				setCollectionOpenIds(openIds);
 			},
 		);
 

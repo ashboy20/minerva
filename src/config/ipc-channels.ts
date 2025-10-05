@@ -16,6 +16,9 @@ const GET_RENDERER_SYNC = 'get-renderer-sync';
 const SET_KEYBIND = 'set-keybind';
 const SET_SETTINGS = 'set-settings';
 
+const GET_COLLECTION_OPEN_IDS = 'get-collection-open-ids';
+const SET_COLLECTION_OPEN_IDS = 'set-collection-open-ids';
+
 const RENDERER_READY = 'renderer-ready';
 
 const TRIGGER_APP_MENU_ITEM_BY_ID =
@@ -50,6 +53,9 @@ export const ipcChannels = {
 
 	SET_KEYBIND,
 	SET_SETTINGS,
+
+	GET_COLLECTION_OPEN_IDS,
+	SET_COLLECTION_OPEN_IDS,
 
 	TRIGGER_APP_MENU_ITEM_BY_ID,
 	OPEN_URL,

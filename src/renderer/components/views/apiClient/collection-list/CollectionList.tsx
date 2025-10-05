@@ -20,6 +20,7 @@ import {
 } from '@minoru/react-dnd-treeview';
 import { useAppDispatch } from '@/store/hooks';
 import { TreeItem } from '@/renderer/components/views/apiClient/collection-list/TreeItem';
+import { ipcChannels } from '@/config/ipc-channels';
 
 export interface MinervaNodeModel extends NodeModel<any> {
 	data: {
@@ -125,6 +126,19 @@ export function CollectionList({
 		setTreeData(parseTreeData(collections));
 	}, [collections]);
 
+	const [openIds, setOpenIds] = useState<string[]>([]);
+
+	useEffect(() => {
+		// Load initial open state
+		window.electron.ipcRenderer
+			.invoke(ipcChannels.GET_COLLECTION_OPEN_IDS)
+			.then((data) => {
+				if (data && Array.isArray(data)) {
+					setOpenIds(data);
+				}
+			});
+	}, []);
+
 	const handleCanDrop = (
 		tree: NodeModel<any>[],
 		{ dragSource, dropTargetId }: DropOptions<any>,
@@ -204,6 +218,17 @@ export function CollectionList({
 		if (!draggedItem) return;
 	};
 
+	const handleChangeOpen = (
+		newOpenIds: NodeModel['id'][],
+	) => {
+		const stringIds = newOpenIds.map((id) => String(id)); // Convert all IDs to strings
+		setOpenIds(stringIds); // Update local state
+		window.electron.ipcRenderer.invoke(
+			ipcChannels.SET_COLLECTION_OPEN_IDS,
+			stringIds,
+		);
+	};
+
 	// Header at the top
 	const header = (
 		<CollectionHeader
@@ -260,7 +285,9 @@ export function CollectionList({
 									dragPreviewRender={(monitorProps) => (
 										<div style={{ opacity: 0.5 }}>
 											<TreeItem
-												node={monitorProps.item}
+												node={
+													monitorProps.item as MinervaNodeModel
+												}
 												depth={0}
 												isOpen={false}
 												onToggle={() => {}}
@@ -286,6 +313,8 @@ export function CollectionList({
 											isDropTarget={isDropTarget}
 										/>
 									)}
+									onChangeOpen={handleChangeOpen}
+									initialOpen={openIds}
 								/>
 							</DndProvider>
 						</>

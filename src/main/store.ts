@@ -5,6 +5,7 @@ import {
 	DEFAULT_SETTINGS,
 	SettingsType,
 } from '../config/settings';
+import { CollectionsType } from '@/types/collections';
 
 export type AppMessageType = string;
 
@@ -14,6 +15,7 @@ export interface StoreType {
 	settings: SettingsType;
 	appMessageLog: AppMessageLogType; // Public-facing console.log()
 	keybinds: CustomAcceleratorsType; // Custom keybinds/accelerators/global shortcuts
+	collections: CollectionsType;
 }
 
 const schema: Store.Schema<StoreType> = {
@@ -71,6 +73,21 @@ const schema: Store.Schema<StoreType> = {
 			},
 		},
 		default: DEFAULT_SETTINGS,
+	},
+	collections: {
+		type: 'object',
+		properties: {
+			openIds: {
+				type: 'array',
+				items: {
+					type: 'string',
+				},
+				default: [],
+			},
+		},
+		default: {
+			openIds: [],
+		},
 	},
 };
 
