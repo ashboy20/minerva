@@ -189,17 +189,6 @@ class EndpointManagementService:
                 session.commit()
                 return True
 
-    async def remove_collection(self, uuid: str) -> bool:
-        """Remove a collection by UUID"""
-        with Session(engine) as session:
-            statement = select(Collection).where(Collection.uuid == uuid)
-            collection = session.exec(statement).first()
-            if collection:
-                session.delete(collection)
-                session.commit()
-                return True
-            return False
-
     async def update_item(
         self, uuid: str, items: dict
     ) -> Union[Collection, Folder, Endpoint, None]:
@@ -289,17 +278,6 @@ class EndpointManagementService:
             session.refresh(folder)
             return folder
 
-    async def delete_folder(self, folder_uuid: str) -> bool:
-        """Delete a folder by UUID"""
-        with Session(engine) as session:
-            statement = select(Folder).where(Folder.uuid == folder_uuid)
-            folder = session.exec(statement).first()
-            if folder:
-                session.delete(folder)
-                session.commit()
-                return True
-            return False
-
     # Endpoint management methods
     async def create_endpoint(
         self,
@@ -330,17 +308,6 @@ class EndpointManagementService:
             session.commit()
             session.refresh(endpoint)
             return endpoint
-
-    async def delete_endpoint(self, endpoint_uuid: str) -> bool:
-        """Delete an endpoint by UUID"""
-        with Session(engine) as session:
-            statement = select(Endpoint).where(Endpoint.uuid == endpoint_uuid)
-            endpoint = session.exec(statement).first()
-            if endpoint:
-                session.delete(endpoint)
-                session.commit()
-                return True
-            return False
 
     async def find_items_by_parent_uuid(
         self, parent_uuid: str, session: Optional[Session] = None
@@ -382,6 +349,30 @@ class EndpointManagementService:
     ) -> List[Union[Folder, Endpoint]]:
         """Find all items (folders and endpoints) in a specific collection"""
         return await self.find_items_by_parent_uuid(collection_uuid)
+
+    async def delete_item_by_uuid(self, uuid: str) -> bool:
+        """Delete any item (collection, folder, or endpoint) by UUID"""
+        item_type = await self.get_type_by_uuid(uuid)
+        if not item_type:
+            return False
+
+        with Session(engine) as session:
+            # Get the item based on its type
+            if item_type == "collection":
+                statement = select(Collection).where(Collection.uuid == uuid)
+                item = session.exec(statement).first()
+            elif item_type == "folder":
+                statement = select(Folder).where(Folder.uuid == uuid)
+                item = session.exec(statement).first()
+            else:  # endpoint
+                statement = select(Endpoint).where(Endpoint.uuid == uuid)
+                item = session.exec(statement).first()
+
+            if item:
+                session.delete(item)
+                session.commit()
+                return True
+            return False
 
 
 # Global service instance

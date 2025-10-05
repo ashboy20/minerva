@@ -3,6 +3,7 @@ import {
 	Collapsible,
 	CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { DeleteConfirmDialog } from '@/renderer/components/views/apiClient/collection-list/DeleteConfirmDialog';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -20,7 +21,7 @@ import { useAppDispatch } from '@/store/hooks';
 import {
 	getCollections,
 	updateItem,
-	createItem,
+	deleteItem,
 } from '@/store/slices/collectionSlice';
 import {
 	ContextMenu,
@@ -31,7 +32,6 @@ import {
 } from '@/renderer/components/ui/context-menu';
 import { Input } from '@/renderer/components/ui/input';
 import { MinervaNodeModel } from '@/renderer/components/views/apiClient/collection-list/CollectionList';
-import { setOpenIds } from '@/store/slices/collectionSlice';
 
 interface TreeItemProps {
 	node: MinervaNodeModel;
@@ -172,6 +172,8 @@ export const TreeItem = React.forwardRef<
 		const [creatingItemType, setCreatingItemType] =
 			useState<'folder' | 'endpoint' | null>(null);
 		const [newName, setNewName] = useState(node.text);
+		const [deleteDialogOpen, setDeleteDialogOpen] =
+			useState(false);
 		const inputRef = React.useRef<HTMLInputElement>(null);
 
 		useEffect(() => {
@@ -230,7 +232,17 @@ export const TreeItem = React.forwardRef<
 		};
 
 		const handleDelete = () => {
-			console.log(`Delete ${node.data.type}:`, node.text);
+			setDeleteDialogOpen(true);
+		};
+
+		const handleConfirmDelete = async () => {
+			try {
+				await dispatch(
+					deleteItem(node.id as string),
+				).unwrap();
+			} catch (error) {
+				console.error('Error deleting item:', error);
+			}
 		};
 
 		const handleEdit = () => {
@@ -313,7 +325,7 @@ export const TreeItem = React.forwardRef<
 			<div ref={ref}>
 				<Collapsible>
 					<CollapsibleTrigger asChild>
-						<ContextMenu>
+						<ContextMenu modal={!deleteDialogOpen}>
 							<ContextMenuTrigger>
 								{itemContent}
 							</ContextMenuTrigger>
@@ -389,6 +401,12 @@ export const TreeItem = React.forwardRef<
 						/>
 					)}
 				</Collapsible>
+				<DeleteConfirmDialog
+					isOpen={deleteDialogOpen}
+					onOpenChange={setDeleteDialogOpen}
+					itemName={node.text}
+					onConfirm={handleConfirmDelete}
+				/>
 			</div>
 		);
 	},
