@@ -171,9 +171,10 @@ async def create_item(request: CreateItemRequest):
                 data=CreateItemResponse.Data(item=folder_schema, position=position),
             )
         elif request.type == "endpoint":
-            # Validate endpoint-specific fields
-            if not request.method or not request.url:
-                raise ValueError("Method and URL are required for endpoints")
+            if not request.method:
+                request.method = "GET"
+            if not request.url:
+                request.url = ""
 
             # Create endpoint
             endpoint = await endpoint_service.create_endpoint(
