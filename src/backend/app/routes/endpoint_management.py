@@ -11,6 +11,8 @@ from app.models.endpoint_management import (
     ReorderResponse,
     UpdateItemRequest,
     UpdateItemResponse,
+    CreateItemRequest,
+    CreateItemResponse,
 )
 from app.services.endpoint_management import endpoint_service
 
@@ -132,9 +134,7 @@ async def update_item(request: UpdateItemRequest):
     try:
         result = await endpoint_service.update_item(request.uuid, request.fields)
         if not result:
-            raise HTTPException(
-                status_code=404, detail=f"Item not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Item not found")
 
         return UpdateItemResponse(
             success=True,
@@ -143,6 +143,65 @@ async def update_item(request: UpdateItemRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update item: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to update item: {str(e)}")
+
+
+@router.post("/item/create", response_model=CreateItemResponse)
+async def create_item(request: CreateItemRequest):
+    """Create a new folder or endpoint"""
+    try:
+        if request.type == "folder":
+            # Create folder
+            folder = await endpoint_service.create_folder(
+                name=request.name,
+                description=request.description,
+                parent_uuid=request.parent_uuid,
+            )
+            # Convert to schema
+            folder_schema = PartialFolderSchema(
+                uuid=folder.uuid,
+                name=folder.name,
+                parent_uuid=folder.parent_uuid,
+                type="folder",
+                items=[],
+            ).model_dump(by_alias=True)
+            position = folder.position
+            return CreateItemResponse(
+                success=True,
+                data=CreateItemResponse.Data(item=folder_schema, position=position),
+            )
+        elif request.type == "endpoint":
+            if not request.method:
+                request.method = "GET"
+            if not request.url:
+                request.url = ""
+
+            # Create endpoint
+            endpoint = await endpoint_service.create_endpoint(
+                name=request.name,
+                method=request.method,
+                url=request.url,
+                description=request.description,
+                parent_uuid=request.parent_uuid,
+                cases=request.cases or [],
+            )
+            position = endpoint.position
+            # Convert to schema
+            endpoint_schema = PartialEndpointSchema(
+                uuid=endpoint.uuid,
+                name=endpoint.name,
+                parent_uuid=endpoint.parent_uuid,
+                type="endpoint",
+                method=endpoint.method,
+                url=endpoint.url,
+            ).model_dump(by_alias=True)
+            return CreateItemResponse(
+                success=True,
+                data=CreateItemResponse.Data(item=endpoint_schema, position=position),
+            )
+        else:
+            raise ValueError(f"Invalid item type: {request.type}")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create item: {str(e)}")

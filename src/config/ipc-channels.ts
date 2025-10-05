@@ -35,6 +35,8 @@ const BACKEND_ENDPOINT_MANAGEMENT_REORDER =
 	'backend:endpoint-management:collection:reorder';
 const BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE =
 	'backend:endpoint-management:item:update';
+const BACKEND_ENDPOINT_MANAGEMENT_ITEM_CREATE =
+	'backend:endpoint-management:item:create';
 const BACKEND_API_CALL_ENDPOINT =
 	'backend:api-call:endpoint';
 
@@ -66,5 +68,6 @@ export const ipcChannels = {
 	BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE,
 	BACKEND_ENDPOINT_MANAGEMENT_REORDER,
 	BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE,
+	BACKEND_ENDPOINT_MANAGEMENT_ITEM_CREATE,
 	BACKEND_API_CALL_ENDPOINT,
 } as const;

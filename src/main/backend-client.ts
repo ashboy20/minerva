@@ -142,6 +142,20 @@ export class BackendClient {
 				},
 			},
 			{
+				ipcChannel:
+					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ITEM_CREATE,
+				handler: async (_event, item: any) => {
+					const response = await this.request(
+						'/api/endpoint-management/item/create',
+						{
+							method: 'POST',
+							body: JSON.stringify(item),
+						},
+					);
+					return this.processResponse(response);
+				},
+			},
+			{
 				ipcChannel: ipcChannels.BACKEND_API_CALL_ENDPOINT,
 				handler: async (_event, requestData: any) => {
 					const response = await this.request(

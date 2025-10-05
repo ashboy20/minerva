@@ -273,11 +273,16 @@ class EndpointManagementService:
     ) -> Folder:
         """Create a new folder"""
         with Session(engine) as session:
+            # Get the current max position for items with the same parent
+            items = await self.find_items_by_parent_uuid(parent_uuid, session)
+            max_position = max([item.position for item in items], default=0)
+
             folder = Folder(
                 uuid=str(uuid_lib.uuid4()),
                 name=name,
                 description=description,
                 parent_uuid=parent_uuid,
+                position=max_position + 1,
             )
             session.add(folder)
             session.commit()
@@ -307,6 +312,10 @@ class EndpointManagementService:
     ) -> Endpoint:
         """Create a new endpoint"""
         with Session(engine) as session:
+            # Get the current max position for items with the same parent
+            items = await self.find_items_by_parent_uuid(parent_uuid, session)
+            max_position = max([item.position for item in items], default=0)
+
             endpoint = Endpoint(
                 uuid=str(uuid_lib.uuid4()),
                 name=name,
@@ -315,6 +324,7 @@ class EndpointManagementService:
                 url=url,
                 parent_uuid=parent_uuid,
                 cases=cases or [],
+                position=max_position + 1,
             )
             session.add(endpoint)
             session.commit()
