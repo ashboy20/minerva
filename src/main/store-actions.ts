@@ -75,7 +75,15 @@ export const resetStoreSettings = () => {
 
 export const resetStore = () => {
 	Logger.status($messages.resetStore);
+	// Save collection state before clearing
+	const collections = store.get('collections');
+
 	store.clear();
+
+	// Restore collection state
+	if (collections) {
+		store.set('collections', collections);
+	}
 
 	synchronizeApp();
 };
@@ -128,4 +136,20 @@ export const getAppMessages = () => {
 	// Reverse the messages so that the most recent is at the top
 	const reversed = messages.slice().reverse();
 	return reversed;
+};
+
+export const setCollectionOpenIds = (openIds: string[]) => {
+	const collections = store.get('collections') || {
+		openIds: [],
+	};
+	collections.openIds = openIds;
+	store.set('collections', collections);
+};
+
+export const getCollectionOpenIds = () => {
+	const collections = store.get('collections') || {
+		openIds: [],
+	};
+	const openIds = collections.openIds as string[];
+	return openIds || [];
 };

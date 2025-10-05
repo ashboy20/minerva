@@ -18,7 +18,6 @@ import { Badge } from '@/components/ui/badge';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
 import {
 	useAppDispatch,
-	useAppSelector,
 } from '@/store/hooks';
 import {
 	getCollections,
