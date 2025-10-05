@@ -254,6 +254,25 @@ class EndpointSchema(ItemSchema, PartialEndpointSchema):
     cases: List[dict] = Field(default=[], description="Endpoint cases")
 
 
+class CreateItemRequest(BaseModel):
+    """Request model for POST /item/create"""
+
+    type: Literal["folder", "endpoint"]
+    name: str
+    description: Optional[str] = None
+    parent_uuid: Optional[str] = None
+    # Endpoint-specific fields
+    method: Optional[str] = None
+    url: Optional[str] = None
+    cases: Optional[List[dict]] = None
+
+
+class CreateItemResponse(BaseResponse):
+    """Response model for POST /item/create"""
+
+    data: Union[PartialFolderSchema, PartialEndpointSchema]
+
+
 class GetCollectionsResponse(BaseResponse):
     """Response model for GET /collections"""
 

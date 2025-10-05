@@ -16,12 +16,11 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
-import {
-	useAppDispatch,
-} from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import {
 	getCollections,
 	updateItem,
+	createItem,
 } from '@/store/slices/collectionSlice';
 import {
 	ContextMenu,
@@ -43,7 +42,7 @@ interface TreeItemProps {
 }
 
 const getIcon = (
-	type: 'folder' | 'endpoint' | 'collection',
+	type: string | 'folder' | 'endpoint' | 'collection',
 ) => {
 	if (type === 'collection') {
 		return <Folder className="h-4 w-4 text-blue-500" />;
@@ -59,6 +58,95 @@ const methodBadge = (method: string) => {
 		<Badge variant="secondary" className="ml-2 text-xs">
 			<MethodText method={method} />
 		</Badge>
+	);
+};
+
+interface NewItemInputProps {
+	type: 'folder' | 'endpoint';
+	parentId: string;
+	depth: number;
+	onCancel: () => void;
+}
+
+const NewItemInput: React.FC<NewItemInputProps> = ({
+	type,
+	parentId,
+	depth,
+	onCancel,
+}) => {
+	const dispatch = useAppDispatch();
+	const [name, setName] = useState('');
+	const inputRef = React.useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		if (inputRef.current) {
+			const timeoutId = setTimeout(() => {
+				if (inputRef.current) {
+					inputRef.current.focus();
+				}
+			}, 200);
+			return () => clearTimeout(timeoutId);
+		}
+	}, []);
+
+	const handleCreate = async (inputName: string) => {
+		if (inputName.trim() === '') return;
+		try {
+			await dispatch(
+				createItem({
+					name: inputName,
+					type,
+					parentUuid: parentId,
+					...(type === 'endpoint' && {
+						method: 'GET',
+						url: '',
+					}),
+				}),
+			).unwrap();
+			dispatch(getCollections());
+			onCancel();
+		} catch {
+			// Handle error silently
+			onCancel();
+		}
+	};
+
+	return (
+		<div
+			className="mx-3 flex items-center gap-2 rounded-sm px-3 py-2 text-sm"
+			style={{
+				paddingLeft: depth * 16 + 12,
+			}}
+		>
+			<span className="w-4 shrink-0" />
+			<div className="h-4 w-4 shrink-0">
+				{getIcon(type)}
+			</div>
+			<div className="flex flex-1 items-center">
+				<Input
+					className="h-7 px-1 py-0 text-sm"
+					ref={inputRef}
+					value={name}
+					onChange={(e) => setName(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter') {
+							handleCreate(e.currentTarget.value);
+						} else if (e.key === 'Escape') {
+							onCancel();
+						}
+					}}
+					onBlur={(e) => {
+						if (e.target.value.trim() !== '') {
+							handleCreate(e.target.value);
+						} else {
+							onCancel();
+						}
+					}}
+					placeholder={`Enter ${type} name`}
+					autoFocus
+				/>
+			</div>
+		</div>
 	);
 };
 
@@ -79,6 +167,8 @@ export const TreeItem = React.forwardRef<
 	) => {
 		const dispatch = useAppDispatch();
 		const [isEditing, setIsEditing] = useState(false);
+		const [creatingItemType, setCreatingItemType] =
+			useState<'folder' | 'endpoint' | null>(null);
 		const [newName, setNewName] = useState(node.text);
 		const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -123,17 +213,11 @@ export const TreeItem = React.forwardRef<
 
 		// Context menu handlers
 		const handleAddEndpoint = () => {
-			console.log(
-				`Add Endpoint to ${node.data.type}:`,
-				node.text,
-			);
+			setCreatingItemType('endpoint');
 		};
 
 		const handleAddFolder = () => {
-			console.log(
-				`Add Folder to ${node.data.type}:`,
-				node.text,
-			);
+			setCreatingItemType('folder');
 		};
 
 		const handleDuplicate = () => {
@@ -217,6 +301,7 @@ export const TreeItem = React.forwardRef<
 						)}
 					</div>
 					{node.data.type === 'endpoint' &&
+						node.data.method &&
 						methodBadge(node.data.method)}
 				</div>
 			</div>
@@ -253,7 +338,10 @@ export const TreeItem = React.forwardRef<
 								{/* Edit for endpoints */}
 								{isEndpoint() && (
 									<>
-										<ContextMenuItem onClick={handleEdit} disabled>
+										<ContextMenuItem
+											onClick={handleEdit}
+											disabled
+										>
 											<Edit className="mr-2 h-4 w-4" />
 											Edit
 										</ContextMenuItem>
@@ -267,7 +355,10 @@ export const TreeItem = React.forwardRef<
 								</ContextMenuItem>
 
 								{/* Duplicate for all items */}
-								<ContextMenuItem onClick={handleDuplicate} disabled>
+								<ContextMenuItem
+									onClick={handleDuplicate}
+									disabled
+								>
 									<Copy className="mr-2 h-4 w-4" />
 									Duplicate
 								</ContextMenuItem>
@@ -285,6 +376,15 @@ export const TreeItem = React.forwardRef<
 							</ContextMenuContent>
 						</ContextMenu>
 					</CollapsibleTrigger>
+					{/* Show new item input when creating */}
+					{creatingItemType && (
+						<NewItemInput
+							type={creatingItemType}
+							parentId={node.id as string}
+							depth={depth + 1}
+							onCancel={() => setCreatingItemType(null)}
+						/>
+					)}
 				</Collapsible>
 			</div>
 		);

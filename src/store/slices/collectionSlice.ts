@@ -177,6 +177,48 @@ export const updateItem = createAsyncThunk(
 	},
 );
 
+export const createItem = createAsyncThunk(
+	'collection/createItem',
+	async (
+		{
+			name,
+			type,
+			parentUuid,
+			method,
+			url,
+		}: {
+			name: string;
+			type: 'folder' | 'endpoint';
+			parentUuid: string;
+			method?: string;
+			url?: string;
+		},
+		{ rejectWithValue },
+	) => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ITEM_CREATE,
+			{
+				name,
+				type,
+				parent_uuid: parentUuid,
+				method,
+				url,
+			},
+		);
+
+		if (result && result.success && result.data) {
+			return result.data;
+		}
+
+		console.error('Create item API failed:', result);
+		return rejectWithValue(
+			result?.data?.error ||
+				result?.error ||
+				'Failed to create item',
+		);
+	},
+);
+
 export const collectionSlice = createSlice({
 	name: 'collection',
 	initialState,
