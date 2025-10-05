@@ -165,9 +165,10 @@ async def create_item(request: CreateItemRequest):
                 type="folder",
                 items=[],
             ).model_dump(by_alias=True)
+            position = folder.position
             return CreateItemResponse(
                 success=True,
-                data=folder_schema,
+                data=CreateItemResponse.Data(item=folder_schema, position=position),
             )
         elif request.type == "endpoint":
             # Validate endpoint-specific fields
@@ -183,6 +184,7 @@ async def create_item(request: CreateItemRequest):
                 parent_uuid=request.parent_uuid,
                 cases=request.cases or [],
             )
+            position = endpoint.position
             # Convert to schema
             endpoint_schema = PartialEndpointSchema(
                 uuid=endpoint.uuid,
@@ -194,7 +196,7 @@ async def create_item(request: CreateItemRequest):
             ).model_dump(by_alias=True)
             return CreateItemResponse(
                 success=True,
-                data=endpoint_schema,
+                data=CreateItemResponse.Data(item=endpoint_schema, position=position),
             )
         else:
             raise ValueError(f"Invalid item type: {request.type}")

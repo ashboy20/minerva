@@ -270,7 +270,11 @@ class CreateItemRequest(BaseModel):
 class CreateItemResponse(BaseResponse):
     """Response model for POST /item/create"""
 
-    data: Union[PartialFolderSchema, PartialEndpointSchema]
+    class Data(BaseModel):
+        item: Union[PartialFolderSchema, PartialEndpointSchema]
+        position: int
+
+    data: Data
 
 
 class GetCollectionsResponse(BaseResponse):

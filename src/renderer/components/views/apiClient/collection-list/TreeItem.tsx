@@ -31,6 +31,7 @@ import {
 } from '@/renderer/components/ui/context-menu';
 import { Input } from '@/renderer/components/ui/input';
 import { MinervaNodeModel } from '@/renderer/components/views/apiClient/collection-list/CollectionList';
+import { setOpenIds } from '@/store/slices/collectionSlice';
 
 interface TreeItemProps {
 	node: MinervaNodeModel;
@@ -39,6 +40,11 @@ interface TreeItemProps {
 	onToggle: () => void;
 	isDragging?: boolean;
 	isDropTarget?: boolean;
+	onCreateItem: (
+		name: string,
+		type: 'folder' | 'endpoint',
+		parentId: string,
+	) => Promise<boolean>;
 }
 
 const getIcon = (
@@ -66,6 +72,11 @@ interface NewItemInputProps {
 	parentId: string;
 	depth: number;
 	onCancel: () => void;
+	onCreateItem: (
+		name: string,
+		type: 'folder' | 'endpoint',
+		parentId: string,
+	) => Promise<boolean>;
 }
 
 const NewItemInput: React.FC<NewItemInputProps> = ({
@@ -73,8 +84,8 @@ const NewItemInput: React.FC<NewItemInputProps> = ({
 	parentId,
 	depth,
 	onCancel,
+	onCreateItem,
 }) => {
-	const dispatch = useAppDispatch();
 	const [name, setName] = useState('');
 	const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -91,22 +102,12 @@ const NewItemInput: React.FC<NewItemInputProps> = ({
 
 	const handleCreate = async (inputName: string) => {
 		if (inputName.trim() === '') return;
-		try {
-			await dispatch(
-				createItem({
-					name: inputName,
-					type,
-					parentUuid: parentId,
-					...(type === 'endpoint' && {
-						method: 'GET',
-						url: '',
-					}),
-				}),
-			).unwrap();
-			dispatch(getCollections());
-			onCancel();
-		} catch {
-			// Handle error silently
+		const success = await onCreateItem(
+			inputName,
+			type,
+			parentId,
+		);
+		if (success) {
 			onCancel();
 		}
 	};
@@ -162,6 +163,7 @@ export const TreeItem = React.forwardRef<
 			onToggle,
 			isDragging,
 			isDropTarget,
+			onCreateItem,
 		},
 		ref,
 	) => {
@@ -383,6 +385,7 @@ export const TreeItem = React.forwardRef<
 							parentId={node.id as string}
 							depth={depth + 1}
 							onCancel={() => setCreatingItemType(null)}
+							onCreateItem={onCreateItem}
 						/>
 					)}
 				</Collapsible>

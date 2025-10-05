@@ -8,6 +8,8 @@ import {
 	Endpoint,
 	Folder,
 	reorder,
+	createItem,
+	getCollections,
 } from '@/store/slices/collectionSlice';
 import { CollectionHeader } from '@/renderer/components/views/apiClient/collection-list/CollectionHeader';
 import { DndProvider } from 'react-dnd';
@@ -18,9 +20,16 @@ import {
 	NodeModel,
 	DropOptions,
 } from '@minoru/react-dnd-treeview';
-import { useAppDispatch } from '@/store/hooks';
+import {
+	useAppDispatch,
+	useAppSelector,
+} from '@/store/hooks';
 import { TreeItem } from '@/renderer/components/views/apiClient/collection-list/TreeItem';
-import { ipcChannels } from '@/config/ipc-channels';
+import {
+	loadOpenIds,
+	setOpenIds,
+} from '@/store/slices/collectionSlice';
+import { useGlobalContext } from '@/renderer/context/global-context';
 
 export interface MinervaNodeModel extends NodeModel<any> {
 	data: {
@@ -126,18 +135,14 @@ export function CollectionList({
 		setTreeData(parseTreeData(collections));
 	}, [collections]);
 
-	const [openIds, setOpenIds] = useState<string[]>([]);
+	const openIds = useAppSelector(
+		(state) => state.collections.openIds,
+	);
 
 	useEffect(() => {
 		// Load initial open state
-		window.electron.ipcRenderer
-			.invoke(ipcChannels.GET_COLLECTION_OPEN_IDS)
-			.then((data) => {
-				if (data && Array.isArray(data)) {
-					setOpenIds(data);
-				}
-			});
-	}, []);
+		dispatch(loadOpenIds());
+	}, [dispatch]);
 
 	const handleCanDrop = (
 		tree: NodeModel<any>[],
@@ -222,11 +227,46 @@ export function CollectionList({
 		newOpenIds: NodeModel['id'][],
 	) => {
 		const stringIds = newOpenIds.map((id) => String(id)); // Convert all IDs to strings
-		setOpenIds(stringIds); // Update local state
-		window.electron.ipcRenderer.invoke(
-			ipcChannels.SET_COLLECTION_OPEN_IDS,
-			stringIds,
-		);
+		dispatch(setOpenIds(stringIds));
+	};
+
+	const handleCreateItem = async (
+		name: string,
+		type: 'folder' | 'endpoint',
+		parentUuid: string,
+	) => {
+		try {
+			const result = await dispatch(
+				createItem({
+					name,
+					type,
+					parentUuid,
+					...(type === 'endpoint' && {
+						method: 'GET',
+						url: '',
+					}),
+				}),
+			).unwrap();
+
+			// Update openIds if needed
+			if (
+				result.item.parent_uuid &&
+				!openIds.includes(result.item.parent_uuid)
+			) {
+				const newOpenIds = [
+					...openIds,
+					result.item.parent_uuid,
+				];
+				await dispatch(setOpenIds(newOpenIds)).unwrap();
+			}
+
+			// Refresh collections to get the new item
+			await dispatch(getCollections()).unwrap();
+			return true;
+		} catch (error) {
+			console.error('Failed to create item:', error);
+			return false;
+		}
 	};
 
 	// Header at the top
@@ -291,6 +331,7 @@ export function CollectionList({
 												depth={0}
 												isOpen={false}
 												onToggle={() => {}}
+												onCreateItem={handleCreateItem}
 											/>
 										</div>
 									)}
@@ -311,6 +352,7 @@ export function CollectionList({
 											onToggle={onToggle}
 											isDragging={isDragging}
 											isDropTarget={isDropTarget}
+											onCreateItem={handleCreateItem}
 										/>
 									)}
 									onChangeOpen={handleChangeOpen}

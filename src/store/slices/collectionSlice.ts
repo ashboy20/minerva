@@ -67,12 +67,14 @@ interface CollectionState {
 	collections: Collection[];
 	loading: boolean;
 	error: string | null;
+	openIds: string[];
 }
 
 const initialState: CollectionState = {
 	collections: [],
 	loading: false,
 	error: null,
+	openIds: [],
 };
 
 export const getCollections = createAsyncThunk(
@@ -219,6 +221,27 @@ export const createItem = createAsyncThunk(
 	},
 );
 
+export const loadOpenIds = createAsyncThunk(
+	'collection/loadOpenIds',
+	async () => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.GET_COLLECTION_OPEN_IDS,
+		);
+		return result && Array.isArray(result) ? result : [];
+	},
+);
+
+export const setOpenIds = createAsyncThunk(
+	'collection/setOpenIds',
+	async (openIds: string[], { dispatch }) => {
+		await window.electron.ipcRenderer.invoke(
+			ipcChannels.SET_COLLECTION_OPEN_IDS,
+			openIds,
+		);
+		return openIds;
+	},
+);
+
 export const collectionSlice = createSlice({
 	name: 'collection',
 	initialState,
@@ -241,6 +264,12 @@ export const collectionSlice = createSlice({
 				state.error =
 					(action.payload as string) ||
 					'Failed to get collections';
+			})
+			.addCase(loadOpenIds.fulfilled, (state, action) => {
+				state.openIds = action.payload;
+			})
+			.addCase(setOpenIds.fulfilled, (state, action) => {
+				state.openIds = action.payload;
 			});
 	},
 });
