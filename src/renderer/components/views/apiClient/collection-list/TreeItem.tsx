@@ -253,7 +253,7 @@ export const TreeItem = React.forwardRef<
 								{/* Edit for endpoints */}
 								{isEndpoint() && (
 									<>
-										<ContextMenuItem onClick={handleEdit}>
+										<ContextMenuItem onClick={handleEdit} disabled>
 											<Edit className="mr-2 h-4 w-4" />
 											Edit
 										</ContextMenuItem>
@@ -267,7 +267,7 @@ export const TreeItem = React.forwardRef<
 								</ContextMenuItem>
 
 								{/* Duplicate for all items */}
-								<ContextMenuItem onClick={handleDuplicate}>
+								<ContextMenuItem onClick={handleDuplicate} disabled>
 									<Copy className="mr-2 h-4 w-4" />
 									Duplicate
 								</ContextMenuItem>
