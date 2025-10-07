@@ -39,9 +39,7 @@ class QueryParam(BaseModel):
 class Auth(BaseModel):
     """Authentication configuration"""
 
-    auth_type: str = Field(
-        description="Authentication type (bearer, basic, etc.)", alias="type"
-    )
+    type: str = Field(description="Authentication type (bearer, basic, etc.)")
     token: Optional[str] = Field(default=None, description="Authentication token")
     username: Optional[str] = Field(default=None, description="Username for basic auth")
     password: Optional[str] = Field(default=None, description="Password for basic auth")
@@ -79,6 +77,13 @@ class Response(BaseModel):
 class Case(BaseModel):
     """Case definition"""
 
+    uuid: str = Field(
+        unique=True,
+        index=True,
+        primary_key=True,
+        description="Unique UUID for case identification",
+        default_factory=lambda: str(uuid.uuid4()),
+    )
     name: str = Field(description="Case name")
     description: Optional[str] = Field(default=None, description="Case description")
     request: Request = Field(description="Request configuration")
@@ -337,3 +342,15 @@ class DeleteItemResponse(BaseResponse):
         message: str = Field(description="Success message")
 
     data: Data = Field(description="The response data payload")
+
+
+class GetEndpointPathParams(BaseModel):
+    """Path parameters for GET /endpoint-management/endpoint/{uuid}"""
+
+    uuid: str = Field(description="UUID of the endpoint to retrieve")
+
+
+class GetEndpointResponse(BaseResponse):
+    """Response model for GET /endpoint-management/endpoint/{uuid}"""
+
+    data: EndpointSchema = Field(description="The endpoint data")

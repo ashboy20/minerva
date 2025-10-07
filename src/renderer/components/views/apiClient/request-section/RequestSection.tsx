@@ -1,4 +1,9 @@
-import { useEffect, useCallback, useRef } from 'react';
+import {
+	useEffect,
+	useCallback,
+	useRef,
+	useState,
+} from 'react';
 import {
 	Tabs,
 	TabsContent,
@@ -11,11 +16,7 @@ import {
 } from '@/renderer/components/ui/card';
 import { JsonEditorComponent } from '@/renderer/components/views/apiClient/components/JsonEditorComponent';
 import { TableForm } from '@/renderer/components/views/apiClient/request-section/InputForm';
-import {
-	Case,
-	Endpoint,
-	Row,
-} from '@/types/backend/endpoint-management/endpoint';
+import { Row } from '@/types/backend/endpoint-management/endpoint';
 import UrlBar from '@/renderer/components/views/apiClient/request-section/UrlBar';
 import { AuthSection } from '@/renderer/components/views/apiClient/request-section/AuthSection';
 import {
@@ -35,21 +36,19 @@ import {
 	updateAuth,
 	clearUpdateSource as clearHeadersAuthUpdateSource,
 } from '@/store/slices/headersAuthSlice';
+import {
+	updateActiveEndpoint,
+	updateActiveCase,
+} from '@/store/slices/endpointsSlice';
+import ApiCallService from '@/renderer/services/apiCallService';
 
-interface RequestSectionProps {
-	activeEndpoint: Endpoint | null;
-	activeCase: Case | null;
-	activeTab: string;
-	loading: boolean;
-	onMethodChange: (method: string) => void;
-	onUrlChange: (url: string) => void;
-	onPathParamsChange?: (pathParams: Row[]) => void;
-	onQueryParamsChange?: (queryParams: Row[]) => void;
-	onHeadersChange?: (headers: Row[]) => void;
-	onBodyChange: (body: string) => void;
-	onAuthChange?: (authType: string, token: string) => void;
-	onActiveTabChange: (tab: string) => void;
-	onSendRequest: () => void;
+interface ApiResponse {
+	status: number;
+	statusText: string;
+	headers: Record<string, string>;
+	data: any;
+	time: number;
+	size: number;
 }
 
 const stringifyBody = (body: any) => {
@@ -66,22 +65,14 @@ const stringifyBody = (body: any) => {
 	}
 };
 
-export function RequestSection({
-	activeEndpoint,
-	activeCase,
-	activeTab,
-	loading,
-	onMethodChange,
-	onUrlChange,
-	onPathParamsChange,
-	onQueryParamsChange,
-	onHeadersChange,
-	onBodyChange,
-	onAuthChange,
-	onActiveTabChange,
-	onSendRequest,
-}: RequestSectionProps) {
+export function RequestSection() {
 	const dispatch = useAppDispatch();
+	const [activeTab, setActiveTab] = useState('headers');
+	const [loading, setLoading] = useState(false);
+	const [response, setResponse] =
+		useState<ApiResponse | null>(null);
+
+	// Get all necessary state from Redux
 	const {
 		fullUrl,
 		pathParams,
@@ -94,11 +85,22 @@ export function RequestSection({
 		lastUpdateSource: headersAuthUpdateSource,
 	} = useAppSelector((state) => state.headersAuth);
 
+	// Get the active endpoint and case from tabs state
+	const { tabs, activeTabId } = useAppSelector(
+		(state) => state.tabs,
+	);
+	const currentTab = tabs.find(
+		(tab) => tab.endpoint.uuid === activeTabId,
+	);
+	const activeEndpoint = currentTab?.endpoint;
+	const activeCase = activeEndpoint?.cases.find(
+		(c) => c.uuid === currentTab?.activeCaseId,
+	);
+
 	// Initialize URL and headers/auth state when endpoint/case changes
 	useEffect(() => {
 		if (activeEndpoint) {
-			const baseUrl = activeEndpoint.base_url || '';
-			const path = activeEndpoint.path || '';
+			const url = activeEndpoint.url || '';
 			const initialPathParams =
 				activeCase?.request?.path_params || [];
 			const initialQueryParams =
@@ -110,6 +112,13 @@ export function RequestSection({
 					activeCase?.request?.auth?.auth_type || 'Bearer',
 				token: activeCase?.request?.auth?.token || '',
 			};
+
+			// Split URL into base and path
+			const urlParts = url.match(
+				/^(https?:\/\/[^\/]+)(\/.*)?$/,
+			);
+			const baseUrl = urlParts ? urlParts[1] : '';
+			const path = urlParts ? urlParts[2] || '/' : url;
 
 			dispatch(
 				initializeUrl({
@@ -129,17 +138,16 @@ export function RequestSection({
 		}
 	}, [activeEndpoint, activeCase, dispatch]);
 
-	// Clean up update source after state changes (faster cleanup)
+	// Clean up update source after state changes
 	useEffect(() => {
 		if (lastUpdateSource) {
 			const timeout = setTimeout(() => {
 				dispatch(clearUpdateSource());
-			}, 10); // Much faster cleanup
+			}, 10);
 			return () => clearTimeout(timeout);
 		}
 	}, [lastUpdateSource, dispatch]);
 
-	// Clean up headers/auth update source
 	useEffect(() => {
 		if (headersAuthUpdateSource) {
 			const timeout = setTimeout(() => {
@@ -152,100 +160,263 @@ export function RequestSection({
 	// Show path params table if URL has path parameters OR if there are existing path params
 	const showPathParams = pathParams.length > 0;
 
-	const handleUrlChange = (newUrl: string) => {
-		dispatch(updateFromUrl(newUrl));
-		onUrlChange?.(newUrl);
+	const handleMethodChange = (method: string) => {
+		if (activeEndpoint) {
+			dispatch(
+				updateActiveEndpoint({
+					...activeEndpoint,
+					method,
+				}),
+			);
+		}
 	};
 
-	// Debounce path params updates to prevent infinite loops
+	const handleUrlChange = (newUrl: string) => {
+		dispatch(updateFromUrl(newUrl));
+		if (activeEndpoint) {
+			dispatch(
+				updateActiveEndpoint({
+					...activeEndpoint,
+					url: newUrl,
+				}),
+			);
+		}
+	};
+
+	// Debounce path params updates
 	const pathParamsTimeoutRef =
 		useRef<NodeJS.Timeout | null>(null);
-
 	const handlePathParamsChange = useCallback(
 		(newPathParams: Row[]) => {
-			// Clear previous timeout
 			if (pathParamsTimeoutRef.current) {
 				clearTimeout(pathParamsTimeoutRef.current);
 			}
-
-			// Immediately update Redux (for UI responsiveness)
 			dispatch(updatePathParams(newPathParams));
-
-			// Debounce parent callback to prevent cascading updates
-			pathParamsTimeoutRef.current = setTimeout(() => {
-				onPathParamsChange?.(newPathParams);
-			}, 50);
+			if (activeCase) {
+				pathParamsTimeoutRef.current = setTimeout(() => {
+					dispatch(
+						updateActiveCase({
+							...activeCase,
+							request: {
+								...activeCase.request,
+								path_params: newPathParams,
+							},
+						}),
+					);
+				}, 50);
+			}
 		},
-		[dispatch, onPathParamsChange],
+		[dispatch, activeCase],
 	);
 
-	// Debounce query params updates to prevent infinite loops
+	// Debounce query params updates
 	const queryParamsTimeoutRef =
 		useRef<NodeJS.Timeout | null>(null);
-
 	const handleQueryParamsChange = useCallback(
 		(newQueryParams: Row[]) => {
-			// Clear previous timeout
 			if (queryParamsTimeoutRef.current) {
 				clearTimeout(queryParamsTimeoutRef.current);
 			}
-
-			// Immediately update Redux (for UI responsiveness)
 			dispatch(updateQueryParams(newQueryParams));
-
-			// Debounce parent callback to prevent cascading updates
-			queryParamsTimeoutRef.current = setTimeout(() => {
-				onQueryParamsChange?.(newQueryParams);
-			}, 50);
+			if (activeCase) {
+				queryParamsTimeoutRef.current = setTimeout(() => {
+					dispatch(
+						updateActiveCase({
+							...activeCase,
+							request: {
+								...activeCase.request,
+								query_params: newQueryParams,
+							},
+						}),
+					);
+				}, 50);
+			}
 		},
-		[dispatch, onQueryParamsChange],
+		[dispatch, activeCase],
 	);
 
-	// Debounce headers updates to prevent infinite loops
+	// Debounce headers updates
 	const headersTimeoutRef = useRef<NodeJS.Timeout | null>(
 		null,
 	);
-
 	const handleHeadersChange = useCallback(
 		(newHeaders: Row[]) => {
-			// Clear previous timeout
 			if (headersTimeoutRef.current) {
 				clearTimeout(headersTimeoutRef.current);
 			}
-
-			// Immediately update Redux (for UI responsiveness)
 			dispatch(updateHeaders(newHeaders));
-
-			// Debounce parent callback to prevent cascading updates
-			headersTimeoutRef.current = setTimeout(() => {
-				onHeadersChange?.(newHeaders);
-			}, 50);
+			if (activeCase) {
+				headersTimeoutRef.current = setTimeout(() => {
+					dispatch(
+						updateActiveCase({
+							...activeCase,
+							request: {
+								...activeCase.request,
+								headers: newHeaders,
+							},
+						}),
+					);
+				}, 50);
+			}
 		},
-		[dispatch, onHeadersChange],
+		[dispatch, activeCase],
 	);
 
-	// Debounce auth updates to prevent infinite loops
+	// Debounce auth updates
 	const authTimeoutRef = useRef<NodeJS.Timeout | null>(
 		null,
 	);
-
 	const handleAuthChange = useCallback(
 		(authType: string, token: string) => {
-			// Clear previous timeout
 			if (authTimeoutRef.current) {
 				clearTimeout(authTimeoutRef.current);
 			}
-
-			// Immediately update Redux (for UI responsiveness)
 			dispatch(updateAuth({ authType, token }));
-
-			// Debounce parent callback to prevent cascading updates
-			authTimeoutRef.current = setTimeout(() => {
-				onAuthChange?.(authType, token);
-			}, 50);
+			if (activeCase) {
+				authTimeoutRef.current = setTimeout(() => {
+					dispatch(
+						updateActiveCase({
+							...activeCase,
+							request: {
+								...activeCase.request,
+								auth: {
+									auth_type: authType,
+									token,
+								},
+							},
+						}),
+					);
+				}, 50);
+			}
 		},
-		[dispatch, onAuthChange],
+		[dispatch, activeCase],
 	);
+
+	const handleBodyChange = (body: string) => {
+		if (activeCase) {
+			try {
+				// Try to parse as JSON first
+				const parsedBody = JSON.parse(body);
+				dispatch(
+					updateActiveCase({
+						...activeCase,
+						request: {
+							...activeCase.request,
+							body: parsedBody,
+						},
+					}),
+				);
+			} catch (error) {
+				// If parsing fails, store as Record<string, any>
+				dispatch(
+					updateActiveCase({
+						...activeCase,
+						request: {
+							...activeCase.request,
+							body: { content: body },
+						},
+					}),
+				);
+			}
+		}
+	};
+
+	const handleSendRequest = async () => {
+		if (!activeEndpoint || !activeCase) return;
+
+		setLoading(true);
+
+		try {
+			// Build headers object from Redux state
+			const requestHeaders: Record<string, string> = {};
+			headers.forEach((header: Row) => {
+				if (
+					header.enabled &&
+					header.keyValue &&
+					header.value
+				) {
+					requestHeaders[header.keyValue] = header.value;
+				}
+			});
+
+			// Build query parameters from Redux state
+			const requestQueryParams: Record<string, string> = {};
+			queryParams.forEach((param: Row) => {
+				if (
+					param.enabled &&
+					param.keyValue &&
+					param.value
+				) {
+					requestQueryParams[param.keyValue] = param.value;
+				}
+			});
+
+			// Prepare request body for non-GET requests
+			let requestBody: string | object | undefined;
+			if (
+				activeEndpoint.method !== 'GET' &&
+				activeEndpoint.method !== 'HEAD' &&
+				activeCase.request?.body
+			) {
+				requestBody = activeCase.request.body;
+			}
+
+			// Prepare auth configuration
+			const authConfig =
+				auth.authType !== 'None' && auth.token
+					? {
+							auth_type: auth.authType,
+							token: auth.token,
+						}
+					: undefined;
+
+			// Call API through Python backend
+			const backendResponse =
+				await ApiCallService.callEndpoint({
+					method: activeEndpoint.method,
+					url: fullUrl,
+					headers:
+						Object.keys(requestHeaders).length > 0
+							? requestHeaders
+							: undefined,
+					query_params:
+						Object.keys(requestQueryParams).length > 0
+							? requestQueryParams
+							: undefined,
+					body: requestBody,
+					auth: authConfig,
+				});
+
+			// Convert backend response to frontend format
+			setResponse({
+				status: backendResponse.status_code,
+				statusText:
+					backendResponse.status_code >= 400
+						? 'Error'
+						: 'OK',
+				headers: backendResponse.headers,
+				data: backendResponse.body,
+				time: backendResponse.response_time,
+				size: backendResponse.size,
+			});
+		} catch (error) {
+			setResponse({
+				status: 0,
+				statusText: 'Network Error',
+				headers: {},
+				data: {
+					error:
+						error instanceof Error
+							? error.message
+							: 'Unknown error',
+				},
+				time: 0,
+				size: 0,
+			});
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	// Cleanup timeouts on unmount
 	useEffect(() => {
@@ -271,18 +442,14 @@ export function RequestSection({
 				<CardContent className="space-y-4 p-4">
 					{/* URL Bar */}
 					<UrlBar
-						method={activeEndpoint?.method ?? 'GET'}
-						url={fullUrl}
 						loading={loading}
-						onMethodChange={onMethodChange}
-						onUrlChange={handleUrlChange}
-						onSendRequest={onSendRequest}
+						onSendRequest={handleSendRequest}
 					/>
 
 					{/* Request Configuration Tabs */}
 					<Tabs
 						value={activeTab}
-						onValueChange={onActiveTabChange}
+						onValueChange={setActiveTab}
 						className="flex flex-1 flex-col"
 					>
 						<TabsList className="mb-2 grid w-full grid-cols-6">
@@ -336,7 +503,7 @@ export function RequestSection({
 								value={stringifyBody(
 									activeCase?.request?.body,
 								)}
-								onChange={onBodyChange}
+								onChange={handleBodyChange}
 								className="flex-1"
 								disabled={
 									activeEndpoint?.method === 'GET' ||

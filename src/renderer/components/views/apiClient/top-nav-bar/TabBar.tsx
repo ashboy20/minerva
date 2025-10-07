@@ -77,26 +77,26 @@ export function TabBar({ className }: TabBarProps) {
 			<div className="scrollbar-none flex items-center overflow-x-auto">
 				{tabs.map((tab) => (
 					<ContextMenu
-						key={tab.uuid}
+						key={tab.endpoint.uuid}
 						// open={}
 						// onOpenChange={(open) => setOpenDropdownId(open ? tab.uuid : null)}
 					>
 						<ContextMenuTrigger asChild>
 							<div
-								onClick={() => handleTabClick(tab.uuid)}
+								onClick={() => handleTabClick(tab.endpoint.uuid)}
 								className={cn(
 									'group relative flex cursor-pointer items-center gap-2 border-r border-border px-3 py-2',
 									'w-48 min-w-48 max-w-48', // Fixed width of 192px
 									'transition-colors duration-150 hover:bg-muted/50',
-									activeTabId === tab.uuid
+									activeTabId === tab.endpoint.uuid
 										? 'border-b-2 border-b-primary bg-background'
 										: 'bg-muted/30',
 								)}
 							>
 								{/* Method badge */}
-								{tab.method && (
+								{tab.endpoint.method && (
 									<div className="text-xs">
-										<MethodText method={tab.method} />
+										<MethodText method={tab.endpoint.method} />
 									</div>
 								)}
 
@@ -111,7 +111,7 @@ export function TabBar({ className }: TabBarProps) {
 											if (e.key === 'Enter') {
 												dispatch(
 													updateTabRenamingState({
-														tabId: tab.uuid,
+														endpointId: tab.endpoint.uuid,
 														isRenaming: false,
 													}),
 												);
@@ -120,14 +120,14 @@ export function TabBar({ className }: TabBarProps) {
 									/>
 								) : (
 									<span className="min-w-0 flex-1 truncate text-sm">
-										New Request
+										{tab.endpoint.name ? tab.endpoint.name : tab.endpoint.path}
 									</span>
 								)}
 
 								{/* Close button */}
 								<button
 									onClick={(e) =>
-										handleCloseTab(tab.uuid, e)
+										handleCloseTab(tab.endpoint.uuid, e)
 									}
 									className="rounded p-0.5 opacity-0 transition-all duration-150 hover:bg-muted group-hover:opacity-100"
 								>
@@ -141,7 +141,7 @@ export function TabBar({ className }: TabBarProps) {
 						<ContextMenuContent className="min-w-32">
 							<ContextMenuItem
 								className="flex cursor-pointer items-center gap-2"
-								onClick={() => handleRenameTab(tab.uuid)}
+								onClick={() => handleRenameTab(tab.endpoint.uuid)}
 							>
 								<Edit3 size={14} />
 								Rename
