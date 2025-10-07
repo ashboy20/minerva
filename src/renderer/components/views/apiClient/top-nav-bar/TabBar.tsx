@@ -13,7 +13,6 @@ import {
 	renameTab,
 	updateTabRenamingState,
 } from '@/store/slices/tabsSlice';
-import { setActiveEndpoint } from '@/store/slices/endpointsSlice';
 import {
 	ContextMenu,
 	ContextMenuContent,

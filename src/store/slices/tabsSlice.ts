@@ -26,7 +26,7 @@ const initialState: TabsState = {
 // Helper function to generate tab label from endpoint
 const generateTabLabel = (endpoint: Endpoint): string => {
 	return (
-		endpoint.name ?? `${endpoint.method} ${endpoint.path}`
+		endpoint.name ?? `${endpoint.method} ${endpoint.url}`
 	);
 };
 
@@ -34,10 +34,12 @@ export const tabsSlice = createSlice({
 	name: 'tabs',
 	initialState,
 	reducers: {
-		addTab: (state, action: PayloadAction<Endpoint>) => {
+		addTab: (
+			state,
+			action: PayloadAction<Endpoint | undefined>,
+		) => {
 			const endpoint = action.payload;
-
-			if (endpoint) {
+			if (endpoint && endpoint.uuid) {
 				// Check if tab for this endpoint already exists
 				const existingTab = state.tabs.find(
 					(tab) => tab.endpoint.uuid === endpoint.uuid,
@@ -46,57 +48,58 @@ export const tabsSlice = createSlice({
 				if (!existingTab) {
 					const newTab: Tab = {
 						endpoint,
-						activeCaseId: endpoint.cases[0]?.uuid,
+						activeCaseId: endpoint.cases[0]?.uuid || '',
 						notSaved: false,
 						new: false,
 						isRenaming: false,
 					};
-
 					state.tabs.push(newTab);
 					state.activeTabId = endpoint.uuid;
 				} else {
-					// Adding new empty tab
-					const newEndpoint: Endpoint = {
-						id: 0,
-						uuid: getUUID(),
-						name: 'New Request',
-						summary: '',
-						description: '',
-						method: 'GET',
-						url: '',
-						cases: [
-							{
-								id: 1,
-								uuid: getUUID(),
-								name: '200 OK Response',
-								description: 'Successful response',
-								request: {
-									headers: [],
-									query_params: [],
-									path_params: [],
-									body: null,
-									auth: null,
-								},
-								response: {
-									status_code: 200,
-									headers: [],
-									body: null,
-								},
-							},
-						],
-					};
-
-					const newTab: Tab = {
-						endpoint: newEndpoint,
-						activeCaseId: '',
-						notSaved: true,
-						new: true,
-						isRenaming: false,
-					};
-
-					state.tabs.push(newTab);
-					state.activeTabId = newEndpoint.uuid;
+					state.activeTabId = existingTab.endpoint.uuid;
 				}
+			} else {
+				// Create a new empty endpoint
+				const newCase = {
+					id: 1,
+					uuid: getUUID(),
+					name: '200 OK Response',
+					description: 'Successful response',
+					request: {
+						headers: [],
+						query_params: [],
+						path_params: [],
+						body: null,
+						auth: null,
+					},
+					response: {
+						status_code: 200,
+						headers: [],
+						body: null,
+					},
+				};
+
+				const newEndpoint: Endpoint = {
+					id: 0,
+					uuid: getUUID(),
+					name: 'New Request',
+					summary: '',
+					description: '',
+					method: 'GET',
+					url: '',
+					cases: [newCase],
+				};
+
+				const newTab: Tab = {
+					endpoint: newEndpoint,
+					activeCaseId: newCase.uuid,
+					notSaved: true,
+					new: true,
+					isRenaming: false,
+				};
+
+				state.tabs.push(newTab);
+				state.activeTabId = newEndpoint.uuid;
 			}
 		},
 
