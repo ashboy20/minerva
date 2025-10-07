@@ -25,6 +25,7 @@ export type Response = {
 
 export type Case = {
 	id: number;
+	uuid: string
 	name: string;
 	description: string;
 	request: Request;
@@ -34,12 +35,10 @@ export type Case = {
 export type Endpoint = {
 	id: number;
 	uuid: string;
-	operation_id: string;
 	name: string;
 	summary: string;
 	description: string;
 	method: string;
-	path: string;
-	base_url: string;
+	url: string;
 	cases: Case[];
 };

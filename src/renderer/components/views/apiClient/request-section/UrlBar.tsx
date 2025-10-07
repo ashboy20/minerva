@@ -11,29 +11,75 @@ import { Button } from '@/renderer/components/ui/button';
 import { PlayIcon } from '@radix-ui/react-icons';
 import React from 'react';
 import { UrlInputField } from '@/renderer/components/views/apiClient/request-section/UrlInputField';
+import {
+	useAppDispatch,
+	useAppSelector,
+} from '@/store/hooks';
+import { updateActiveEndpoint } from '@/store/slices/endpointsSlice';
 
 interface UrlBarProps {
-	method: string;
-	url: string;
 	loading: boolean;
-	onMethodChange: (method: string) => void;
-	onUrlChange: (url: string) => void;
 	onSendRequest: () => void;
 }
 
-function UrlBar({
-	method,
-	url,
-	loading,
-	onMethodChange,
-	onUrlChange,
-	onSendRequest,
-}: UrlBarProps) {
+function UrlBar({ loading, onSendRequest }: UrlBarProps) {
+	const dispatch = useAppDispatch();
+
+	// Get the active endpoint from the active tab
+	const { tabs, activeTabId } = useAppSelector(
+		(state) => state.tabs,
+	);
+	const activeTab = tabs.find(
+		(tab) => tab.endpoint.uuid === activeTabId,
+	);
+	const activeEndpoint = activeTab?.endpoint;
+
+	const handleMethodChange = (method: string) => {
+		if (activeEndpoint) {
+			dispatch(
+				updateActiveEndpoint({
+					...activeEndpoint,
+					method,
+				}),
+			);
+		}
+	};
+
+	const handleUrlChange = (url: string) => {
+		if (!activeEndpoint) return;
+
+		// Parse the URL to extract base_url and path
+		try {
+			const urlObj = new URL(url);
+			const basePath = urlObj.origin;
+			const path = urlObj.pathname + urlObj.search;
+			dispatch(
+				updateActiveEndpoint({
+					...activeEndpoint,
+					url: url,
+				}),
+			);
+		} catch {
+			// If URL parsing fails, just update the path
+			dispatch(
+				updateActiveEndpoint({
+					...activeEndpoint,
+					url: url,
+				}),
+			);
+		}
+	};
+
+	// Construct the full URL from base_url and path, ensuring it's never undefined
+	const fullUrl = activeEndpoint
+		? `${activeEndpoint.url || ''}`
+		: '';
+
 	return (
 		<div className="flex space-x-2">
 			<Select
-				value={method ?? 'GET'}
-				onValueChange={onMethodChange}
+				value={activeEndpoint?.method ?? 'GET'}
+				onValueChange={handleMethodChange}
 			>
 				<SelectTrigger className="w-32">
 					<SelectValue />
@@ -47,11 +93,16 @@ function UrlBar({
 				</SelectContent>
 			</Select>
 
-			<UrlInputField value={url} onChange={onUrlChange} />
+			<UrlInputField
+				value={fullUrl}
+				onChange={handleUrlChange}
+			/>
 
 			<Button
 				onClick={onSendRequest}
-				disabled={loading || !url || !String(url).trim()}
+				disabled={
+					loading || !fullUrl || !String(fullUrl).trim()
+				}
 				className="px-6"
 			>
 				{loading ? (

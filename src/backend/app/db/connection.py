@@ -1,7 +1,7 @@
 import os
 from sqlmodel import SQLModel, create_engine, Session
 from pathlib import Path
-from app.models.endpoint_management import Collection, Folder, Endpoint
+from app.models.endpoint_management import Case, Collection, Folder, Endpoint
 import uuid
 import yaml
 
@@ -88,6 +88,18 @@ def process_items(session: Session, items: list, parent_uuid: str):
             # Create endpoint
             endpoint_uuid = str(uuid.uuid4())
             position_counter[parent_uuid] = position_counter.get(parent_uuid, 0) + 1
+
+            cases = item.get("cases", [])
+            for case in cases:
+                case_uuid = str(uuid.uuid4())
+                case = Case(
+                    uuid=case_uuid,
+                    name=case.get("name", ""),
+                    description=case.get("description", ""),
+                    request=case.get("request", {}),
+                    response=case.get("response", {}),
+                ).model_dump(by_alias=True, mode="python")
+
             endpoint = Endpoint(
                 uuid=endpoint_uuid,
                 name=item.get("name", ""),
@@ -96,7 +108,7 @@ def process_items(session: Session, items: list, parent_uuid: str):
                 url=item.get("url", ""),
                 parent_uuid=parent_uuid,
                 position=position_counter[parent_uuid],
-                cases=item.get("cases", []),
+                cases=cases,
             )
             session.add(endpoint)
 

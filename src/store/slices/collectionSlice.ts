@@ -262,6 +262,24 @@ export const deleteItem = createAsyncThunk(
 	},
 );
 
+export const getEndpoint = createAsyncThunk(
+	'collection/getEndpoint',
+	async (uuid: string, { rejectWithValue }) => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET,
+			uuid,
+		);
+
+		if (result && result.success && result.data) {
+			return result.data as Endpoint;
+		}
+
+		return rejectWithValue(
+			result?.error || 'Failed to get endpoint',
+		);
+	},
+);
+
 export const collectionSlice = createSlice({
 	name: 'collection',
 	initialState,

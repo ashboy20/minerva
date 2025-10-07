@@ -171,6 +171,15 @@ export class BackendClient {
 				},
 			},
 			{
+				ipcChannel: ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET,
+				handler: async (_event, uuid: string) => {
+					const response = await this.request(
+						`/api/endpoint-management/endpoint/${uuid}`,
+					);
+					return this.processResponse(response);
+				},
+			},
+			{
 				ipcChannel: ipcChannels.BACKEND_API_CALL_ENDPOINT,
 				handler: async (_event, requestData: any) => {
 					const response = await this.request(

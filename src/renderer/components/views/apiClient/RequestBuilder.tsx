@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
 	useAppSelector,
 	useAppDispatch,
@@ -14,211 +14,31 @@ import { RequestSection } from '@/renderer/components/views/apiClient/request-se
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
 import { LayoutSwitcher } from '@/renderer/components/views/apiClient/top-nav-bar/LayoutSwitcher';
 import { TabBar } from '@/renderer/components/views/apiClient/top-nav-bar/TabBar';
-import ApiCallService from '@/renderer/services/apiCallService';
-import {
-	Row,
-	Endpoint,
-} from '@/types/backend/endpoint-management/endpoint';
-import {
-	setActiveEndpoint,
-	updateActiveEndpoint,
-	updateActiveCase,
-} from '@/store/slices/endpointsSlice';
 import {
 	createBlankCollection,
 	getCollections,
 } from '@/store/slices/collectionSlice';
 
-interface ApiResponse {
-	status: number;
-	statusText: string;
-	headers: Record<string, string>;
-	data: any;
-	time: number;
-	size: number;
-}
-
 export function RequestBuilder() {
 	const dispatch = useAppDispatch();
+	const { settings } = useGlobalContext();
+
+	// Get collections state from Redux
 	const {
 		collections,
 		loading: collectionsLoading,
 		error: collectionsError,
 	} = useAppSelector((state) => state.collections);
 
-	const [response, setResponse] =
-		useState<ApiResponse | null>(null);
-	const [loading, setLoading] = useState(false);
-	const [activeTab, setActiveTab] = useState('headers');
-
-	// Get global settings including layout preference
-	const { settings } = useGlobalContext();
-
-	// Get URL state from Redux
-	const { pathParams, queryParams } = useAppSelector(
-		(state) => state.url,
-	);
-	// Get headers and auth state from Redux
-	const { headers, auth } = useAppSelector(
-		(state) => state.headersAuth,
-	);
-	// Get endpoints state from Redux
-	const {
-		endpoints,
-		activeEndpoint,
-		activeCase,
-		loading: endpointsLoading,
-	} = useAppSelector((state) => state.endpoints);
-
-	const handleEndpointClick = (endpoint: Endpoint) => {
-		dispatch(setActiveEndpoint({ endpoint }));
-	};
-
-	const sendRequest = async () => {
-		if (!activeEndpoint || !activeCase) return;
-
-		setLoading(true);
-
-		try {
-			// Build headers object from Redux state
-			const requestHeaders: Record<string, string> = {};
-			headers.forEach((header: Row) => {
-				if (
-					header.enabled &&
-					header.keyValue &&
-					header.value
-				) {
-					requestHeaders[header.keyValue] = header.value;
-				}
-			});
-
-			// Build query parameters from Redux state
-			const requestQueryParams: Record<string, string> = {};
-			queryParams.forEach((param: Row) => {
-				if (
-					param.enabled &&
-					param.keyValue &&
-					param.value
-				) {
-					requestQueryParams[param.keyValue] = param.value;
-				}
-			});
-
-			// Construct the full URL
-			const baseUrl =
-				activeEndpoint.base_url + activeEndpoint.path;
-
-			// Prepare request body for non-GET requests
-			let requestBody: string | object | undefined;
-			if (
-				activeEndpoint.method !== 'GET' &&
-				activeEndpoint.method !== 'HEAD' &&
-				activeCase.request?.body
-			) {
-				requestBody = activeCase.request.body;
-			}
-
-			// Prepare auth configuration
-			const authConfig =
-				auth.authType !== 'None' && auth.token
-					? {
-							auth_type: auth.authType,
-							token: auth.token,
-						}
-					: undefined;
-
-			// Call API through Python backend
-			const backendResponse =
-				await ApiCallService.callEndpoint({
-					method: activeEndpoint.method,
-					url: baseUrl,
-					headers:
-						Object.keys(requestHeaders).length > 0
-							? requestHeaders
-							: undefined,
-					query_params:
-						Object.keys(requestQueryParams).length > 0
-							? requestQueryParams
-							: undefined,
-					body: requestBody,
-					auth: authConfig,
-				});
-
-			// Convert backend response to frontend format
-			setResponse({
-				status: backendResponse.status_code,
-				statusText:
-					backendResponse.status_code >= 400
-						? 'Error'
-						: 'OK',
-				headers: backendResponse.headers,
-				data: backendResponse.body,
-				time: backendResponse.response_time,
-				size: backendResponse.size,
-			});
-		} catch (error) {
-			setResponse({
-				status: 0,
-				statusText: 'Network Error',
-				headers: {},
-				data: {
-					error:
-						error instanceof Error
-							? error.message
-							: 'Unknown error',
-				},
-				time: 0,
-				size: 0,
-			});
-		} finally {
-			setLoading(false);
-		}
-	};
-
 	// Fetch collections from FastAPI backend service on mount
 	useEffect(() => {
-		console.log('RequestBuilder: fetching collections');
 		dispatch(getCollections());
-		console.log('Collections fetched:', collections);
 	}, [dispatch]);
 
 	// Handler functions for collection list
 	const handleCreateCollection = () => {
 		dispatch(createBlankCollection());
 		dispatch(getCollections());
-	};
-
-	// Handler functions for RequestSection
-	const handleMethodChange = (method: string) => {
-		dispatch(updateActiveEndpoint({ method }));
-	};
-
-	const handleUrlChange = (url: string) => {
-		// Parse the URL to extract base_url and path
-		try {
-			const urlObj = new URL(url);
-			const basePath = urlObj.origin;
-			const path = urlObj.pathname + urlObj.search;
-			dispatch(
-				updateActiveEndpoint({ base_url: basePath, path }),
-			);
-		} catch {
-			// If URL parsing fails, just update the path
-			dispatch(updateActiveEndpoint({ path: url }));
-		}
-	};
-
-	const handleBodyChange = (body: string) => {
-		if (activeCase) {
-			dispatch(
-				updateActiveCase({
-					request: {
-						...activeCase.request,
-						body: body as any, // Allow string or object for body
-					},
-				}),
-			);
-		}
 	};
 
 	return (
@@ -237,7 +57,6 @@ export function RequestBuilder() {
 					loading={collectionsLoading}
 					error={collectionsError}
 					onCreateCollection={handleCreateCollection}
-					// onEndpointClick={handleEndpointClick}
 				/>
 			</ResizablePanel>
 
@@ -264,23 +83,13 @@ export function RequestBuilder() {
 							className="h-full"
 						>
 							<ResizablePanel defaultSize={60} minSize={30}>
-								<RequestSection
-									activeEndpoint={activeEndpoint}
-									activeCase={activeCase}
-									activeTab={activeTab}
-									loading={loading}
-									onMethodChange={handleMethodChange}
-									onUrlChange={handleUrlChange}
-									onBodyChange={handleBodyChange}
-									onActiveTabChange={setActiveTab}
-									onSendRequest={sendRequest}
-								/>
+								<RequestSection />
 							</ResizablePanel>
 
 							<ResizableHandle withHandle />
 
 							<ResizablePanel defaultSize={40} minSize={20}>
-								<ResponseSection response={response} />
+								<ResponseSection />
 							</ResizablePanel>
 						</ResizablePanelGroup>
 					</div>

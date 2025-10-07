@@ -50,7 +50,7 @@ export const fetchEndpoints = createAsyncThunk(
 		try {
 			const result =
 				await window.electron.ipcRenderer.invoke(
-					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINTS_GET,
+					ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET,
 				);
 
 			// Check if the API call was successful

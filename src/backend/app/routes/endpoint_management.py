@@ -1,8 +1,10 @@
 from typing import List
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.models.endpoint_management import (
     GetCollectionsResponse,
+    GetEndpointPathParams,
+    GetEndpointResponse,
     PartialCollectionSchema,
     PartialEndpointSchema,
     PartialFolderSchema,
@@ -15,6 +17,7 @@ from app.models.endpoint_management import (
     CreateItemResponse,
     DeleteItemRequest,
     DeleteItemResponse,
+    EndpointSchema,
 )
 from app.services.endpoint_management import endpoint_service
 
@@ -207,6 +210,40 @@ async def create_item(request: CreateItemRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create item: {str(e)}")
+
+
+@router.get("/endpoint/{uuid}", response_model=GetEndpointResponse)
+async def get_endpoint(path_params: GetEndpointPathParams = Depends()):
+    """Get an endpoint by UUID"""
+    try:
+        # Find the endpoint
+        endpoint = await endpoint_service.find_endpoint_by_uuid(path_params.uuid)
+
+        if not endpoint:
+            raise HTTPException(status_code=404, detail=f"Endpoint not found")
+
+        # Convert to schema
+        endpoint_schema = EndpointSchema(
+            uuid=endpoint.uuid,
+            name=endpoint.name,
+            description=endpoint.description,
+            type="endpoint",
+            method=endpoint.method,
+            url=endpoint.url,
+            cases=endpoint.cases,
+            parent_uuid=endpoint.parent_uuid,
+            created_at=endpoint.created_at,
+            updated_at=endpoint.updated_at,
+        )
+
+        return GetEndpointResponse(
+            success=True,
+            data=endpoint_schema,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get endpoint: {str(e)}")
 
 
 @router.post("/item/delete", response_model=DeleteItemResponse)

@@ -36,7 +36,11 @@ export function UrlInputField({
 		lastValueRef.current = value;
 	}, [value]);
 
-	useSingleLineEditor(containerRef, editorOptions);
+	// Pass value as a dependency to recreate editor when value changes
+	useSingleLineEditor(containerRef, {
+		...editorOptions,
+		deps: [value], // Add value to dependencies array
+	});
 
 	return (
 		<div

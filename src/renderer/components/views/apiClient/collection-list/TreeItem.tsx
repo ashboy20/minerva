@@ -22,6 +22,7 @@ import {
 	getCollections,
 	updateItem,
 	deleteItem,
+	getEndpoint,
 } from '@/store/slices/collectionSlice';
 import {
 	ContextMenu,
@@ -32,6 +33,7 @@ import {
 } from '@/renderer/components/ui/context-menu';
 import { Input } from '@/renderer/components/ui/input';
 import { MinervaNodeModel } from '@/renderer/components/views/apiClient/collection-list/CollectionList';
+import { addTab } from '@/store/slices/tabsSlice';
 
 interface TreeItemProps {
 	node: MinervaNodeModel;
@@ -254,6 +256,22 @@ export const TreeItem = React.forwardRef<
 		const isFolder = () => node.data.type === 'folder';
 		const isEndpoint = () => node.data.type === 'endpoint';
 
+		const handleItemClick = async () => {
+			if (isEndpoint()) {
+				try {
+					const endpoint = await dispatch(
+						getEndpoint(node.id as string),
+					).unwrap();
+
+					if (endpoint) {
+						dispatch(addTab(endpoint));
+					}
+				} catch (error) {
+					console.error('Error loading endpoint:', error);
+				}
+			}
+		};
+
 		const itemContent = (
 			<div
 				role="button"
@@ -264,6 +282,7 @@ export const TreeItem = React.forwardRef<
 				style={{
 					paddingLeft: depth * 16 + 12,
 				}}
+				onClick={handleItemClick}
 			>
 				{node.droppable ? (
 					<button
