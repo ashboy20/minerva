@@ -155,7 +155,7 @@ export const updateItem = createAsyncThunk(
 	'collection/updateItem',
 	async (
 		{ uuid, fields }: { uuid: string; fields: any },
-		{ rejectWithValue },
+		{ rejectWithValue, dispatch },
 	) => {
 		const result = await window.electron.ipcRenderer.invoke(
 			ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE,
@@ -164,6 +164,8 @@ export const updateItem = createAsyncThunk(
 		);
 
 		if (result && result.success) {
+			// Refresh collections after successful update
+			await dispatch(getCollections());
 			return {
 				uuid,
 				fields,
