@@ -4,7 +4,7 @@ import {
 } from '@reduxjs/toolkit';
 import { Endpoint } from '@/types/backend/endpoint-management/endpoint';
 import { getUUID } from '@/utils/getUUID';
-import { updateItem } from './collectionSlice';
+import { updateItem } from '@/store/slices/collectionSlice';
 
 interface Tab {
 	endpoint: Endpoint;
@@ -22,13 +22,6 @@ interface TabsState {
 const initialState: TabsState = {
 	tabs: [],
 	activeTabId: null,
-};
-
-// Helper function to generate tab label from endpoint
-const generateTabLabel = (endpoint: Endpoint): string => {
-	return (
-		endpoint.name ?? `${endpoint.method} ${endpoint.url}`
-	);
 };
 
 export const tabsSlice = createSlice({
@@ -195,6 +188,17 @@ export const tabsSlice = createSlice({
 			state.tabs = [];
 			state.activeTabId = null;
 		},
+	},
+	extraReducers: (builder) => {
+		builder.addCase(updateItem.fulfilled, (state, action) => {
+			const { uuid, fields } = action.payload;
+			const tab = state.tabs.find(
+				(tab) => tab.endpoint.uuid === uuid,
+			);
+			if (tab) {
+				tab.endpoint.name = fields.name;
+			}
+		});
 	},
 });
 

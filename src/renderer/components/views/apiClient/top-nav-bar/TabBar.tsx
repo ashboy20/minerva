@@ -34,11 +34,6 @@ export function TabBar({ className }: TabBarProps) {
 		(state) => state.tabs,
 	);
 
-	// TODO: do we really need it?
-	const { endpoints, activeEndpoint } = useAppSelector(
-		(state) => state.endpoints,
-	);
-
 	const [newEndpointLabel, setNewEndpointLabel] =
 		useState('');
 	const inputRef = useRef<HTMLInputElement>(null);
