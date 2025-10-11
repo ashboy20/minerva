@@ -78,29 +78,27 @@ class CallEndpointService:
             end_time = time.time()
             response_time = (end_time - start_time) * 1000  # Convert to milliseconds
 
-            # Parse response body
-            try:
-                if response.headers.get("content-type", "").startswith(
-                    "application/json"
-                ):
-                    response_body = response.json()
-                else:
-                    response_body = response.text
-            except (json.JSONDecodeError, ValueError):
-                response_body = response.text
-
-            # Convert headers to dict
-            response_headers = dict(response.headers)
-
             # Calculate response size
             response_size = len(response.content)
 
+            # Convert response headers to dict of strings
+            headers = {k: str(v) for k, v in response.headers.items()}
+
+            # Try to parse response body as JSON, fallback to text
+            try:
+                body = response.json()
+            except json.JSONDecodeError:
+                body = response.text
+
             return ApiResponse(
-                status_code=response.status_code,
-                headers=response_headers,
-                body=response_body,
-                response_time=response_time,
-                size=response_size,
+                success=True,
+                data=ApiResponse.Data(
+                    status_code=response.status_code,
+                    headers=headers,
+                    body=body,
+                    size=response_size,
+                    response_time=response_time,
+                ),
             )
 
         except requests.exceptions.RequestException as e:
@@ -109,11 +107,14 @@ class CallEndpointService:
             response_time = (end_time - start_time) * 1000
 
             return ApiResponse(
-                status_code=0,  # Indicate connection error
-                headers={},
-                body={"error": str(e), "error_type": type(e).__name__},
-                response_time=response_time,
-                size=0,
+                success=False,
+                data=ApiResponse.Data(
+                    status_code=0,  # Indicate connection error
+                    headers={},
+                    body={"error": str(e), "error_type": type(e).__name__},
+                    response_time=response_time,
+                    size=0,
+                ),
             )
 
         except Exception as e:
@@ -122,14 +123,17 @@ class CallEndpointService:
             response_time = (end_time - start_time) * 1000
 
             return ApiResponse(
-                status_code=0,
-                headers={},
-                body={
-                    "error": f"Unexpected error: {str(e)}",
-                    "error_type": type(e).__name__,
-                },
-                response_time=response_time,
-                size=0,
+                success=False,
+                data=ApiResponse.Data(
+                    status_code=0,
+                    headers={},
+                    body={
+                        "error": f"Unexpected error: {str(e)}",
+                        "error_type": type(e).__name__,
+                    },
+                    response_time=response_time,
+                    size=0,
+                ),
             )
 
 
