@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import {
 	JsonEditorInstance,
 	useJsonEditor,
@@ -6,6 +6,8 @@ import {
 import { Button } from '@/components/ui/button';
 
 interface JsonEditorComponentProps {
+	/** Label for the editor */
+	label?: string;
 	/** Initial value for the editor */
 	value?: string;
 	/** Placeholder text when editor is empty */
@@ -23,6 +25,7 @@ interface JsonEditorComponentProps {
 }
 
 export function JsonEditorComponent({
+	label = 'Enter request body (JSON, XML, etc.)',
 	value = '',
 	placeholder = '',
 	disabled = false,
@@ -39,6 +42,7 @@ export function JsonEditorComponent({
 		placeholder,
 		editable: !disabled,
 		darkTheme,
+		lineWrapping: true, // Enable line wrapping
 		onChange: (newValue) => {
 			onChange?.(newValue);
 		},
@@ -62,7 +66,7 @@ export function JsonEditorComponent({
 		<div>
 			<div className="flex justify-between">
 				<p className="text-sm text-muted-foreground">
-					Enter request body (JSON, XML, etc.)
+					{label}
 				</p>
 				<Button
 					size="sm"
@@ -79,8 +83,10 @@ export function JsonEditorComponent({
 					minHeight: '200px',
 					border: '1px solid hsl(var(--border))',
 					borderRadius: '6px',
-					overflow: 'visible', // Changed from 'hidden' to 'visible'
-					position: 'relative', // Ensure proper positioning
+					overflow: 'hidden',
+					position: 'relative',
+					maxWidth: '100%',
+					width: '100%',
 				}}
 				onClick={() => {
 					if (editor) {

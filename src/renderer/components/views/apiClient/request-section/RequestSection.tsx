@@ -40,16 +40,6 @@ import {
 	updateActiveEndpoint,
 	updateActiveCase,
 } from '@/store/slices/endpointsSlice';
-import ApiCallService from '@/renderer/services/apiCallService';
-
-interface ApiResponse {
-	status: number;
-	statusText: string;
-	headers: Record<string, string>;
-	data: any;
-	time: number;
-	size: number;
-}
 
 const stringifyBody = (body: any) => {
 	if (typeof body === 'string') {
@@ -68,9 +58,6 @@ const stringifyBody = (body: any) => {
 export function RequestSection() {
 	const dispatch = useAppDispatch();
 	const [activeTab, setActiveTab] = useState('headers');
-	const [loading, setLoading] = useState(false);
-	const [response, setResponse] =
-		useState<ApiResponse | null>(null);
 
 	// Get all necessary state from Redux
 	const {
@@ -321,103 +308,6 @@ export function RequestSection() {
 		}
 	};
 
-	const handleSendRequest = async () => {
-		if (!activeEndpoint || !activeCase) return;
-
-		setLoading(true);
-
-		try {
-			// Build headers object from Redux state
-			const requestHeaders: Record<string, string> = {};
-			headers.forEach((header: Row) => {
-				if (
-					header.enabled &&
-					header.keyValue &&
-					header.value
-				) {
-					requestHeaders[header.keyValue] = header.value;
-				}
-			});
-
-			// Build query parameters from Redux state
-			const requestQueryParams: Record<string, string> = {};
-			queryParams.forEach((param: Row) => {
-				if (
-					param.enabled &&
-					param.keyValue &&
-					param.value
-				) {
-					requestQueryParams[param.keyValue] = param.value;
-				}
-			});
-
-			// Prepare request body for non-GET requests
-			let requestBody: string | object | undefined;
-			if (
-				activeEndpoint.method !== 'GET' &&
-				activeEndpoint.method !== 'HEAD' &&
-				activeCase.request?.body
-			) {
-				requestBody = activeCase.request.body;
-			}
-
-			// Prepare auth configuration
-			const authConfig =
-				auth.authType !== 'None' && auth.token
-					? {
-							auth_type: auth.authType,
-							token: auth.token,
-						}
-					: undefined;
-
-			// Call API through Python backend
-			const backendResponse =
-				await ApiCallService.callEndpoint({
-					method: activeEndpoint.method,
-					url: fullUrl,
-					headers:
-						Object.keys(requestHeaders).length > 0
-							? requestHeaders
-							: undefined,
-					query_params:
-						Object.keys(requestQueryParams).length > 0
-							? requestQueryParams
-							: undefined,
-					body: requestBody,
-					auth: authConfig,
-				});
-
-			// Convert backend response to frontend format
-			setResponse({
-				status: backendResponse.status_code,
-				statusText:
-					backendResponse.status_code >= 400
-						? 'Error'
-						: 'OK',
-				headers: backendResponse.headers,
-				data: backendResponse.body,
-				time: backendResponse.response_time,
-				size: backendResponse.size,
-			});
-		} catch (error) {
-			setResponse({
-				status: 0,
-				statusText: 'Network Error',
-				headers: {},
-				data: {
-					error:
-						error instanceof Error
-							? error.message
-							: 'Unknown error',
-				},
-				time: 0,
-				size: 0,
-			});
-		} finally {
-			setLoading(false);
-		}
-	};
-
 	// Cleanup timeouts on unmount
 	useEffect(() => {
 		return () => {
@@ -441,10 +331,7 @@ export function RequestSection() {
 			<Card className="flex h-full flex-col border-none">
 				<CardContent className="space-y-4 p-4">
 					{/* URL Bar */}
-					<UrlBar
-						loading={loading}
-						onSendRequest={handleSendRequest}
-					/>
+					<UrlBar />
 
 					{/* Request Configuration Tabs */}
 					<Tabs

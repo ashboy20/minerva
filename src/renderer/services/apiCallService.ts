@@ -37,43 +37,18 @@ export class ApiCallService {
 	 */
 	static async callEndpoint(
 		request: ApiCallRequest,
-	): Promise<ApiCallResponse> {
+	): Promise<any> {
 		try {
-			const result: BackendResponse =
+			const result =
 				await window.electron.ipcRenderer.invoke(
 					ipcChannels.BACKEND_API_CALL_ENDPOINT,
 					request,
 				);
 
-			if (result.error) {
-				// Return error response in the expected format
-				return {
-					status_code: result.status || 0,
-					headers: {},
-					body: {
-						error: result.error,
-						error_type: 'BackendError',
-					},
-					response_time: 0,
-					size: 0,
-				};
-			}
+			console.log("returned from backend")
+			console.log(result)
 
-			if (!result.data) {
-				// Return error response if no data
-				return {
-					status_code: 0,
-					headers: {},
-					body: {
-						error: 'No response data from backend',
-						error_type: 'NoDataError',
-					},
-					response_time: 0,
-					size: 0,
-				};
-			}
-
-			return result.data;
+			return result;
 		} catch (error) {
 			console.error('API Call Service Error:', error);
 

@@ -4,6 +4,7 @@ import headersAuthReducer from '@/store/slices/headersAuthSlice';
 import endpointsReducer from '@/store/slices/endpointsSlice';
 import tabsReducer from '@/store/slices/tabsSlice';
 import collectionsReducer from '@/store/slices/collectionSlice';
+import responseReducer from '@/store/slices/responseSlice';
 
 export const store = configureStore({
 	reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
 		endpoints: endpointsReducer,
 		tabs: tabsReducer,
 		collections: collectionsReducer,
+		response: responseReducer,
 	},
 });
 
