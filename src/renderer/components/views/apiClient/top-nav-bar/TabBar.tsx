@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { X, Plus, Edit3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
@@ -10,8 +10,8 @@ import {
 	addTab,
 	setActiveTab,
 	closeTab,
-	renameTab,
 	updateTabRenamingState,
+	updateTabName,
 } from '@/store/slices/tabsSlice';
 import {
 	ContextMenu,
@@ -20,6 +20,7 @@ import {
 	ContextMenuTrigger,
 } from '@/renderer/components/ui/context-menu';
 import { Input } from '@/renderer/components/ui/input';
+import { updateItem } from '@/store/slices/collectionSlice';
 
 interface TabBarProps {
 	className?: string;
@@ -40,6 +41,7 @@ export function TabBar({ className }: TabBarProps) {
 
 	const [newEndpointLabel, setNewEndpointLabel] =
 		useState('');
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const handleTabClick = (tabId: string) => {
 		dispatch(setActiveTab(tabId));
@@ -57,14 +59,62 @@ export function TabBar({ className }: TabBarProps) {
 		dispatch(addTab({}));
 	};
 
-	const handleRenameTab = (uuid: string) => {
+	const handleStartRenameTab = (uuid: string) => {
 		dispatch(
 			updateTabRenamingState({
-				tabId: uuid,
+				endpointId: uuid,
 				isRenaming: true,
 			}),
 		);
 	};
+
+	const handleTabRename = async (
+		uuid: string,
+		newName: string,
+	) => {
+		// First update the tab name in the UI
+		dispatch(
+			updateTabName({
+				endpointId: uuid,
+				name: newName,
+			}),
+		);
+
+		// Then update the backend and refresh collections
+		try {
+			await dispatch(
+				updateItem({
+					uuid: uuid,
+					fields: {
+						name: newName,
+					},
+				}),
+			).unwrap();
+		} catch (error) {
+			console.error('Failed to update item name:', error);
+		}
+	};
+
+	useEffect(() => {
+		setNewEndpointLabel(
+			tabs.find((tab) => tab.endpoint.uuid === activeTabId)
+				?.endpoint.name || '',
+		);
+	}, [tabs, activeTabId]);
+
+	// Focus input when renaming starts
+	useEffect(() => {
+		const renamingTab = tabs.find((tab) => tab.isRenaming);
+		if (renamingTab && inputRef.current) {
+			const timeoutId = setTimeout(() => {
+				if (inputRef.current) {
+					inputRef.current.focus();
+					inputRef.current.select();
+				}
+			}, 200);
+			return () => clearTimeout(timeoutId);
+		}
+	}, [tabs]);
 
 	return (
 		<div
@@ -82,7 +132,9 @@ export function TabBar({ className }: TabBarProps) {
 					>
 						<ContextMenuTrigger asChild>
 							<div
-								onClick={() => handleTabClick(tab.endpoint.uuid)}
+								onClick={() =>
+									handleTabClick(tab.endpoint.uuid)
+								}
 								className={cn(
 									'group relative flex cursor-pointer items-center gap-2 border-r border-border px-3 py-2',
 									'w-48 min-w-48 max-w-48', // Fixed width of 192px
@@ -95,13 +147,16 @@ export function TabBar({ className }: TabBarProps) {
 								{/* Method badge */}
 								{tab.endpoint.method && (
 									<div className="text-xs">
-										<MethodText method={tab.endpoint.method} />
+										<MethodText
+											method={tab.endpoint.method}
+										/>
 									</div>
 								)}
 
 								{/* Tab label */}
 								{tab.isRenaming ? (
 									<Input
+										ref={inputRef}
 										value={newEndpointLabel}
 										onChange={(e) =>
 											setNewEndpointLabel(e.target.value)
@@ -114,12 +169,18 @@ export function TabBar({ className }: TabBarProps) {
 														isRenaming: false,
 													}),
 												);
+												handleTabRename(
+													tab.endpoint.uuid,
+													newEndpointLabel,
+												);
 											}
 										}}
 									/>
 								) : (
 									<span className="min-w-0 flex-1 truncate text-sm">
-										{tab.endpoint.name ? tab.endpoint.name : tab.endpoint.path}
+										{tab.endpoint.name
+											? tab.endpoint.name
+											: tab.endpoint.path}
 									</span>
 								)}
 
@@ -140,7 +201,9 @@ export function TabBar({ className }: TabBarProps) {
 						<ContextMenuContent className="min-w-32">
 							<ContextMenuItem
 								className="flex cursor-pointer items-center gap-2"
-								onClick={() => handleRenameTab(tab.endpoint.uuid)}
+								onClick={() =>
+									handleStartRenameTab(tab.endpoint.uuid)
+								}
 							>
 								<Edit3 size={14} />
 								Rename

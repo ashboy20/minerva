@@ -4,6 +4,7 @@ import {
 } from '@reduxjs/toolkit';
 import { Endpoint } from '@/types/backend/endpoint-management/endpoint';
 import { getUUID } from '@/utils/getUUID';
+import { updateItem } from './collectionSlice';
 
 interface Tab {
 	endpoint: Endpoint;
@@ -174,6 +175,22 @@ export const tabsSlice = createSlice({
 			}
 		},
 
+		updateTabName: (
+			state,
+			action: PayloadAction<{
+				endpointId: string;
+				name: string;
+			}>,
+		) => {
+			const { endpointId, name } = action.payload;
+			const tab = state.tabs.find(
+				(tab) => tab.endpoint.uuid === endpointId,
+			);
+			if (tab) {
+				tab.endpoint.name = name;
+			}
+		},
+
 		clearTabs: (state) => {
 			state.tabs = [];
 			state.activeTabId = null;
@@ -188,6 +205,7 @@ export const {
 	updateTabSavedState,
 	updateTabRenamingState,
 	clearTabs,
+	updateTabName,
 } = tabsSlice.actions;
 
 export default tabsSlice.reducer;
