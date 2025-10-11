@@ -11,13 +11,11 @@ export function ResponseSection() {
 		(state) => state.response,
 	);
 
-	const { tabs, activeTabId } = useAppSelector(
-		(state) => state.tabs,
-	);
-	const activeTab = tabs.find(
-		(tab) => tab.endpoint.uuid === activeTabId,
-	);
-	const activeEndpoint = activeTab?.endpoint;
+	const handleCopyResponse = () => {
+		console.log('handleCopyResponse');
+		console.log(response?.data);
+		navigator.clipboard.writeText(JSON.stringify(response?.data, null, 2));
+	};
 
 	return (
 		<div className="h-full overflow-y-auto p-4">
@@ -53,6 +51,9 @@ export function ResponseSection() {
 
 					{/* Response Body */}
 					<JsonEditorComponent
+						label="Response"
+						buttonLabel="Copy"
+						onButtonClick={handleCopyResponse}
 						placeholder={
 							loading
 								? 'Loading...'

@@ -22,6 +22,8 @@ interface JsonEditorComponentProps {
 	onChange?: (value: string) => void;
 	/** Callback when editor is ready */
 	onReady?: (editor: JsonEditorInstance) => void;
+	buttonLabel?: string;
+	onButtonClick?: () => void;
 }
 
 export function JsonEditorComponent({
@@ -33,6 +35,8 @@ export function JsonEditorComponent({
 	className = '',
 	onChange,
 	onReady,
+	buttonLabel = 'Prettify',
+	onButtonClick,
 }: JsonEditorComponentProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +46,6 @@ export function JsonEditorComponent({
 		placeholder,
 		editable: !disabled,
 		darkTheme,
-		lineWrapping: true, // Enable line wrapping
 		onChange: (newValue) => {
 			onChange?.(newValue);
 		},
@@ -68,13 +71,13 @@ export function JsonEditorComponent({
 				<p className="text-sm text-muted-foreground">
 					{label}
 				</p>
-				<Button
+				{buttonLabel && <Button
 					size="sm"
 					className="px-2"
-					onClick={handlePrettify}
+					onClick={onButtonClick ? onButtonClick : handlePrettify}
 				>
-					Prettify
-				</Button>
+					{buttonLabel}
+				</Button>}
 			</div>
 			<div
 				ref={containerRef}
