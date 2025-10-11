@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import {
 	JsonEditorInstance,
 	useJsonEditor,
@@ -6,6 +6,8 @@ import {
 import { Button } from '@/components/ui/button';
 
 interface JsonEditorComponentProps {
+	/** Label for the editor */
+	label?: string;
 	/** Initial value for the editor */
 	value?: string;
 	/** Placeholder text when editor is empty */
@@ -20,9 +22,12 @@ interface JsonEditorComponentProps {
 	onChange?: (value: string) => void;
 	/** Callback when editor is ready */
 	onReady?: (editor: JsonEditorInstance) => void;
+	buttonLabel?: string;
+	onButtonClick?: () => void;
 }
 
 export function JsonEditorComponent({
+	label = 'Enter request body (JSON, XML, etc.)',
 	value = '',
 	placeholder = '',
 	disabled = false,
@@ -30,6 +35,8 @@ export function JsonEditorComponent({
 	className = '',
 	onChange,
 	onReady,
+	buttonLabel = 'Prettify',
+	onButtonClick,
 }: JsonEditorComponentProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -62,15 +69,15 @@ export function JsonEditorComponent({
 		<div>
 			<div className="flex justify-between">
 				<p className="text-sm text-muted-foreground">
-					Enter request body (JSON, XML, etc.)
+					{label}
 				</p>
-				<Button
+				{buttonLabel && <Button
 					size="sm"
 					className="px-2"
-					onClick={handlePrettify}
+					onClick={onButtonClick ? onButtonClick : handlePrettify}
 				>
-					Prettify
-				</Button>
+					{buttonLabel}
+				</Button>}
 			</div>
 			<div
 				ref={containerRef}
@@ -79,8 +86,10 @@ export function JsonEditorComponent({
 					minHeight: '200px',
 					border: '1px solid hsl(var(--border))',
 					borderRadius: '6px',
-					overflow: 'visible', // Changed from 'hidden' to 'visible'
-					position: 'relative', // Ensure proper positioning
+					overflow: 'hidden',
+					position: 'relative',
+					maxWidth: '100%',
+					width: '100%',
 				}}
 				onClick={() => {
 					if (editor) {

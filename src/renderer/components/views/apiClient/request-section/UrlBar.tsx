@@ -16,18 +16,23 @@ import {
 	useAppSelector,
 } from '@/store/hooks';
 import { updateActiveEndpoint } from '@/store/slices/endpointsSlice';
+import { sendRequest } from '@/store/slices/responseSlice';
 
-interface UrlBarProps {
-	loading: boolean;
-	onSendRequest: () => void;
-}
-
-function UrlBar({ loading, onSendRequest }: UrlBarProps) {
+function UrlBar() {
 	const dispatch = useAppDispatch();
 
-	// Get the active endpoint from the active tab
+	// Get the active endpoint from the active tab and loading state from response
 	const { tabs, activeTabId } = useAppSelector(
 		(state) => state.tabs,
+	);
+	const { loading } = useAppSelector(
+		(state) => state.response,
+	);
+	const { headers, auth } = useAppSelector(
+		(state) => state.headersAuth,
+	);
+	const { fullUrl, queryParams } = useAppSelector(
+		(state) => state.url,
 	);
 	const activeTab = tabs.find(
 		(tab) => tab.endpoint.uuid === activeTabId,
@@ -70,8 +75,46 @@ function UrlBar({ loading, onSendRequest }: UrlBarProps) {
 		}
 	};
 
+	const handleSendRequest = async () => {
+		console.log('handleSendRequest');
+		if (!activeEndpoint || !activeTab?.endpoint) return;
+
+		// Prepare request body for non-GET requests
+		let requestBody: string | object | undefined;
+		if (
+			activeEndpoint.method !== 'GET' &&
+			activeEndpoint.method !== 'HEAD'
+		) {
+			const activeCase = activeTab.endpoint.cases.find(
+				(c) => c.uuid === activeTab.activeCaseId,
+			);
+			const body = activeCase?.request?.body;
+			if (body !== null && body !== undefined) {
+				requestBody = body;
+			}
+		}
+
+		console.log('method', activeEndpoint.method);
+		console.log('fullUrl', fullUrl);
+		console.log('headers', headers);
+		console.log('queryParams', queryParams);
+		console.log('requestBody', requestBody);
+		console.log('auth', auth);
+
+		dispatch(
+			sendRequest({
+				method: activeEndpoint.method,
+				url: fullUrl,
+				headers,
+				queryParams,
+				body: requestBody,
+				auth,
+			}),
+		);
+	};
+
 	// Construct the full URL from base_url and path, ensuring it's never undefined
-	const fullUrl = activeEndpoint
+	const url = activeEndpoint
 		? `${activeEndpoint.url || ''}`
 		: '';
 
@@ -94,15 +137,13 @@ function UrlBar({ loading, onSendRequest }: UrlBarProps) {
 			</Select>
 
 			<UrlInputField
-				value={fullUrl}
+				value={url}
 				onChange={handleUrlChange}
 			/>
 
 			<Button
-				onClick={onSendRequest}
-				disabled={
-					loading || !fullUrl || !String(fullUrl).trim()
-				}
+				onClick={handleSendRequest}
+				disabled={loading || !url || !String(url).trim()}
 				className="px-6"
 			>
 				{loading ? (

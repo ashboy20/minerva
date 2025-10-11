@@ -1,5 +1,7 @@
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union
+
+from .base import BaseResponse
 
 
 class RequestHeader(BaseModel):
@@ -26,9 +28,15 @@ class ApiRequest(BaseModel):
     auth: Optional[AuthConfig] = None
 
 
-class ApiResponse(BaseModel):
-    status_code: int
-    headers: Dict[str, str]
-    body: Union[str, Dict[str, Any], List[Any]]
-    response_time: float  # in milliseconds
-    size: int  # response size in bytes
+
+
+
+class ApiResponse(BaseResponse):
+    class Data(BaseModel):
+        status_code: int
+        headers: Dict[str, str]
+        body: Any
+        size: int
+        response_time: float
+    
+    data: Data

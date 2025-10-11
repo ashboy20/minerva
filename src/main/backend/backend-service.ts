@@ -10,8 +10,8 @@ import path from 'path';
 import net from 'net';
 import fs from 'fs';
 import log from 'electron-log';
-import { is } from './util';
-import { __assets } from './paths';
+import { is } from '../util';
+import { __assets } from '../paths';
 
 export class BackendService {
 	private pythonProcess: ChildProcess | null = null;
@@ -30,7 +30,7 @@ export class BackendService {
 		// Path to the FastAPI backend (development)
 		this.backendPath = path.join(
 			__dirname,
-			'..',
+			'../../',
 			'backend',
 		);
 	}
@@ -148,6 +148,7 @@ export class BackendService {
 								'python',
 							);
 				try {
+					console.log(venvPython)
 					fs.accessSync(venvPython, fs.constants.X_OK);
 					pythonCmd = venvPython;
 					log.info(

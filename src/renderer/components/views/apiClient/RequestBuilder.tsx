@@ -44,7 +44,7 @@ export function RequestBuilder() {
 	return (
 		<ResizablePanelGroup
 			direction="horizontal"
-			className="min-h-[calc(100vh-200px)]"
+			className="min-h-[calc(100vh-200px)] w-full"
 		>
 			{/* Left Sidebar - Endpoints List */}
 			<ResizablePanel
