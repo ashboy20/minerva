@@ -8,8 +8,8 @@ import { AutoUpdate } from './auto-update';
 import {
 	getBackendService,
 	setupBackendServiceLifecycle,
-} from './backend-service';
-import { registerBackendHandlers } from './backend-client';
+} from './backend/backend-service';
+import { registerBackendHandlers } from './backend/backend-client';
 import {
 	createChildWindow,
 	createMainWindow,

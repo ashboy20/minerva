@@ -8,7 +8,7 @@ import keyboard from './keyboard';
 import { getSetting } from './store-actions';
 import { is } from './util';
 import windows from './windows';
-import { getBackendService } from './backend-service';
+import { getBackendService } from './backend/backend-service';
 
 const register = () => {
 	Logger.status($init.appListeners);
