@@ -48,7 +48,9 @@ class Auth(BaseModel):
 class Request(BaseModel):
     """Request configuration for a test case"""
 
-    url: Optional[str] = Field(default=None, description="Request URL")
+    base_url: Optional[str] = Field(default=None, description="Request base URL")
+    full_url: Optional[str] = Field(default=None, description="Request full URL")
+    path: Optional[str] = Field(default=None, description="Request path")
     headers: Optional[List[Header]] = Field(default=None, description="Request headers")
     query: Optional[List[QueryParam]] = Field(
         default=None, description="Query parameters"
@@ -167,7 +169,7 @@ class Endpoint(SQLModel, table=True):
     method: str = Field(
         description="HTTP method (GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD)"
     )
-    url: str = Field(description="Endpoint URL")
+    url: str = Field(description="Endpoint URL without query params")
     cases: List[dict] = Field(
         description="Endpoint cases", sa_column=Column(JSON), default=[]
     )
@@ -250,7 +252,7 @@ class PartialEndpointSchema(PartialItemSchema):
 
     type: str = Field(description="Item type", default="endpoint")
     method: str = Field(description="HTTP method")
-    url: str = Field(description="Endpoint URL")
+    url: str = Field(description="Endpoint URL without query params")
 
 
 class EndpointSchema(ItemSchema, PartialEndpointSchema):

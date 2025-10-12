@@ -30,7 +30,9 @@ items:
           - name: 'Success'
             description: 'Successfully fetch all posts'
             request:
-              url: 'https://jsonplaceholder.typicode.com/posts'
+              base_url: 'https://jsonplaceholder.typicode.com'
+              full_url: 'https://jsonplaceholder.typicode.com/posts'
+              path: '/posts'
               headers:
                 - name: 'Accept'
                   value: 'application/json'
@@ -49,7 +51,9 @@ items:
           - name: 'Success'
             description: 'Successfully fetch post with ID 1'
             request:
-              url: 'https://jsonplaceholder.typicode.com/posts/1'
+              base_url: 'https://jsonplaceholder.typicode.com'
+              full_url: 'https://jsonplaceholder.typicode.com/posts/1'
+              path: '/posts/1'
               headers:
                 - name: 'Accept'
                   value: 'application/json'
@@ -68,7 +72,9 @@ items:
           - name: 'Success'
             description: 'Successfully create a new post'
             request:
-              url: 'https://jsonplaceholder.typicode.com/posts'
+              base_url: 'https://jsonplaceholder.typicode.com'
+              full_url: 'https://jsonplaceholder.typicode.com/posts'
+              path: '/posts'
               headers:
                 - name: 'Content-Type'
                   value: 'application/json'
@@ -88,7 +94,9 @@ items:
           - name: 'Success'
             description: 'Successfully update post with ID 1'
             request:
-              url: 'https://jsonplaceholder.typicode.com/posts/1'
+              base_url: 'https://jsonplaceholder.typicode.com'
+              full_url: 'https://jsonplaceholder.typicode.com/posts/1'
+              path: '/posts/1'
               headers:
                 - name: 'Content-Type'
                   value: 'application/json'
@@ -108,7 +116,9 @@ items:
           - name: 'Success'
             description: 'Successfully delete post with ID 1'
             request:
-              url: 'https://jsonplaceholder.typicode.com/posts/1'
+              base_url: 'https://jsonplaceholder.typicode.com'
+              full_url: 'https://jsonplaceholder.typicode.com/posts/1'
+              path: '/posts/1'
               headers:
                 - name: 'Accept'
                   value: 'application/json'
@@ -131,7 +141,9 @@ items:
           - name: 'Test Case'
             description: 'Test various path parameter formats'
             request:
-              url: '{{baseUrl}}/users/:userId/posts/:postId/comments/:commentId'
+              base_url: '{{baseUrl}}'
+              full_url: '{{baseUrl}}/users/:userId/posts/:postId/comments/:commentId'
+              path: '/users/:userId/posts/:postId/comments/:commentId'
               path_params:
                 - name: 'userId'
                   value: '{{userId}}'
@@ -154,7 +166,9 @@ items:
           - name: 'Test Case'
             description: 'Test various query parameter formats'
             request:
-              url: '{{baseUrl}}/posts'
+              base_url: '{{baseUrl}}'
+              full_url: '{{baseUrl}}/posts?userId={{userId}}&_limit={{limit}}&_page={{page}}'
+              path: '/posts'
               query_params:
                 - name: 'userId'
                   value: '{{userId}}'
@@ -182,7 +196,9 @@ items:
           - name: 'Test Case'
             description: 'Test combination of path and query parameters with variables'
             request:
-              url: '{{baseUrl}}/users/:userId/posts/:postId'
+              base_url: '{{baseUrl}}'
+              full_url: '{{baseUrl}}/users/:userId/posts/:postId?_method={{method}}&_format={{format}}'
+              path: '/users/:userId/posts/:postId'
               path_params:
                 - name: 'userId'
                   value: '{{userId}}'
