@@ -25,7 +25,6 @@ import {
 } from '@/store/hooks';
 import {
 	initializeUrl,
-	updateFromUrl,
 	updatePathParams,
 	updateQueryParams,
 	clearUpdateSource,
@@ -58,7 +57,6 @@ export function RequestSection() {
 
 	// Get all necessary state from Redux
 	const {
-		fullUrl,
 		pathParams,
 		queryParams,
 		lastUpdateSource,
@@ -309,7 +307,7 @@ export function RequestSection() {
 
 	return (
 		<div className="h-full overflow-y-auto p-4">
-			<Card className="flex h-full flex-col border-none">
+			{activeTabId && (<Card className="flex h-full flex-col border-none">
 				<CardContent className="space-y-4 p-4">
 					{/* URL Bar */}
 					<UrlBar />
@@ -406,7 +404,7 @@ export function RequestSection() {
 						/>
 					</Tabs>
 				</CardContent>
-			</Card>
+			</Card>)}
 		</div>
 	);
 }
