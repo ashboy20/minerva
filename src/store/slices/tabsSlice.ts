@@ -181,6 +181,22 @@ export const tabsSlice = createSlice({
 			);
 			if (tab) {
 				tab.endpoint.name = name;
+				tab.notSaved = true;
+			}
+		},
+		updateNotSaveState: (
+			state,
+			action: PayloadAction<{
+				endpointId: string;
+				notSaved: boolean;
+			}>,
+		) => {
+			const { endpointId, notSaved } = action.payload;
+			const tab = state.tabs.find(
+				(tab) => tab.endpoint.uuid === endpointId,
+			);
+			if (tab) {
+				tab.notSaved = notSaved;
 			}
 		},
 
@@ -190,15 +206,18 @@ export const tabsSlice = createSlice({
 		},
 	},
 	extraReducers: (builder) => {
-		builder.addCase(updateItem.fulfilled, (state, action) => {
-			const { uuid, fields } = action.payload;
-			const tab = state.tabs.find(
-				(tab) => tab.endpoint.uuid === uuid,
-			);
-			if (tab) {
-				tab.endpoint.name = fields.name;
-			}
-		});
+		builder.addCase(
+			updateItem.fulfilled,
+			(state, action) => {
+				const { uuid, fields } = action.payload;
+				const tab = state.tabs.find(
+					(tab) => tab.endpoint.uuid === uuid,
+				);
+				if (tab) {
+					tab.endpoint.name = fields.name;
+				}
+			},
+		);
 	},
 });
 
@@ -210,6 +229,7 @@ export const {
 	updateTabRenamingState,
 	clearTabs,
 	updateTabName,
+	updateNotSaveState,
 } = tabsSlice.actions;
 
 export default tabsSlice.reducer;

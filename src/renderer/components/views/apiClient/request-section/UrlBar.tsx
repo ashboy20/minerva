@@ -8,8 +8,8 @@ import {
 import { HTTP_METHODS } from '@/data/apiClient';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
 import { Button } from '@/renderer/components/ui/button';
-import { PlayIcon } from '@radix-ui/react-icons';
-import React from 'react';
+import { PlayIcon, FileIcon } from '@radix-ui/react-icons';
+import React, { useEffect } from 'react';
 import { UrlInputField } from '@/renderer/components/views/apiClient/request-section/UrlInputField';
 import {
 	useAppDispatch,
@@ -17,6 +17,8 @@ import {
 } from '@/store/hooks';
 import { updateActiveEndpoint } from '@/store/slices/endpointsSlice';
 import { sendRequest } from '@/store/slices/responseSlice';
+import { updateItem } from '@/store/slices/collectionSlice';
+import { updateNotSaveState } from '@/store/slices/tabsSlice';
 
 function UrlBar() {
 	const dispatch = useAppDispatch();
@@ -76,7 +78,6 @@ function UrlBar() {
 	};
 
 	const handleSendRequest = async () => {
-		console.log('handleSendRequest');
 		if (!activeEndpoint || !activeTab?.endpoint) return;
 
 		// Prepare request body for non-GET requests
@@ -94,13 +95,6 @@ function UrlBar() {
 			}
 		}
 
-		console.log('method', activeEndpoint.method);
-		console.log('fullUrl', fullUrl);
-		console.log('headers', headers);
-		console.log('queryParams', queryParams);
-		console.log('requestBody', requestBody);
-		console.log('auth', auth);
-
 		dispatch(
 			sendRequest({
 				method: activeEndpoint.method,
@@ -112,6 +106,50 @@ function UrlBar() {
 			}),
 		);
 	};
+
+	const handleSave = async () => {
+		if (!activeEndpoint) return;
+
+		try {
+			await dispatch(
+				updateItem({
+					uuid: activeEndpoint.uuid,
+					fields: {
+						method: activeEndpoint.method,
+						url: activeEndpoint.url,
+						name: activeEndpoint.name,
+					},
+				}),
+			).unwrap();
+
+			// Mark tab as saved
+			dispatch(
+				updateNotSaveState({
+					endpointId: activeEndpoint.uuid,
+					notSaved: false,
+				}),
+			);
+		} catch (error) {
+			console.error('Failed to save endpoint:', error);
+		}
+	};
+
+	// Handle Cmd+S keyboard shortcut
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+				e.preventDefault();
+				handleSave();
+			}
+		};
+
+		document.addEventListener('keydown', handleKeyDown);
+		return () =>
+			document.removeEventListener(
+				'keydown',
+				handleKeyDown,
+			);
+	}, [activeEndpoint]);
 
 	// Construct the full URL from base_url and path, ensuring it's never undefined
 	const url = activeEndpoint
@@ -141,20 +179,32 @@ function UrlBar() {
 				onChange={handleUrlChange}
 			/>
 
-			<Button
-				onClick={handleSendRequest}
-				disabled={loading || !url || !String(url).trim()}
-				className="px-6"
-			>
-				{loading ? (
-					<>Sending...</>
-				) : (
-					<>
-						<PlayIcon className="mr-2 h-4 w-4" />
-						Send
-					</>
-				)}
-			</Button>
+			<div className="flex gap-2">
+				<Button
+					onClick={handleSave}
+					disabled={!activeTab?.notSaved}
+					variant="outline"
+					className="px-4"
+				>
+					<FileIcon className="mr-2 h-4 w-4" />
+					Save
+				</Button>
+
+				<Button
+					onClick={handleSendRequest}
+					disabled={loading || !url || !String(url).trim()}
+					className="px-4"
+				>
+					{loading ? (
+						<>Sending...</>
+					) : (
+						<>
+							<PlayIcon className="mr-2 h-4 w-4" />
+							Send
+						</>
+					)}
+				</Button>
+			</div>
 		</div>
 	);
 }

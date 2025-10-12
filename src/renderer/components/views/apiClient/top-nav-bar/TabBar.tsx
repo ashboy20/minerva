@@ -139,6 +139,11 @@ export function TabBar({ className }: TabBarProps) {
 										: 'bg-muted/30',
 								)}
 							>
+								{/* Unsaved indicator */}
+								{tab.notSaved && (
+									<div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+								)}
+
 								{/* Method badge */}
 								{tab.endpoint.method && (
 									<div className="text-xs">
