@@ -36,10 +36,7 @@ import {
 	updateAuth,
 	clearUpdateSource as clearHeadersAuthUpdateSource,
 } from '@/store/slices/headersAuthSlice';
-import {
-	updateActiveEndpoint,
-	updateActiveCase,
-} from '@/store/slices/endpointsSlice';
+import { updateNotSaveState } from '@/store/slices/tabsSlice';
 
 const stringifyBody = (body: any) => {
 	if (typeof body === 'string') {
@@ -147,28 +144,21 @@ export function RequestSection() {
 	// Show path params table if URL has path parameters OR if there are existing path params
 	const showPathParams = pathParams.length > 0;
 
-	const handleMethodChange = (method: string) => {
-		if (activeEndpoint) {
-			dispatch(
-				updateActiveEndpoint({
-					...activeEndpoint,
-					method,
-				}),
-			);
-		}
-	};
-
-	const handleUrlChange = (newUrl: string) => {
-		dispatch(updateFromUrl(newUrl));
-		if (activeEndpoint) {
-			dispatch(
-				updateActiveEndpoint({
-					...activeEndpoint,
-					url: newUrl,
-				}),
-			);
-		}
-	};
+	// Update endpoint in tab state and mark as unsaved
+	const updateEndpointInTab = useCallback(
+		(updatedCase: any) => {
+			if (activeTabId && activeCase) {
+				// Mark the tab as unsaved
+				dispatch(
+					updateNotSaveState({
+						endpointId: activeTabId,
+						notSaved: true,
+					}),
+				);
+			}
+		},
+		[dispatch, activeTabId, activeCase],
+	);
 
 	// Debounce path params updates
 	const pathParamsTimeoutRef =
@@ -181,19 +171,17 @@ export function RequestSection() {
 			dispatch(updatePathParams(newPathParams));
 			if (activeCase) {
 				pathParamsTimeoutRef.current = setTimeout(() => {
-					dispatch(
-						updateActiveCase({
-							...activeCase,
-							request: {
-								...activeCase.request,
-								path_params: newPathParams,
-							},
-						}),
-					);
+					updateEndpointInTab({
+						...activeCase,
+						request: {
+							...activeCase.request,
+							path_params: newPathParams,
+						},
+					});
 				}, 50);
 			}
 		},
-		[dispatch, activeCase],
+		[dispatch, activeCase, updateEndpointInTab],
 	);
 
 	// Debounce query params updates
@@ -207,19 +195,17 @@ export function RequestSection() {
 			dispatch(updateQueryParams(newQueryParams));
 			if (activeCase) {
 				queryParamsTimeoutRef.current = setTimeout(() => {
-					dispatch(
-						updateActiveCase({
-							...activeCase,
-							request: {
-								...activeCase.request,
-								query_params: newQueryParams,
-							},
-						}),
-					);
+					updateEndpointInTab({
+						...activeCase,
+						request: {
+							...activeCase.request,
+							query_params: newQueryParams,
+						},
+					});
 				}, 50);
 			}
 		},
-		[dispatch, activeCase],
+		[dispatch, activeCase, updateEndpointInTab],
 	);
 
 	// Debounce headers updates
@@ -234,19 +220,17 @@ export function RequestSection() {
 			dispatch(updateHeaders(newHeaders));
 			if (activeCase) {
 				headersTimeoutRef.current = setTimeout(() => {
-					dispatch(
-						updateActiveCase({
-							...activeCase,
-							request: {
-								...activeCase.request,
-								headers: newHeaders,
-							},
-						}),
-					);
+					updateEndpointInTab({
+						...activeCase,
+						request: {
+							...activeCase.request,
+							headers: newHeaders,
+						},
+					});
 				}, 50);
 			}
 		},
-		[dispatch, activeCase],
+		[dispatch, activeCase, updateEndpointInTab],
 	);
 
 	// Debounce auth updates
@@ -261,52 +245,49 @@ export function RequestSection() {
 			dispatch(updateAuth({ authType, token }));
 			if (activeCase) {
 				authTimeoutRef.current = setTimeout(() => {
-					dispatch(
-						updateActiveCase({
-							...activeCase,
-							request: {
-								...activeCase.request,
-								auth: {
-									auth_type: authType,
-									token,
-								},
+					updateEndpointInTab({
+						...activeCase,
+						request: {
+							...activeCase.request,
+							auth: {
+								auth_type: authType,
+								token,
 							},
-						}),
-					);
+						},
+					});
 				}, 50);
 			}
 		},
-		[dispatch, activeCase],
+		[dispatch, activeCase, updateEndpointInTab],
 	);
 
-	const handleBodyChange = (body: string) => {
-		if (activeCase) {
-			try {
-				// Try to parse as JSON first
-				const parsedBody = JSON.parse(body);
-				dispatch(
-					updateActiveCase({
+	const handleBodyChange = useCallback(
+		(body: string) => {
+			if (activeCase) {
+				try {
+					// Try to parse as JSON first
+					const parsedBody = JSON.parse(body);
+					updateEndpointInTab({
 						...activeCase,
 						request: {
 							...activeCase.request,
 							body: parsedBody,
 						},
-					}),
-				);
-			} catch (error) {
-				// If parsing fails, store as Record<string, any>
-				dispatch(
-					updateActiveCase({
+					});
+				} catch (error) {
+					// If parsing fails, store as Record<string, any>
+					updateEndpointInTab({
 						...activeCase,
 						request: {
 							...activeCase.request,
 							body: { content: body },
 						},
-					}),
-				);
+					});
+				}
 			}
-		}
-	};
+		},
+		[activeCase, updateEndpointInTab],
+	);
 
 	// Cleanup timeouts on unmount
 	useEffect(() => {
