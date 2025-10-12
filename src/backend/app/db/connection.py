@@ -4,6 +4,7 @@ from pathlib import Path
 from app.models.endpoint_management import Case, Collection, Folder, Endpoint
 import uuid
 import yaml
+from urllib.parse import urlparse
 
 # Database configuration
 DATABASE_DIR = Path(__file__).parent / "data"
@@ -25,6 +26,47 @@ engine = create_engine(
     connect_args={"check_same_thread": False},  # Allow multiple threads for SQLite
     echo=False,  # Set to True for SQL debugging
 )
+
+
+def parse_url(url: str) -> tuple[str, str, str]:
+    """Parse URL into base_url, full_url and path using urllib.parse
+
+    Args:
+        url: Full URL to parse
+
+    Returns:
+        Tuple of (base_url, full_url, path) where:
+        - base_url is the scheme + netloc (e.g. 'https://api.example.com')
+        - full_url is the complete URL
+        - path is the path + query + fragment (e.g. '/users?id=1#info')
+    """
+    # Handle empty or None URLs
+    if not url:
+        return None, "", "/"
+
+    # Parse the URL
+    parsed = urlparse(url if "://" in url else f"http://{url}")
+
+    # Extract base URL (scheme + netloc)
+    base_url = None
+    if parsed.scheme and parsed.netloc:
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+    # Build path (including query and fragment)
+    path = parsed.path or "/"
+    if parsed.query:
+        path = f"{path}?{parsed.query}"
+    if parsed.fragment:
+        path = f"{path}#{parsed.fragment}"
+
+    # Ensure path starts with /
+    if not path.startswith("/"):
+        path = f"/{path}"
+
+    # Full URL is either the original URL or constructed from parts
+    full_url = url if "://" in url else f"http://{url}"
+
+    return base_url, full_url, path
 
 
 def create_db_and_tables():
@@ -89,23 +131,36 @@ def process_items(session: Session, items: list, parent_uuid: str):
             endpoint_uuid = str(uuid.uuid4())
             position_counter[parent_uuid] = position_counter.get(parent_uuid, 0) + 1
 
+            # Store the URL in the endpoint
+            url = item.get("url", "")
+
+            # Process cases
             cases = item.get("cases", [])
             for case in cases:
                 case_uuid = str(uuid.uuid4())
+                request = case.get("request", {})
+
+                # Parse URL components for the request
+                base_url, full_url, path = parse_url(url)
+                request["base_url"] = base_url
+                request["full_url"] = full_url
+                request["path"] = path
+
                 case = Case(
                     uuid=case_uuid,
                     name=case.get("name", ""),
                     description=case.get("description", ""),
-                    request=case.get("request", {}),
+                    request=request,
                     response=case.get("response", {}),
                 ).model_dump(by_alias=True, mode="python")
 
+            # Create endpoint with URL and processed cases
             endpoint = Endpoint(
                 uuid=endpoint_uuid,
                 name=item.get("name", ""),
                 description=item.get("description", ""),
                 method=item.get("method", "GET"),
-                url=item.get("url", ""),
+                url=url,
                 parent_uuid=parent_uuid,
                 position=position_counter[parent_uuid],
                 cases=cases,

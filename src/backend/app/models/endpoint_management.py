@@ -8,7 +8,7 @@ from .base import BaseResponse
 
 
 # child components
-class Varialble(BaseModel):
+class Variable(BaseModel):
     """Variable definition"""
 
     key: str = Field(description="Variable key")
@@ -52,7 +52,7 @@ class Request(BaseModel):
     full_url: Optional[str] = Field(default=None, description="Request full URL")
     path: Optional[str] = Field(default=None, description="Request path")
     headers: Optional[List[Header]] = Field(default=None, description="Request headers")
-    query: Optional[List[QueryParam]] = Field(
+    query_params: Optional[List[QueryParam]] = Field(
         default=None, description="Query parameters"
     )
     path_params: Optional[List[PathParam]] = Field(
