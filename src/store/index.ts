@@ -4,6 +4,7 @@ import headersAuthReducer from '@/store/slices/headersAuthSlice';
 import tabsReducer from '@/store/slices/tabsSlice';
 import collectionsReducer from '@/store/slices/collectionSlice';
 import responseReducer from '@/store/slices/responseSlice';
+import { syncEndpointNameMiddleware } from '@/store/middleware/apiClientMiddleware';
 
 export const store = configureStore({
 	reducer: {
@@ -13,6 +14,8 @@ export const store = configureStore({
 		collections: collectionsReducer,
 		response: responseReducer,
 	},
+	middleware: (getDefaultMiddleware) =>
+		getDefaultMiddleware().concat(syncEndpointNameMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

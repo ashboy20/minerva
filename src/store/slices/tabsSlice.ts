@@ -8,6 +8,7 @@ import { updateItem } from '@/store/slices/collectionSlice';
 
 interface Tab {
 	endpoint: Endpoint;
+	originalEndpoint: Endpoint; // Store original state for comparison
 	activeCaseId: string;
 	notSaved: boolean;
 	new: boolean;
@@ -22,6 +23,26 @@ interface TabsState {
 const initialState: TabsState = {
 	tabs: [],
 	activeTabId: null,
+};
+
+// Helper function to deep clone an endpoint
+const cloneEndpoint = (endpoint: Endpoint): Endpoint => {
+	return JSON.parse(JSON.stringify(endpoint));
+};
+
+// Helper function to check if endpoint has changed
+const hasEndpointChanged = (
+	current: Endpoint,
+	original: Endpoint,
+): boolean => {
+	// Compare relevant fields
+	return (
+		current.method !== original.method ||
+		current.url !== original.url ||
+		current.name !== original.name ||
+		JSON.stringify(current.cases) !==
+			JSON.stringify(original.cases)
+	);
 };
 
 export const tabsSlice = createSlice({
@@ -42,6 +63,7 @@ export const tabsSlice = createSlice({
 				if (!existingTab) {
 					const newTab: Tab = {
 						endpoint,
+						originalEndpoint: cloneEndpoint(endpoint), // Store original state
 						activeCaseId: endpoint.cases[0]?.uuid || '',
 						notSaved: false,
 						new: false,
@@ -86,6 +108,7 @@ export const tabsSlice = createSlice({
 
 				const newTab: Tab = {
 					endpoint: newEndpoint,
+					originalEndpoint: cloneEndpoint(newEndpoint), // Store original state
 					activeCaseId: newCase.uuid,
 					notSaved: true,
 					new: true,
@@ -181,9 +204,9 @@ export const tabsSlice = createSlice({
 			);
 			if (tab) {
 				tab.endpoint.name = name;
-				tab.notSaved = true;
 			}
 		},
+
 		updateNotSaveState: (
 			state,
 			action: PayloadAction<{
@@ -200,24 +223,92 @@ export const tabsSlice = createSlice({
 			}
 		},
 
+		updateEndpoint: (
+			state,
+			action: PayloadAction<{
+				endpointId: string;
+				fields: Partial<Endpoint>;
+			}>,
+		) => {
+			const { endpointId, fields } = action.payload;
+
+			const tab = state.tabs.find(
+				(tab) => tab.endpoint.uuid === endpointId,
+			);
+			if (tab) {
+				// Update only the specified fields
+				tab.endpoint = {
+					...tab.endpoint,
+					...fields,
+				};
+
+				console.log(tab.endpoint);
+
+				// Check if the endpoint has changed from its original state
+				tab.notSaved = hasEndpointChanged(
+					tab.endpoint,
+					tab.originalEndpoint,
+				);
+
+				console.log(tab.notSaved);
+			}
+		},
+
+		updateCase: (
+			state,
+			action: PayloadAction<{
+				endpointId: string;
+				caseId: string;
+				fields: Partial<
+					(typeof initialState.tabs)[0]['endpoint']['cases'][0]
+				>;
+			}>,
+		) => {
+			const { endpointId, caseId, fields } = action.payload;
+			const tab = state.tabs.find(
+				(tab) => tab.endpoint.uuid === endpointId,
+			);
+			if (tab) {
+				const caseIndex = tab.endpoint.cases.findIndex(
+					(c) => c.uuid === caseId,
+				);
+				if (caseIndex !== -1) {
+					// Update only the specified fields in the case
+					tab.endpoint.cases[caseIndex] = {
+						...tab.endpoint.cases[caseIndex],
+						...fields,
+					};
+					// Check if the endpoint has changed from its original state
+					tab.notSaved = hasEndpointChanged(
+						tab.endpoint,
+						tab.originalEndpoint,
+					);
+				}
+			}
+		},
+
+		// TODO: check this function
+		updateOriginalState: (
+			state,
+			action: PayloadAction<{
+				endpointId: string;
+			}>,
+		) => {
+			const { endpointId } = action.payload;
+			const tab = state.tabs.find(
+				(tab) => tab.endpoint.uuid === endpointId,
+			);
+			if (tab) {
+				// Update the original state to match current state after saving
+				tab.originalEndpoint = cloneEndpoint(tab.endpoint);
+				tab.notSaved = false;
+			}
+		},
+
 		clearTabs: (state) => {
 			state.tabs = [];
 			state.activeTabId = null;
 		},
-	},
-	extraReducers: (builder) => {
-		builder.addCase(
-			updateItem.fulfilled,
-			(state, action) => {
-				const { uuid, fields } = action.payload;
-				const tab = state.tabs.find(
-					(tab) => tab.endpoint.uuid === uuid,
-				);
-				if (tab) {
-					tab.endpoint.name = fields.name;
-				}
-			},
-		);
 	},
 });
 
@@ -230,6 +321,9 @@ export const {
 	clearTabs,
 	updateTabName,
 	updateNotSaveState,
+	updateEndpoint,
+	updateCase,
+	updateOriginalState,
 } = tabsSlice.actions;
 
 export default tabsSlice.reducer;

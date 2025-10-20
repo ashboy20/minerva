@@ -7,6 +7,9 @@ export type Row = {
 };
 
 export type Request = {
+	base_url?: string;
+	full_url?: string;
+	path?: string;
 	headers: Row[];
 	query_params: Row[];
 	path_params: Row[];
@@ -25,7 +28,7 @@ export type Response = {
 
 export type Case = {
 	id: number;
-	uuid: string
+	uuid: string;
 	name: string;
 	description: string;
 	request: Request;

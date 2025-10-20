@@ -148,7 +148,6 @@ export class BackendService {
 								'python',
 							);
 				try {
-					console.log(venvPython)
 					fs.accessSync(venvPython, fs.constants.X_OK);
 					pythonCmd = venvPython;
 					log.info(
@@ -185,11 +184,21 @@ export class BackendService {
 
 			// Handle process output
 			this.pythonProcess.stdout?.on('data', (data) => {
-				log.info(`FastAPI stdout: ${data.toString()}`);
+				const output = data.toString();
+				log.info(`FastAPI stdout: ${output}`);
+				if (
+					output.includes('Application startup complete')
+				) {
+					log.info('FastAPI server started successfully');
+				}
 			});
 
 			this.pythonProcess.stderr?.on('data', (data) => {
-				log.error(`FastAPI stderr: ${data.toString()}`);
+				const error = data.toString();
+				log.error(`FastAPI stderr: ${error}`);
+				if (error.includes('Address already in use')) {
+					log.error('Port 30000 is already in use');
+				}
 			});
 
 			// Handle process exit

@@ -17,7 +17,11 @@ import {
 } from '@/store/hooks';
 import { updateItem } from '@/store/slices/collectionSlice';
 import { updateFromUrl } from '@/store/slices/urlSlice';
-import { updateNotSaveState } from '@/store/slices/tabsSlice';
+import {
+	updateEndpoint,
+	updateCase,
+	updateOriginalState,
+} from '@/store/slices/tabsSlice';
 import { sendRequest } from '@/store/slices/responseSlice';
 
 function UrlBar() {
@@ -33,42 +37,71 @@ function UrlBar() {
 	const { headers, auth } = useAppSelector(
 		(state) => state.headersAuth,
 	);
-	const { fullUrl, queryParams } = useAppSelector(
+	const { pathParams, queryParams } = useAppSelector(
 		(state) => state.url,
 	);
+
+	// Get active tab and case
 	const activeTab = tabs.find(
 		(tab) => tab.endpoint.uuid === activeTabId,
 	);
 
+	const activeCase = activeTab?.endpoint.cases.find(
+		(c) => c.uuid === activeTab.activeCaseId,
+	);
+
+	// Get URL from active case's request
+	const currentUrl =
+		activeCase?.request?.full_url ||
+		activeTab?.endpoint.url ||
+		'';
+
 	const handleMethodChange = (method: string) => {
 		if (!activeTab || !activeTabId) return;
 
-		// Mark tab as unsaved
 		dispatch(
-			updateNotSaveState({
+			updateEndpoint({
 				endpointId: activeTabId,
-				notSaved: true,
+				fields: {
+					method: method,
+				},
 			}),
 		);
 	};
 
 	const handleUrlChange = (url: string) => {
-		if (!activeTab || !activeTabId) return;
+		if (!activeTab || !activeTabId || !activeCase) return;
 
-		// Update URL in urlSlice
+		// Update the endpoint's URL first to trigger notSaved state
+		dispatch(
+			updateEndpoint({
+				endpointId: activeTabId,
+				fields: {
+					url: url,
+				},
+			}),
+		);
+
+		// Then update URL slice for path/query param parsing
 		dispatch(updateFromUrl(url));
 
-		// Mark tab as unsaved
+		// Update the case's request with the new URL
 		dispatch(
-			updateNotSaveState({
+			updateCase({
 				endpointId: activeTabId,
-				notSaved: true,
+				caseId: activeCase.uuid,
+				fields: {
+					request: {
+						...activeCase.request,
+						full_url: url,
+					},
+				},
 			}),
 		);
 	};
 
 	const handleSendRequest = async () => {
-		if (!activeTab?.endpoint) return;
+		if (!activeTab?.endpoint || !activeCase) return;
 
 		// Prepare request body for non-GET requests
 		let requestBody: string | object | undefined;
@@ -76,10 +109,7 @@ function UrlBar() {
 			activeTab.endpoint.method !== 'GET' &&
 			activeTab.endpoint.method !== 'HEAD'
 		) {
-			const activeCase = activeTab.endpoint.cases.find(
-				(c) => c.uuid === activeTab.activeCaseId,
-			);
-			const body = activeCase?.request?.body;
+			const body = activeCase.request?.body;
 			if (body !== null && body !== undefined) {
 				requestBody = body;
 			}
@@ -88,7 +118,7 @@ function UrlBar() {
 		dispatch(
 			sendRequest({
 				method: activeTab.endpoint.method,
-				url: fullUrl,
+				url: currentUrl,
 				headers,
 				queryParams,
 				body: requestBody,
@@ -106,17 +136,16 @@ function UrlBar() {
 					uuid: activeTab.endpoint.uuid,
 					fields: {
 						method: activeTab.endpoint.method,
-						url: fullUrl,
+						url: currentUrl,
 						name: activeTab.endpoint.name,
 					},
 				}),
 			).unwrap();
 
-			// Mark tab as saved
+			// Update the original state to match current state
 			dispatch(
-				updateNotSaveState({
+				updateOriginalState({
 					endpointId: activeTab.endpoint.uuid,
-					notSaved: false,
 				}),
 			);
 		} catch (error) {
@@ -141,6 +170,25 @@ function UrlBar() {
 			);
 	}, [activeTab?.endpoint]);
 
+	// When URL changes in urlSlice, update the case
+	useEffect(() => {
+		if (!activeTab || !activeTabId || !activeCase) return;
+
+		dispatch(
+			updateCase({
+				endpointId: activeTabId,
+				caseId: activeCase.uuid,
+				fields: {
+					request: {
+						...activeCase.request,
+						path_params: pathParams,
+						query_params: queryParams,
+					},
+				},
+			}),
+		);
+	}, [pathParams, queryParams]);
+
 	return (
 		<div className="flex space-x-2">
 			<Select
@@ -160,7 +208,7 @@ function UrlBar() {
 			</Select>
 
 			<UrlInputField
-				value={fullUrl}
+				value={currentUrl}
 				onChange={handleUrlChange}
 			/>
 
@@ -178,7 +226,9 @@ function UrlBar() {
 				<Button
 					onClick={handleSendRequest}
 					disabled={
-						loading || !fullUrl || !String(fullUrl).trim()
+						loading ||
+						!currentUrl ||
+						!String(currentUrl).trim()
 					}
 					className="px-4"
 				>
