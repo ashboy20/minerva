@@ -1,5 +1,5 @@
 import { Middleware, AnyAction } from '@reduxjs/toolkit';
-import { updateTabName } from '@/store/slices/tabsSlice';
+import { updateTabName, updateTabRenamingState } from '@/store/slices/tabsSlice';
 import { updateItem } from '@/store/slices/collectionSlice';
 import { RootState } from '@/store';
 
@@ -25,9 +25,8 @@ export const syncEndpointNameMiddleware: Middleware =
 		if (
 			typeof action === 'object' &&
 			action !== null &&
-			'type' in action &&
-			action.type === 'collection/updateItem/fulfilled'
-		) {
+			'type' in action) {
+			if (action.type === 'collection/updateItem/fulfilled') {
 			const { uuid, fields } = (action as UpdateItemAction)
 				.payload;
 			if (fields && fields.name) {
@@ -42,9 +41,10 @@ export const syncEndpointNameMiddleware: Middleware =
 							name: fields.name,
 						}),
 					);
+					store.dispatch(updateTabRenamingState({ endpointId: uuid, isRenaming: false }));
 				}
 			}
 		}
-
+	}
 		return result;
 	};

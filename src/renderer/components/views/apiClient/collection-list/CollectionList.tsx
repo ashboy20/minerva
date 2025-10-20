@@ -30,7 +30,6 @@ import {
 	loadOpenIds,
 	setOpenIds,
 } from '@/store/slices/collectionSlice';
-import { useGlobalContext } from '@/renderer/context/global-context';
 
 export interface MinervaNodeModel extends NodeModel<any> {
 	data: {

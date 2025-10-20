@@ -76,14 +76,6 @@ export function TabBar({ className }: TabBarProps) {
 			).unwrap();
 		} catch (error) {
 			console.error('Failed to update item name:', error);
-		} finally {
-			// Always end renaming state
-			dispatch(
-				updateTabRenamingState({
-					endpointId: uuid,
-					isRenaming: false,
-				}),
-			);
 		}
 	};
 
