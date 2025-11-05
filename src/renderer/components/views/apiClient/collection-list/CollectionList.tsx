@@ -10,6 +10,7 @@ import {
 	reorder,
 	createItem,
 	getCollections,
+	createBlankCollection,
 } from '@/store/slices/collectionSlice';
 import { CollectionHeader } from '@/renderer/components/views/apiClient/collection-list/CollectionHeader';
 import { DndProvider } from 'react-dnd';
@@ -29,7 +30,6 @@ import {
 	loadOpenIds,
 	setOpenIds,
 } from '@/store/slices/collectionSlice';
-import { useGlobalContext } from '@/renderer/context/global-context';
 
 export interface MinervaNodeModel extends NodeModel<any> {
 	data: {
@@ -111,38 +111,49 @@ const parseTreeData = (
 	return treeData;
 };
 
-interface CollectionListProps {
-	collections: Collection[];
-	loading: boolean;
-	error: string | null;
-	onCreateCollection: () => void;
-	onEndpointClick?: (endpoint: Endpoint) => void;
-}
-
-export function CollectionList({
-	collections,
-	loading,
-	error,
-	onCreateCollection,
-	onEndpointClick,
-}: CollectionListProps) {
+export function CollectionList() {
 	const dispatch = useAppDispatch();
+	const { collections, loading, error } = useAppSelector(
+		(state) => state.collections,
+	);
 	const [treeData, setTreeData] = useState<
 		NodeModel<any>[]
 	>(() => parseTreeData(collections));
-
-	useEffect(() => {
-		setTreeData(parseTreeData(collections));
-	}, [collections]);
 
 	const openIds = useAppSelector(
 		(state) => state.collections.openIds,
 	);
 
+	// Fetch collections on mount
 	useEffect(() => {
+		dispatch(getCollections())
+			.unwrap()
+			.then((result) => {
+				console.log(
+					'Collections fetched successfully:',
+					result,
+				);
+				setTreeData(parseTreeData(result));
+			})
+			.catch((error) => {
+				console.error(
+					'Failed to fetch collections:',
+					error,
+				);
+			});
 		// Load initial open state
 		dispatch(loadOpenIds());
 	}, [dispatch]);
+
+	// Update tree data when collections change
+	useEffect(() => {
+		setTreeData(parseTreeData(collections));
+	}, [collections]);
+
+	const handleCreateCollection = () => {
+		dispatch(createBlankCollection());
+		dispatch(getCollections());
+	};
 
 	const handleCanDrop = (
 		tree: NodeModel<any>[],
@@ -272,7 +283,7 @@ export function CollectionList({
 	// Header at the top
 	const header = (
 		<CollectionHeader
-			onCreateCollection={onCreateCollection}
+			onCreateCollection={handleCreateCollection}
 		/>
 	);
 

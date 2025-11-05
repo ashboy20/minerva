@@ -4,10 +4,51 @@ from app.db.connection import Session, engine
 from sqlmodel import select
 import uuid as uuid_lib
 from datetime import datetime, UTC
+from urllib.parse import urlparse
 
 
 class EndpointManagementService:
     """Service for managing endpoints and folders"""
+
+    def _parse_url(self, url: str) -> tuple[str, str, str]:
+        """Parse URL into base_url, full_url and path using urllib.parse
+
+        Args:
+            url: Full URL to parse
+
+        Returns:
+            Tuple of (base_url, full_url, path) where:
+            - base_url is the scheme + netloc (e.g. 'https://api.example.com')
+            - full_url is the complete URL
+            - path is the path + query + fragment (e.g. '/users?id=1#info')
+        """
+        # Handle empty or None URLs
+        if not url:
+            return None, "", "/"
+
+        # Parse the URL
+        parsed = urlparse(url if "://" in url else f"http://{url}")
+
+        # Extract base URL (scheme + netloc)
+        base_url = None
+        if parsed.scheme and parsed.netloc:
+            base_url = f"{parsed.scheme}://{parsed.netloc}"
+
+        # Build path (including query and fragment)
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        if parsed.fragment:
+            path = f"{path}#{parsed.fragment}"
+
+        # Ensure path starts with /
+        if not path.startswith("/"):
+            path = f"/{path}"
+
+        # Full URL is either the original URL or constructed from parts
+        full_url = url if "://" in url else f"http://{url}"
+
+        return base_url, full_url, path
 
     # Collection methods
     async def get_collections(self) -> List[Collection]:
@@ -294,6 +335,7 @@ class EndpointManagementService:
             items = await self.find_items_by_parent_uuid(parent_uuid, session)
             max_position = max([item.position for item in items], default=0)
 
+            # Create endpoint with just the URL
             endpoint = Endpoint(
                 uuid=str(uuid_lib.uuid4()),
                 name=name,
@@ -301,9 +343,43 @@ class EndpointManagementService:
                 method=method.upper(),
                 url=url,
                 parent_uuid=parent_uuid,
-                cases=cases or [],
                 position=max_position + 1,
             )
+
+            # Process cases and add URL components to each case's request
+            if cases:
+                for case in cases:
+                    if "request" in case:
+                        base_url, full_url, path = self._parse_url(url)
+                        case["request"]["base_url"] = base_url
+                        case["request"]["full_url"] = full_url
+                        case["request"]["path"] = path
+                endpoint.cases = cases
+            else:
+                # Create default case with URL components
+                base_url, full_url, path = self._parse_url(url)
+                default_case = {
+                    "uuid": str(uuid_lib.uuid4()),
+                    "name": "Default Case",
+                    "description": "Default test case",
+                    "request": {
+                        "base_url": base_url,
+                        "full_url": full_url,
+                        "path": path,
+                        "headers": [],
+                        "query_params": [],
+                        "path_params": [],
+                        "body": None,
+                        "auth": None,
+                    },
+                    "response": {
+                        "status_code": 200,
+                        "headers": [],
+                        "body": None,
+                    },
+                }
+                endpoint.cases = [default_case]
+
             session.add(endpoint)
             session.commit()
             session.refresh(endpoint)

@@ -11,7 +11,6 @@ import {
 	setActiveTab,
 	closeTab,
 	updateTabRenamingState,
-	updateTabName,
 } from '@/store/slices/tabsSlice';
 import {
 	ContextMenu,
@@ -51,7 +50,7 @@ export function TabBar({ className }: TabBarProps) {
 	};
 
 	const handleAddTab = () => {
-		dispatch(addTab({}));
+		dispatch(addTab(undefined)); // Pass undefined to create a new endpoint
 	};
 
 	const handleStartRenameTab = (uuid: string) => {
@@ -67,22 +66,12 @@ export function TabBar({ className }: TabBarProps) {
 		uuid: string,
 		newName: string,
 	) => {
-		// First update the tab name in the UI
-		dispatch(
-			updateTabName({
-				endpointId: uuid,
-				name: newName,
-			}),
-		);
-
-		// Then update the backend and refresh collections
 		try {
+			// Update backend first
 			await dispatch(
 				updateItem({
-					uuid: uuid,
-					fields: {
-						name: newName,
-					},
+					uuid,
+					fields: { name: newName },
 				}),
 			).unwrap();
 		} catch (error) {
@@ -120,11 +109,7 @@ export function TabBar({ className }: TabBarProps) {
 		>
 			<div className="scrollbar-none flex items-center overflow-x-auto">
 				{tabs.map((tab) => (
-					<ContextMenu
-						key={tab.endpoint.uuid}
-						// open={}
-						// onOpenChange={(open) => setOpenDropdownId(open ? tab.uuid : null)}
-					>
+					<ContextMenu key={tab.endpoint.uuid}>
 						<ContextMenuTrigger asChild>
 							<div
 								onClick={() =>
@@ -139,6 +124,11 @@ export function TabBar({ className }: TabBarProps) {
 										: 'bg-muted/30',
 								)}
 							>
+								{/* Unsaved indicator */}
+								{tab.notSaved && (
+									<div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+								)}
+
 								{/* Method badge */}
 								{tab.endpoint.method && (
 									<div className="text-xs">
@@ -158,24 +148,22 @@ export function TabBar({ className }: TabBarProps) {
 										}
 										onKeyDown={(e) => {
 											if (e.key === 'Enter') {
-												dispatch(
-													updateTabRenamingState({
-														endpointId: tab.endpoint.uuid,
-														isRenaming: false,
-													}),
-												);
 												handleTabRename(
 													tab.endpoint.uuid,
 													newEndpointLabel,
 												);
 											}
 										}}
+										onBlur={() => {
+											handleTabRename(
+												tab.endpoint.uuid,
+												newEndpointLabel,
+											);
+										}}
 									/>
 								) : (
 									<span className="min-w-0 flex-1 truncate text-sm">
-										{tab.endpoint.name
-											? tab.endpoint.name
-											: tab.endpoint.path}
+										{tab.endpoint.name || 'New Request'}
 									</span>
 								)}
 

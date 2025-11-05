@@ -2,6 +2,9 @@ import React, { useRef, useEffect } from 'react';
 import { useSingleLineEditor } from '@/renderer/lib/codemirror/editors/SingleLineEditor';
 import { variableExtensions } from '@/renderer/lib/codemirror/extensions/VariableExtensions';
 import { urlParamExtensions } from '@/renderer/lib/codemirror/extensions/UrlParamExtensions';
+import { useAppDispatch } from '@/store/hooks';
+import { updateFromUrl } from '@/store/slices/urlSlice';
+import { updateNotSaveState } from '@/store/slices/tabsSlice';
 
 interface UrlInputFieldProps {
 	value?: string;
@@ -12,6 +15,7 @@ export function UrlInputField({
 	value,
 	onChange,
 }: UrlInputFieldProps) {
+	const dispatch = useAppDispatch();
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const lastValueRef = useRef(value);
 
@@ -27,6 +31,9 @@ export function UrlInputField({
 			if (newValue !== lastValueRef.current) {
 				lastValueRef.current = newValue;
 				onChange(newValue);
+
+				// Update URL in urlSlice
+				dispatch(updateFromUrl(newValue));
 			}
 		},
 	};
@@ -36,10 +43,10 @@ export function UrlInputField({
 		lastValueRef.current = value;
 	}, [value]);
 
-	// Pass value as a dependency to recreate editor when value changes
+	// Don't pass value as a dependency - let the editor handle updates internally
 	useSingleLineEditor(containerRef, {
 		...editorOptions,
-		deps: [value], // Add value to dependencies array
+		deps: [], // Remove value from deps array
 	});
 
 	return (

@@ -14,10 +14,6 @@ import { RequestSection } from '@/renderer/components/views/apiClient/request-se
 import { ResponseSection } from '@/renderer/components/views/apiClient/components/ResponseSection';
 import { LayoutSwitcher } from '@/renderer/components/views/apiClient/top-nav-bar/LayoutSwitcher';
 import { TabBar } from '@/renderer/components/views/apiClient/top-nav-bar/TabBar';
-import {
-	createBlankCollection,
-	getCollections,
-} from '@/store/slices/collectionSlice';
 
 export function RequestBuilder() {
 	const dispatch = useAppDispatch();
@@ -30,17 +26,6 @@ export function RequestBuilder() {
 		error: collectionsError,
 	} = useAppSelector((state) => state.collections);
 
-	// Fetch collections from FastAPI backend service on mount
-	useEffect(() => {
-		dispatch(getCollections());
-	}, [dispatch]);
-
-	// Handler functions for collection list
-	const handleCreateCollection = () => {
-		dispatch(createBlankCollection());
-		dispatch(getCollections());
-	};
-
 	return (
 		<ResizablePanelGroup
 			direction="horizontal"
@@ -52,12 +37,7 @@ export function RequestBuilder() {
 				minSize={15}
 				maxSize={40}
 			>
-				<CollectionList
-					collections={collections}
-					loading={collectionsLoading}
-					error={collectionsError}
-					onCreateCollection={handleCreateCollection}
-				/>
+				<CollectionList/>
 			</ResizablePanel>
 
 			<ResizableHandle />

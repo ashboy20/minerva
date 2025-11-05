@@ -206,7 +206,7 @@ export const urlSlice = createSlice({
 			}
 
 			state.fullUrl = newUrl;
-
+			
 			// Extract base URL and path
 			const { baseUrl, path } = extractBaseAndPath(
 				newUrl,

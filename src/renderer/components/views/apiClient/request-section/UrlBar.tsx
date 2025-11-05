@@ -8,20 +8,26 @@ import {
 import { HTTP_METHODS } from '@/data/apiClient';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
 import { Button } from '@/renderer/components/ui/button';
-import { PlayIcon } from '@radix-ui/react-icons';
-import React from 'react';
+import { PlayIcon, FileIcon } from '@radix-ui/react-icons';
+import React, { useEffect } from 'react';
 import { UrlInputField } from '@/renderer/components/views/apiClient/request-section/UrlInputField';
 import {
 	useAppDispatch,
 	useAppSelector,
 } from '@/store/hooks';
-import { updateActiveEndpoint } from '@/store/slices/endpointsSlice';
+import { updateItem } from '@/store/slices/collectionSlice';
+import { updateFromUrl } from '@/store/slices/urlSlice';
+import {
+	updateEndpoint,
+	updateCase,
+	updateOriginalState,
+} from '@/store/slices/tabsSlice';
 import { sendRequest } from '@/store/slices/responseSlice';
 
 function UrlBar() {
 	const dispatch = useAppDispatch();
 
-	// Get the active endpoint from the active tab and loading state from response
+	// Get states from Redux
 	const { tabs, activeTabId } = useAppSelector(
 		(state) => state.tabs,
 	);
@@ -31,80 +37,88 @@ function UrlBar() {
 	const { headers, auth } = useAppSelector(
 		(state) => state.headersAuth,
 	);
-	const { fullUrl, queryParams } = useAppSelector(
+	const { pathParams, queryParams } = useAppSelector(
 		(state) => state.url,
 	);
+
+	// Get active tab and case
 	const activeTab = tabs.find(
 		(tab) => tab.endpoint.uuid === activeTabId,
 	);
-	const activeEndpoint = activeTab?.endpoint;
+
+	const activeCase = activeTab?.endpoint.cases.find(
+		(c) => c.uuid === activeTab.activeCaseId,
+	);
+
+	// Get URL from active case's request
+	const currentUrl =
+		activeCase?.request?.full_url ||
+		activeTab?.endpoint.url ||
+		'';
 
 	const handleMethodChange = (method: string) => {
-		if (activeEndpoint) {
-			dispatch(
-				updateActiveEndpoint({
-					...activeEndpoint,
-					method,
-				}),
-			);
-		}
+		if (!activeTab || !activeTabId) return;
+
+		dispatch(
+			updateEndpoint({
+				endpointId: activeTabId,
+				fields: {
+					method: method,
+				},
+			}),
+		);
 	};
 
 	const handleUrlChange = (url: string) => {
-		if (!activeEndpoint) return;
+		if (!activeTab || !activeTabId || !activeCase) return;
 
-		// Parse the URL to extract base_url and path
-		try {
-			const urlObj = new URL(url);
-			const basePath = urlObj.origin;
-			const path = urlObj.pathname + urlObj.search;
-			dispatch(
-				updateActiveEndpoint({
-					...activeEndpoint,
+		// Update the endpoint's URL first to trigger notSaved state
+		dispatch(
+			updateEndpoint({
+				endpointId: activeTabId,
+				fields: {
 					url: url,
-				}),
-			);
-		} catch {
-			// If URL parsing fails, just update the path
-			dispatch(
-				updateActiveEndpoint({
-					...activeEndpoint,
-					url: url,
-				}),
-			);
-		}
+				},
+			}),
+		);
+
+		// Then update URL slice for path/query param parsing
+		dispatch(updateFromUrl(url));
+
+		// Update the case's request with the new URL
+		dispatch(
+			updateCase({
+				endpointId: activeTabId,
+				caseId: activeCase.uuid,
+				fields: {
+					request: {
+						...activeCase.request,
+						full_url: url,
+					},
+				},
+			}),
+		);
 	};
 
 	const handleSendRequest = async () => {
-		console.log('handleSendRequest');
-		if (!activeEndpoint || !activeTab?.endpoint) return;
+		if (!activeTab?.endpoint || !activeCase) return;
 
 		// Prepare request body for non-GET requests
 		let requestBody: string | object | undefined;
 		if (
-			activeEndpoint.method !== 'GET' &&
-			activeEndpoint.method !== 'HEAD'
+			activeTab.endpoint.method !== 'GET' &&
+			activeTab.endpoint.method !== 'HEAD'
 		) {
-			const activeCase = activeTab.endpoint.cases.find(
-				(c) => c.uuid === activeTab.activeCaseId,
-			);
-			const body = activeCase?.request?.body;
+			const body = activeCase.request?.body;
 			if (body !== null && body !== undefined) {
 				requestBody = body;
 			}
 		}
 
-		console.log('method', activeEndpoint.method);
-		console.log('fullUrl', fullUrl);
-		console.log('headers', headers);
-		console.log('queryParams', queryParams);
-		console.log('requestBody', requestBody);
-		console.log('auth', auth);
-
 		dispatch(
 			sendRequest({
-				method: activeEndpoint.method,
-				url: fullUrl,
+				method: activeTab.endpoint.method,
+				url: currentUrl,
 				headers,
 				queryParams,
 				body: requestBody,
@@ -113,15 +127,72 @@ function UrlBar() {
 		);
 	};
 
-	// Construct the full URL from base_url and path, ensuring it's never undefined
-	const url = activeEndpoint
-		? `${activeEndpoint.url || ''}`
-		: '';
+	const handleSave = async () => {
+		if (!activeTab?.endpoint) return;
+
+		try {
+			await dispatch(
+				updateItem({
+					uuid: activeTab.endpoint.uuid,
+					fields: {
+						method: activeTab.endpoint.method,
+						url: currentUrl,
+						name: activeTab.endpoint.name,
+					},
+				}),
+			).unwrap();
+
+			// Update the original state to match current state
+			dispatch(
+				updateOriginalState({
+					endpointId: activeTab.endpoint.uuid,
+				}),
+			);
+		} catch (error) {
+			console.error('Failed to save endpoint:', error);
+		}
+	};
+
+	// Handle Cmd+S keyboard shortcut
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+				e.preventDefault();
+				handleSave();
+			}
+		};
+
+		document.addEventListener('keydown', handleKeyDown);
+		return () =>
+			document.removeEventListener(
+				'keydown',
+				handleKeyDown,
+			);
+	}, [activeTab?.endpoint]);
+
+	// When URL changes in urlSlice, update the case
+	useEffect(() => {
+		if (!activeTab || !activeTabId || !activeCase) return;
+
+		dispatch(
+			updateCase({
+				endpointId: activeTabId,
+				caseId: activeCase.uuid,
+				fields: {
+					request: {
+						...activeCase.request,
+						path_params: pathParams,
+						query_params: queryParams,
+					},
+				},
+			}),
+		);
+	}, [pathParams, queryParams]);
 
 	return (
 		<div className="flex space-x-2">
 			<Select
-				value={activeEndpoint?.method ?? 'GET'}
+				value={activeTab?.endpoint?.method ?? 'GET'}
 				onValueChange={handleMethodChange}
 			>
 				<SelectTrigger className="w-32">
@@ -137,24 +208,40 @@ function UrlBar() {
 			</Select>
 
 			<UrlInputField
-				value={url}
+				value={currentUrl}
 				onChange={handleUrlChange}
 			/>
 
-			<Button
-				onClick={handleSendRequest}
-				disabled={loading || !url || !String(url).trim()}
-				className="px-6"
-			>
-				{loading ? (
-					<>Sending...</>
-				) : (
-					<>
-						<PlayIcon className="mr-2 h-4 w-4" />
-						Send
-					</>
-				)}
-			</Button>
+			<div className="flex gap-2">
+				<Button
+					onClick={handleSave}
+					disabled={!activeTab?.notSaved}
+					variant="outline"
+					className="px-4"
+				>
+					<FileIcon className="mr-2 h-4 w-4" />
+					Save
+				</Button>
+
+				<Button
+					onClick={handleSendRequest}
+					disabled={
+						loading ||
+						!currentUrl ||
+						!String(currentUrl).trim()
+					}
+					className="px-4"
+				>
+					{loading ? (
+						<>Sending...</>
+					) : (
+						<>
+							<PlayIcon className="mr-2 h-4 w-4" />
+							Send
+						</>
+					)}
+				</Button>
+			</div>
 		</div>
 	);
 }
