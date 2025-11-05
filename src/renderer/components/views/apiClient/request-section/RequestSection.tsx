@@ -305,106 +305,128 @@ export function RequestSection() {
 		};
 	}, []);
 
+	const parsePathParams = useCallback((pathParams: Row[]) => {
+		return pathParams.map((param, index) => ({
+			row_id: index + 1,
+			keyValue: param.keyValue,
+			value: param.value,
+			enabled: true
+		}));
+	}, []);
+
+	const parseQueryParams = useCallback((queryParams: Row[]) => {
+		return queryParams.map((param, index) => ({
+			row_id: index + 1,
+			keyValue: param.keyValue,
+			value: param.value,
+			enabled: true
+		}));
+	}, []);
+
 	return (
 		<div className="h-full overflow-y-auto p-4">
-			{activeTabId && (<Card className="flex h-full flex-col border-none">
-				<CardContent className="space-y-4 p-4">
-					{/* URL Bar */}
-					<UrlBar />
+			{activeTabId && (
+				<Card className="flex h-full flex-col border-none">
+					<CardContent className="space-y-4 p-4">
+						{/* URL Bar */}
+						<UrlBar />
 
-					{/* Request Configuration Tabs */}
-					<Tabs
-						value={activeTab}
-						onValueChange={setActiveTab}
-						className="flex flex-1 flex-col"
-					>
-						<TabsList className="mb-2 grid w-full grid-cols-6">
-							<TabsTrigger value="params">
-								Params
-							</TabsTrigger>
-							<TabsTrigger value="headers">
-								Headers
-							</TabsTrigger>
-							<TabsTrigger value="body">Body</TabsTrigger>
-							<TabsTrigger value="auth">Auth</TabsTrigger>
-							<TabsTrigger value="pre-request-scripts">
-								Pre-Request Scripts
-							</TabsTrigger>
-							<TabsTrigger value="tests">Tests</TabsTrigger>
-						</TabsList>
-						<TabsContent
-							value="params"
-							className="flex-1 space-y-2"
+						{/* Request Configuration Tabs */}
+						<Tabs
+							value={activeTab}
+							onValueChange={setActiveTab}
+							className="flex flex-1 flex-col"
 						>
-							{showPathParams && (
-								<TableForm
-									rows={pathParams}
-									title="Path Params"
-									onChange={handlePathParamsChange}
-									isPathParamTable
-								/>
-							)}
-							<TableForm
-								rows={queryParams}
-								title="Query Params"
-								onChange={handleQueryParamsChange}
-							/>
-						</TabsContent>
-						<TabsContent
-							value="headers"
-							className="flex-1 space-y-2"
-						>
-							<TableForm
-								rows={headers}
-								onChange={handleHeadersChange}
-								isHeaderTable
-							/>
-						</TabsContent>
-						<TabsContent
-							value="body"
-							className="flex max-h-screen flex-1 flex-col space-y-2 overflow-auto"
-						>
-							<JsonEditorComponent
-								placeholder="{}"
-								value={stringifyBody(
-									activeCase?.request?.body,
+							<TabsList className="mb-2 grid w-full grid-cols-6">
+								<TabsTrigger value="params">
+									Params
+								</TabsTrigger>
+								<TabsTrigger value="headers">
+									Headers
+								</TabsTrigger>
+								<TabsTrigger value="body">Body</TabsTrigger>
+								<TabsTrigger value="auth">Auth</TabsTrigger>
+								<TabsTrigger value="pre-request-scripts">
+									Pre-Request Scripts
+								</TabsTrigger>
+								<TabsTrigger value="tests">
+									Tests
+								</TabsTrigger>
+							</TabsList>
+							<TabsContent
+								value="params"
+								className="flex-1 space-y-2"
+							>
+								{showPathParams && (
+									<TableForm
+										rows={parsePathParams(pathParams)}
+										title="Path Params"
+										onChange={handlePathParamsChange}
+										isPathParamTable
+									/>
 								)}
-								onChange={handleBodyChange}
-								className="flex-1"
-								disabled={
-									activeEndpoint?.method === 'GET' ||
-									activeEndpoint?.method === 'HEAD'
-								}
-								darkTheme
+								<TableForm
+									rows={parseQueryParams(queryParams)}
+									title="Query Params"
+									onChange={handleQueryParamsChange}
+								/>
+							</TabsContent>
+							<TabsContent
+								value="headers"
+								className="flex-1 space-y-2"
+							>
+								<TableForm
+									rows={headers}
+									onChange={handleHeadersChange}
+									isHeaderTable
+								/>
+							</TabsContent>
+							<TabsContent
+								value="body"
+								className="flex max-h-screen flex-1 flex-col space-y-2 overflow-auto"
+							>
+								<JsonEditorComponent
+									placeholder="{}"
+									value={stringifyBody(
+										activeCase?.request?.body,
+									)}
+									onChange={handleBodyChange}
+									className="flex-1"
+									disabled={
+										activeEndpoint?.method === 'GET' ||
+										activeEndpoint?.method === 'HEAD'
+									}
+									darkTheme
+								/>
+								{(activeEndpoint?.method === 'GET' ||
+									activeEndpoint?.method === 'HEAD') && (
+									<p className="text-sm text-muted-foreground">
+										Body is not applicable for GET requests
+									</p>
+								)}
+							</TabsContent>
+							<TabsContent
+								value="auth"
+								className="flex-1 space-y-2"
+							>
+								<AuthSection
+									authType={auth.authType}
+									token={auth.token}
+									onAuthChange={handleAuthChange}
+								/>
+							</TabsContent>
+							<TabsContent
+								value="pre-request-scripts"
+								className="flex-1 space-y-2"
 							/>
-							{(activeEndpoint?.method === 'GET' ||
-								activeEndpoint?.method === 'HEAD') && (
-								<p className="text-sm text-muted-foreground">
-									Body is not applicable for GET requests
-								</p>
-							)}
-						</TabsContent>
-						<TabsContent
-							value="auth"
-							className="flex-1 space-y-2"
-						>
-							<AuthSection
-								authType={auth.authType}
-								token={auth.token}
-								onAuthChange={handleAuthChange}
+							<TabsContent
+								value="tests"
+								className="flex-1 space-y-2"
 							/>
-						</TabsContent>
-						<TabsContent
-							value="pre-request-scripts"
-							className="flex-1 space-y-2"
-						/>
-						<TabsContent
-							value="tests"
-							className="flex-1 space-y-2"
-						/>
-					</Tabs>
-				</CardContent>
-			</Card>)}
+						</Tabs>
+					</CardContent>
+				</Card>
+			)}
 		</div>
 	);
 }

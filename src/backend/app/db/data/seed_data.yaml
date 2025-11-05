@@ -136,13 +136,13 @@ items:
       - name: 'Path Parameters Test'
         description: 'Test endpoint with path parameters'
         method: 'GET'
-        url: '{{baseUrl}}/users/:userId/posts/:postId/comments/:commentId'
+        url: 'https://jsonplaceholder.typicode.com/users/:userId/posts/:postId/comments/:commentId'
         cases:
           - name: 'Test Case'
             description: 'Test various path parameter formats'
             request:
-              base_url: '{{baseUrl}}'
-              full_url: '{{baseUrl}}/users/:userId/posts/:postId/comments/:commentId'
+              base_url: 'https://jsonplaceholder.typicode.com'
+              full_url: 'https://jsonplaceholder.typicode.com/users/:userId/posts/:postId/comments/:commentId'
               path: '/users/:userId/posts/:postId/comments/:commentId'
               path_params:
                 - name: 'userId'
@@ -161,13 +161,13 @@ items:
       - name: 'Query Parameters Test'
         description: 'Test endpoint with query parameters'
         method: 'GET'
-        url: '{{baseUrl}}/posts?userId={{userId}}&_limit={{limit}}&_page={{page}}'
+        url: 'https://jsonplaceholder.typicode.com/posts?userId={{userId}}&_limit={{limit}}&_page={{page}}'
         cases:
           - name: 'Test Case'
             description: 'Test various query parameter formats'
             request:
-              base_url: '{{baseUrl}}'
-              full_url: '{{baseUrl}}/posts?userId={{userId}}&_limit={{limit}}&_page={{page}}'
+              base_url: 'https://jsonplaceholder.typicode.com'
+              full_url: 'https://jsonplaceholder.typicode.com/posts?userId={{userId}}&_limit={{limit}}&_page={{page}}'
               path: '/posts'
               query_params:
                 - name: 'userId'
@@ -191,13 +191,13 @@ items:
       - name: 'Mixed Parameters Test'
         description: 'Test endpoint with mixed parameter types'
         method: 'POST'
-        url: '{{baseUrl}}/users/:userId/posts/:postId?_method={{method}}&_format={{format}}'
+        url: 'https://jsonplaceholder.typicode.com/users/:userId/posts/:postId?_method={{method}}&_format={{format}}'
         cases:
           - name: 'Test Case'
             description: 'Test combination of path and query parameters with variables'
             request:
-              base_url: '{{baseUrl}}'
-              full_url: '{{baseUrl}}/users/:userId/posts/:postId?_method={{method}}&_format={{format}}'
+              base_url: 'https://jsonplaceholder.typicode.com'
+              full_url: 'https://jsonplaceholder.typicode.com/users/:userId/posts/:postId?_method={{method}}&_format={{format}}'
               path: '/users/:userId/posts/:postId'
               path_params:
                 - name: 'userId'
