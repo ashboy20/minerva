@@ -1,6 +1,9 @@
 import { Middleware, AnyAction } from '@reduxjs/toolkit';
-import { updateTabName, updateTabRenamingState } from '@/store/slices/tabsSlice';
-import { updateItem } from '@/store/slices/collectionSlice';
+import {
+	updateTabName,
+	updateTabRenamingState,
+} from '@/store/slices/tabsSlice';
+import { updateItem } from '@/store/slices/collectionSliceBackup';
 import { RootState } from '@/store';
 
 interface UpdateItemAction extends AnyAction {
@@ -25,26 +28,35 @@ export const syncEndpointNameMiddleware: Middleware =
 		if (
 			typeof action === 'object' &&
 			action !== null &&
-			'type' in action) {
-			if (action.type === 'collection/updateItem/fulfilled') {
-			const { uuid, fields } = (action as UpdateItemAction)
-				.payload;
-			if (fields && fields.name) {
-				// Get the tab before dispatching new actions
-				const tab = afterState.tabs.tabs.find(
-					(tab) => tab.endpoint.uuid === uuid,
-				);
-				if (tab) {
-					store.dispatch(
-						updateTabName({
-							endpointId: uuid,
-							name: fields.name,
-						}),
+			'type' in action
+		) {
+			if (
+				action.type === 'collection/updateItem/fulfilled'
+			) {
+				const { uuid, fields } = (
+					action as UpdateItemAction
+				).payload;
+				if (fields && fields.name) {
+					// Get the tab before dispatching new actions
+					const tab = afterState.tabs.tabs.find(
+						(tab) => tab.endpoint.uuid === uuid,
 					);
-					store.dispatch(updateTabRenamingState({ endpointId: uuid, isRenaming: false }));
+					if (tab) {
+						store.dispatch(
+							updateTabName({
+								endpointId: uuid,
+								name: fields.name,
+							}),
+						);
+						store.dispatch(
+							updateTabRenamingState({
+								endpointId: uuid,
+								isRenaming: false,
+							}),
+						);
+					}
 				}
 			}
 		}
-	}
 		return result;
 	};

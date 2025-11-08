@@ -15,7 +15,7 @@ import {
 	useAppDispatch,
 	useAppSelector,
 } from '@/store/hooks';
-import { updateItem } from '@/store/slices/collectionSlice';
+import { updateItem } from '@/store/slices/collectionSliceBackup';
 import { updateFromUrl } from '@/store/slices/urlSlice';
 import {
 	updateEndpoint,

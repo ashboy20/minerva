@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
 	Card,
 	CardContent,
@@ -7,10 +7,7 @@ import {
 	Collection,
 	Endpoint,
 	Folder,
-	reorder,
-	createItem,
 	getCollections,
-	createBlankCollection,
 } from '@/store/slices/collectionSlice';
 import { CollectionHeader } from '@/renderer/components/views/apiClient/collection-list/CollectionHeader';
 import { DndProvider } from 'react-dnd';
@@ -26,10 +23,6 @@ import {
 	useAppSelector,
 } from '@/store/hooks';
 import { TreeItem } from '@/renderer/components/views/apiClient/collection-list/TreeItem';
-import {
-	loadOpenIds,
-	setOpenIds,
-} from '@/store/slices/collectionSlice';
 
 export interface MinervaNodeModel extends NodeModel<any> {
 	data: {
@@ -41,70 +34,78 @@ export interface MinervaNodeModel extends NodeModel<any> {
 }
 
 const parseTreeData = (
-	items: Collection[] | (Folder | Endpoint)[],
+	items: (Collection | Folder | Endpoint)[],
 	parentId: string | number = 0,
-) => {
+): MinervaNodeModel[] => {
 	const treeData: MinervaNodeModel[] = [];
 
 	items.forEach((item) => {
-		// Handle collections
-		if (item.type === 'collection') {
+		// Handle collections (from local files)
+		if ('type' in item && item.type === 'collection') {
+			const collection = item as Collection;
 			const collectionNode = {
-				id: item.uuid,
+				id: collection.uuid,
 				parent: parentId,
 				droppable: true,
-				text: item.name,
+				text: collection.name,
 				data: {
-					type: 'collection',
+					type: 'collection' as const,
 					isEditing: false,
 				},
 			};
 			treeData.push(collectionNode);
 
-			// Process collection items
-			if (item.items?.length) {
+			// Process collection items recursively
+			if (collection.items && collection.items.length > 0) {
 				treeData.push(
 					...parseTreeData(
-						item.items as (Folder | Endpoint)[],
-						item.uuid,
+						collection.items,
+						collection.uuid,
 					),
 				);
 			}
-		} else {
-			// Handle folders and endpoints
-			const typedItem = item as Folder | Endpoint;
-			const node = {
-				id: typedItem.uuid,
+		}
+		// Handle folders (from local files)
+		else if ('type' in item && item.type === 'folder') {
+			const folder = item as Folder;
+			const folderNode = {
+				id: folder.uuid,
 				parent: parentId,
-				droppable: typedItem.type === 'folder',
-				text:
-					typedItem.type === 'endpoint'
-						? (typedItem.name ??
-							(typedItem as Endpoint).url)
-						: typedItem.name,
+				droppable: true,
+				text: folder.name,
 				data: {
-					type: typedItem.type,
+					type: 'folder' as const,
 					isEditing: false,
-					...(typedItem.type === 'endpoint' && {
-						method: (typedItem as Endpoint).method,
-						url: (typedItem as Endpoint).url,
-					}),
 				},
 			};
-			treeData.push(node);
+			treeData.push(folderNode);
 
-			// Process folder items
-			if (typedItem.type === 'folder') {
-				const folder = typedItem as Folder;
-				if (folder.items?.length) {
-					treeData.push(
-						...parseTreeData(
-							folder.items as (Folder | Endpoint)[],
-							folder.uuid,
-						),
-					);
-				}
+			// Process folder items recursively
+			if (folder.items && folder.items.length > 0) {
+				treeData.push(
+					...parseTreeData(folder.items, folder.uuid),
+				);
 			}
+		}
+		// Handle endpoints (from local files)
+		else if ('type' in item && item.type === 'endpoint') {
+			const endpoint = item as Endpoint;
+			const endpointNode = {
+				id: endpoint.uuid,
+				parent: parentId,
+				droppable: false,
+				text:
+					endpoint.name ||
+					endpoint.url ||
+					'Untitled Endpoint',
+				data: {
+					type: 'endpoint' as const,
+					isEditing: false,
+					method: endpoint.method || 'GET',
+					url: endpoint.url || '',
+				},
+			};
+			treeData.push(endpointNode);
 		}
 	});
 
@@ -113,16 +114,21 @@ const parseTreeData = (
 
 export function CollectionList() {
 	const dispatch = useAppDispatch();
-	const { collections, loading, error } = useAppSelector(
-		(state) => state.collections,
-	);
-	const [treeData, setTreeData] = useState<
-		NodeModel<any>[]
-	>(() => parseTreeData(collections));
 
-	const openIds = useAppSelector(
-		(state) => state.collections.openIds,
+	const { collections, loading, error } = useAppSelector(
+		(state) => state.newCollections,
 	);
+
+	// Compute tree data from collections using useMemo
+	const treeData = useMemo(
+		() => parseTreeData(collections),
+		[collections],
+	);
+
+	// TODO: Move openIds to newCollectionSlice
+	const [openIds, setOpenIdsLocal] = React.useState<
+		string[]
+	>([]);
 
 	// Fetch collections on mount
 	useEffect(() => {
@@ -133,7 +139,6 @@ export function CollectionList() {
 					'Collections fetched successfully:',
 					result,
 				);
-				setTreeData(parseTreeData(result));
 			})
 			.catch((error) => {
 				console.error(
@@ -141,18 +146,16 @@ export function CollectionList() {
 					error,
 				);
 			});
-		// Load initial open state
-		dispatch(loadOpenIds());
+
+		// TODO: Load initial open state from persistence
+		console.log('TODO: Load openIds from storage');
 	}, [dispatch]);
 
-	// Update tree data when collections change
-	useEffect(() => {
-		setTreeData(parseTreeData(collections));
-	}, [collections]);
-
 	const handleCreateCollection = () => {
-		dispatch(createBlankCollection());
-		dispatch(getCollections());
+		// TODO: Implement createBlankCollection in newCollectionSlice
+		console.log('TODO: Create blank collection');
+		// dispatch(createBlankCollection());
+		// dispatch(getCollections());
 	};
 
 	const handleCanDrop = (
@@ -217,28 +220,26 @@ export function CollectionList() {
 		newTree: NodeModel<any>[],
 		options: DropOptions<any>,
 	) => {
-		setTreeData(newTree as any);
+		// TODO: Implement reorder in newCollectionSlice
+		console.log('TODO: Reorder items', {
+			draggedUuid: options.dragSource?.id,
+			oldParentUuid: options.dragSource?.parent,
+			newParentUuid: options.dropTarget?.id,
+			relativeIndex: options.relativeIndex,
+		});
 
-		dispatch(
-			reorder({
-				draggedUuid: options.dragSource?.id as string,
-				oldParentUuid: options.dragSource?.parent as string,
-				newParentUuid: options.dropTarget?.id as string,
-				relativeIndex: options.relativeIndex as number,
-			}),
-		);
-
-		const draggedItem = newTree.find(
-			(item) => item.id === options.dragSource?.id,
-		);
-		if (!draggedItem) return;
+		// TODO: Refresh collections after reorder
+		// dispatch(getCollections());
 	};
 
 	const handleChangeOpen = (
 		newOpenIds: NodeModel['id'][],
 	) => {
-		const stringIds = newOpenIds.map((id) => String(id)); // Convert all IDs to strings
-		dispatch(setOpenIds(stringIds));
+		const stringIds = newOpenIds.map((id) => String(id));
+		setOpenIdsLocal(stringIds);
+
+		// TODO: Persist openIds to storage
+		console.log('TODO: Save openIds to storage', stringIds);
 	};
 
 	const handleCreateItem = async (
@@ -246,38 +247,20 @@ export function CollectionList() {
 		type: 'folder' | 'endpoint',
 		parentUuid: string,
 	) => {
-		try {
-			const result = await dispatch(
-				createItem({
-					name,
-					type,
-					parentUuid,
-					...(type === 'endpoint' && {
-						method: 'GET',
-						url: '',
-					}),
-				}),
-			).unwrap();
+		// TODO: Implement createItem in newCollectionSlice
+		console.log('TODO: Create item', {
+			name,
+			type,
+			parentUuid,
+			...(type === 'endpoint' && {
+				method: 'GET',
+				url: '',
+			}),
+		});
 
-			// Update openIds if needed
-			if (
-				result.item.parent_uuid &&
-				!openIds.includes(result.item.parent_uuid)
-			) {
-				const newOpenIds = [
-					...openIds,
-					result.item.parent_uuid,
-				];
-				await dispatch(setOpenIds(newOpenIds)).unwrap();
-			}
-
-			// Refresh collections to get the new item
-			await dispatch(getCollections()).unwrap();
-			return true;
-		} catch (error) {
-			console.error('Failed to create item:', error);
-			return false;
-		}
+		// TODO: Update openIds if needed
+		// TODO: Refresh collections after creation
+		return false;
 	};
 
 	// Header at the top

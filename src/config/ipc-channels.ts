@@ -27,6 +27,7 @@ const OPEN_URL = 'open-url';
 const OPEN_CHILD_WINDOW = 'open-child-window';
 
 // Backend API channels
+const BACKEND_COLLECTIONS_GET = 'backend:collections:get';
 const BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET =
 	'backend:endpoint-management:collections:get';
 const BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE =
@@ -68,6 +69,7 @@ export const ipcChannels = {
 	OPEN_CHILD_WINDOW,
 
 	// Backend API channels
+	BACKEND_COLLECTIONS_GET,
 	BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
 	BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE,
 	BACKEND_ENDPOINT_MANAGEMENT_REORDER,

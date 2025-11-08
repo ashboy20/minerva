@@ -30,7 +30,7 @@ export type Case = {
 	id: number;
 	uuid: string;
 	name: string;
-	description: string;
+	description: string;y
 	request: Request;
 	response: Response;
 };

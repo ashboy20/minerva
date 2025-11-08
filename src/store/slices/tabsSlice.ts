@@ -4,7 +4,7 @@ import {
 } from '@reduxjs/toolkit';
 import { Endpoint } from '@/types/backend/endpoint-management/endpoint';
 import { getUUID } from '@/utils/getUUID';
-import { updateItem } from '@/store/slices/collectionSlice';
+import { updateItem } from '@/store/slices/collectionSliceBackup';
 
 interface Tab {
 	endpoint: Endpoint;
