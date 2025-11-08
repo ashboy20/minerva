@@ -1,0 +1,438 @@
+meta:
+  seq: 2
+  type: endpoint
+  created_at: 2025-01-01 12:00:00
+  updated_at: 2025-01-01 12:00:00
+
+data:
+  uuid: endpoint-002
+  name: Create User Post
+  description: Create new posts with different scenarios including validation and auth
+  method: POST
+  url: https://jsonplaceholder.typicode.com/posts
+  cases:
+    - case_id: 1
+      name: Create basic post
+      description: Successfully create a post with all required fields
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+          - row_id: 2
+            keyValue: Accept
+            value: application/json
+            enabled: true
+        body:
+          title: 'My First Post'
+          body: 'This is the content of my first post. It contains useful information.'
+          userId: 1
+        auth: null
+        inheritance: null
+      response:
+        status_code: 201
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          id: 101
+          title: 'My First Post'
+          body: 'This is the content of my first post. It contains useful information.'
+          userId: 1
+
+    - case_id: 2
+      name: Create post with authentication
+      description: Create a post with bearer token authentication
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+          - row_id: 2
+            keyValue: Accept
+            value: application/json
+            enabled: true
+          - row_id: 3
+            keyValue: Authorization
+            value: Bearer {{access_token}}
+            enabled: true
+        body:
+          title: 'Authenticated Post'
+          body: 'This post was created with proper authentication.'
+          userId: 2
+        auth:
+          type: bearer
+          value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        inheritance: null
+      response:
+        status_code: 201
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          id: 102
+          title: 'Authenticated Post'
+          body: 'This post was created with proper authentication.'
+          userId: 2
+
+    - case_id: 3
+      name: Create post with special characters
+      description: Test posting with emojis and special characters
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params:
+          - row_id: 1
+            keyValue: _delay
+            value: '1000'
+            enabled: false
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          title: '🚀 Special Post with émojis & symbols!'
+          body: 'Testing special chars: @#$%^&* and unicode: 你好世界'
+          userId: 3
+        auth: null
+        inheritance: null
+      response:
+        status_code: 201
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          id: 103
+          title: '🚀 Special Post with émojis & symbols!'
+          body: 'Testing special chars: @#$%^&* and unicode: 你好世界'
+          userId: 3
+
+    - case_id: 4
+      name: Create nested post to specific user
+      description: Create a post using path parameters for user ID
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /users/:userId/posts
+        path_params:
+          - row_id: 1
+            keyValue: userId
+            value: '5'
+            enabled: true
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+          - row_id: 2
+            keyValue: X-Custom-Header
+            value: custom-value
+            enabled: true
+        body:
+          title: 'Post for specific user'
+          body: 'This post belongs to user 5.'
+        auth: null
+        inheritance: null
+      response:
+        status_code: 201
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          id: 104
+          title: 'Post for specific user'
+          body: 'This post belongs to user 5.'
+          userId: 5
+
+    - case_id: 5
+      name: Create minimal post
+      description: Create a post with only required fields
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+        body:
+          title: 'Minimal Post'
+          userId: 1
+        auth: null
+        inheritance: null
+      response:
+        status_code: 201
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          id: 105
+          title: 'Minimal Post'
+          userId: 1
+
+    - case_id: 6
+      name: Missing required fields (400)
+      description: Test validation error when required fields are missing
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+        body:
+          body: 'Post content without title'
+        auth: null
+        inheritance: null
+      response:
+        status_code: 400
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          error: 'Bad Request'
+          message: 'Missing required field: title'
+
+    - case_id: 7
+      name: Invalid data type (422)
+      description: Test validation error with invalid data types
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+        body:
+          title: 12345
+          body: true
+          userId: 'not-a-number'
+        auth: null
+        inheritance: null
+      response:
+        status_code: 422
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          error: 'Unprocessable Entity'
+          message: 'Invalid data types for fields'
+          details:
+            - field: 'title'
+              error: 'Expected string'
+            - field: 'userId'
+              error: 'Expected integer'
+
+    - case_id: 8
+      name: Unauthorized post creation (401)
+      description: Test error when creating post without authentication
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+        body:
+          title: 'Unauthorized Post'
+          body: 'This should fail'
+          userId: 1
+        auth: null
+        inheritance: null
+      response:
+        status_code: 401
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          error: 'Unauthorized'
+          message: 'Authentication token required'
+
+    - case_id: 9
+      name: Invalid auth token (403)
+      description: Test error with expired or invalid authentication token
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+          - row_id: 2
+            keyValue: Authorization
+            value: Bearer invalid-token-12345
+            enabled: true
+        body:
+          title: 'Post with invalid token'
+          body: 'This should be forbidden'
+          userId: 1
+        auth:
+          type: bearer
+          value: 'invalid-token-12345'
+        inheritance: null
+      response:
+        status_code: 403
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          error: 'Forbidden'
+          message: 'Invalid or expired authentication token'
+
+    - case_id: 10
+      name: Create post for non-existent user (404)
+      description: Test error when creating post for user that doesn't exist
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /users/:userId/posts
+        path_params:
+          - row_id: 1
+            keyValue: userId
+            value: '99999'
+            enabled: true
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+        body:
+          title: 'Post for non-existent user'
+          body: 'This should fail'
+        auth: null
+        inheritance: null
+      response:
+        status_code: 404
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          error: 'Not Found'
+          message: 'User with ID 99999 not found'
+
+    - case_id: 11
+      name: Payload too large (413)
+      description: Test error when request body exceeds size limit
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+        body:
+          title: 'Post with huge content'
+          body: 'Lorem ipsum dolor sit amet... [Imagine 10MB of text here]'
+          userId: 1
+        auth: null
+        inheritance: null
+      response:
+        status_code: 413
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          error: 'Payload Too Large'
+          message: 'Request body exceeds maximum allowed size'
+
+    - case_id: 12
+      name: Malformed JSON body (400)
+      description: Test error with invalid JSON syntax in request body
+      pre: null
+      post: null
+      request:
+        base_url: https://jsonplaceholder.typicode.com
+        path: /posts
+        path_params: []
+        query_params: []
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json
+            enabled: true
+        body: "{ title: 'Missing quotes', invalid json }"
+        auth: null
+        inheritance: null
+      response:
+        status_code: 400
+        headers:
+          - row_id: 1
+            keyValue: Content-Type
+            value: application/json; charset=utf-8
+            enabled: true
+        body:
+          error: 'Bad Request'
+          message: 'Failed to parse JSON body'
