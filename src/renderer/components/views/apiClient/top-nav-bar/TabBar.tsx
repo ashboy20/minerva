@@ -19,7 +19,7 @@ import {
 	ContextMenuTrigger,
 } from '@/renderer/components/ui/context-menu';
 import { Input } from '@/renderer/components/ui/input';
-import { updateItem } from '@/store/slices/collectionSlice';
+import { updateItem } from '@/store/slices/collectionSliceBackup';
 
 interface TabBarProps {
 	className?: string;

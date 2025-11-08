@@ -23,7 +23,7 @@ import {
 	updateItem,
 	deleteItem,
 	getEndpoint,
-} from '@/store/slices/collectionSlice';
+} from '@/store/slices/collectionSliceBackup';
 import {
 	ContextMenu,
 	ContextMenuContent,

@@ -1,5 +1,8 @@
-import { ipcChannels } from "../../../config/ipc-channels";
-import { BackendClient, EndpointConfig } from "../backend-client";
+import { ipcChannels } from '../../../config/ipc-channels';
+import {
+	BackendClient,
+	EndpointConfig,
+} from '../backend-client';
 
 /**
  * Get endpoint configurations for IPC handlers
@@ -8,6 +11,15 @@ export function getEndpointManagementApis(
 	client: BackendClient,
 ): EndpointConfig[] {
 	return [
+		{
+			ipcChannel: ipcChannels.BACKEND_COLLECTIONS_GET,
+			handler: async (_event) => {
+				const response = await client.request(
+					'/api/collections/',
+				);
+				return client.processResponse(response);
+			},
+		},
 		{
 			ipcChannel:
 				ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
