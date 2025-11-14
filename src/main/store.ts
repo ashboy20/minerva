@@ -71,9 +71,13 @@ const schema: Store.Schema<StoreType> = {
 				type: 'string',
 				enum: ['horizontal', 'vertical'],
 			},
+			apiClientCollectionRootDir: {
+				type: 'string',
+			},
 		},
 		default: DEFAULT_SETTINGS,
 	},
+	// TODO: remove this because we are not storing openIds here anymore
 	collections: {
 		type: 'object',
 		properties: {

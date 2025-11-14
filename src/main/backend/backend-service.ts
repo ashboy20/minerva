@@ -12,6 +12,7 @@ import fs from 'fs';
 import log from 'electron-log';
 import { is } from '../util';
 import { __assets } from '../paths';
+import store from '../store';
 
 export class BackendService {
 	private pythonProcess: ChildProcess | null = null;
@@ -84,6 +85,12 @@ export class BackendService {
 			let args: string[];
 			let cwd: string;
 
+			// Get collection root directory from electron store
+			const settings = store.get('settings');
+			const collectionRootDir =
+				settings.apiClientCollectionRootDir ||
+				'app/db/data/collections';
+
 			if (is.prod) {
 				// Production mode: use the compiled executable
 				log.info(
@@ -121,6 +128,8 @@ export class BackendService {
 					this.host,
 					'--port',
 					this.port.toString(),
+					'--collection-root-dir',
+					collectionRootDir,
 				];
 				cwd = path.dirname(exePath); // Run from executable directory
 
@@ -166,6 +175,8 @@ export class BackendService {
 					this.host,
 					'--port',
 					this.port.toString(),
+					'--collection-root-dir',
+					collectionRootDir,
 				];
 				cwd = this.backendPath;
 
