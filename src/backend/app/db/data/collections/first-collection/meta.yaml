@@ -1,0 +1,28 @@
+uuid: 603c588c-19b7-48b6-8afd-2d5984f2040a
+type: collection
+name: First Collection
+description: First Collection Description
+pre: null
+post: null
+variables:
+  - row_id: 1
+    keyValue: baseUrl
+    value: https://jsonplaceholder.typicode.com
+    enabled: true
+  - row_id: 2
+    keyValue: userId
+    value: 1
+    enabled: true
+request:
+  headers:
+    - row_id: 1
+      keyValue: Content-Type
+      value: application/json
+      enabled: true
+    - row_id: 2
+      keyValue: Accept
+      value: application/json
+      enabled: true
+  auth:
+    type: bearer
+    value: 1234567890

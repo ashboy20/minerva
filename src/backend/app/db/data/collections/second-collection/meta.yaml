@@ -1,0 +1,10 @@
+uuid: 08ed16ea-c2c4-4aae-bf96-999030616f42
+type: collection
+name: Second Collection
+description: Second Collection Description
+pre: null
+post: null
+variables: []
+request:
+  headers: []
+  auth: null

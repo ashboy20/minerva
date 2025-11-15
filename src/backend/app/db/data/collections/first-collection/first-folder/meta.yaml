@@ -1,0 +1,28 @@
+uuid: f2a01eea-4390-4f0e-8804-17cd0a9b9d5d
+type: folder
+name: First Folder
+description: First Folder Description
+pre: null
+post: null
+variables:
+  - row_id: 1
+    keyValue: baseUrl
+    value: https://jsonplaceholder.typicode.com
+    enabled: true
+  - row_id: 2
+    keyValue: userId
+    value: 1
+    enabled: true
+request:
+  headers:
+    - row_id: 1
+      keyValue: Content-Type
+      value: application/json
+      enabled: true
+    - row_id: 2
+      keyValue: Accept
+      value: application/json
+      enabled: true
+  auth:
+    type: bearer
+    value: 1234567890
