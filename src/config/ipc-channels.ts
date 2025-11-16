@@ -36,6 +36,10 @@ const BACKEND_COLLECTIONS_REORDER =
 	'backend:collections:reorder';
 const BACKEND_COLLECTIONS_TOGGLE_OPEN =
 	'backend:collections:toggle-open';
+const BACKEND_FOLDER_CREATE = 'backend:folder:create';
+const BACKEND_FOLDER_DELETE = 'backend:folder:delete';
+const BACKEND_ENDPOINT_CREATE = 'backend:endpoint:create';
+const BACKEND_ENDPOINT_DELETE = 'backend:endpoint:delete';
 const BACKEND_API_CALL_ENDPOINT =
 	'backend:api-call:endpoint';
 
@@ -68,6 +72,10 @@ export const ipcChannels = {
 	BACKEND_COLLECTIONS_DELETE,
 	BACKEND_COLLECTIONS_REORDER,
 	BACKEND_COLLECTIONS_TOGGLE_OPEN,
+	BACKEND_FOLDER_CREATE,
+	BACKEND_FOLDER_DELETE,
+	BACKEND_ENDPOINT_CREATE,
+	BACKEND_ENDPOINT_DELETE,
 
 	BACKEND_API_CALL_ENDPOINT,
 } as const;

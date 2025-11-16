@@ -146,3 +146,106 @@ export interface DeleteCollectionResponse {
 	success: boolean;
 	data?: DeleteCollectionData;
 }
+
+/**
+ * Request body for POST /api/collections/folder
+ */
+export interface CreateFolderRequest {
+	name: string;
+	parent_uuid: string;
+}
+
+/**
+ * Data model for folder creation result
+ */
+export interface CreateFolderData {
+	message: string;
+	uuid: string;
+	name: string;
+	slug: string;
+}
+
+/**
+ * Response from POST /api/collections/folder
+ */
+export interface CreateFolderResponse {
+	success: boolean;
+	data?: CreateFolderData;
+}
+
+/**
+ * Request body for DELETE /api/collections/folder
+ */
+export interface DeleteFolderRequest {
+	uuid: string;
+}
+
+/**
+ * Data model for folder deletion result
+ */
+export interface DeleteFolderData {
+	message: string;
+	uuid: string;
+	slug: string;
+}
+
+/**
+ * Response from DELETE /api/collections/folder
+ */
+export interface DeleteFolderResponse {
+	success: boolean;
+	data?: DeleteFolderData;
+}
+
+/**
+ * Request body for POST /api/collections/endpoint
+ */
+export interface CreateEndpointRequest {
+	name: string;
+	parent_uuid: string;
+	method?: string;
+	base_url?: string;
+	path?: string;
+}
+
+/**
+ * Data model for endpoint creation result
+ */
+export interface CreateEndpointData {
+	message: string;
+	uuid: string;
+	name: string;
+	slug: string;
+}
+
+/**
+ * Response from POST /api/collections/endpoint
+ */
+export interface CreateEndpointResponse {
+	success: boolean;
+	data?: CreateEndpointData;
+}
+
+/**
+ * Request body for DELETE /api/collections/endpoint
+ */
+export interface DeleteEndpointRequest {
+	uuid: string;
+}
+
+/**
+ * Data model for endpoint deletion result
+ */
+export interface DeleteEndpointData {
+	message: string;
+	uuid: string;
+	slug: string;
+}
+
+/**
+ * Response from DELETE /api/collections/endpoint
+ */
+export interface DeleteEndpointResponse {
+	success: boolean;
+	data?: DeleteEndpointData;
+}

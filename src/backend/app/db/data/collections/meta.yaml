@@ -1,35 +1,35 @@
 collections:
-  - uuid: 603c588c-19b7-48b6-8afd-2d5984f2040a
-    name: collection
+- uuid: 603c588c-19b7-48b6-8afd-2d5984f2040a
+  name: collection
+  seq: 0
+  is_opened: true
+  items:
+  - type: endpoint
+    uuid: e6191f37-2f93-48eb-854a-3a1e481e071f
+    name: get-collections
     seq: 0
-    is_opened: true
-    items:
-      - type: endpoint
-        uuid: e6191f37-2f93-48eb-854a-3a1e481e071f
-        name: get-collections
-        seq: 0
-      - type: endpoint
-        uuid: 00c62093-eba6-4c2b-823b-d3ecc33a12e1
-        name: create-collection
-        seq: 1
-      - type: endpoint
-        uuid: f2a01eea-4390-4f0e-8804-17cd0a9b9d5d
-        name: delete-collection
-        seq: 2
-  - uuid: 08ed16ea-c2c4-4aae-bf96-999030616f42
-    name: call-endpoint
+  - type: endpoint
+    uuid: 00c62093-eba6-4c2b-823b-d3ecc33a12e1
+    name: create-collection
     seq: 1
-    is_opened: true
-    items:
-      - type: endpoint
-        uuid: a1b2c3d4-e5f6-4789-a012-3456789abcde
-        name: call-api-endpoint
-        seq: 0
-      - type: endpoint
-        uuid: b2c3d4e5-f6a7-4890-b123-4567890bcdef
-        name: get-endpoint-status
-        seq: 1
-      - type: endpoint
-        uuid: c3d4e5f6-a7b8-4901-c234-5678901cdefg
-        name: execute-batch-calls
-        seq: 2
+  - type: endpoint
+    uuid: f2a01eea-4390-4f0e-8804-17cd0a9b9d5d
+    name: delete-collection
+    seq: 2
+- uuid: 08ed16ea-c2c4-4aae-bf96-999030616f42
+  name: call-endpoint
+  seq: 1
+  is_opened: true
+  items:
+  - type: endpoint
+    uuid: a1b2c3d4-e5f6-4789-a012-3456789abcde
+    name: call-api-endpoint
+    seq: 0
+  - type: endpoint
+    uuid: b2c3d4e5-f6a7-4890-b123-4567890bcdef
+    name: get-endpoint-status
+    seq: 1
+  - type: endpoint
+    uuid: c3d4e5f6-a7b8-4901-c234-5678901cdefg
+    name: execute-batch-calls
+    seq: 2

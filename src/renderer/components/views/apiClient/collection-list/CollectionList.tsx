@@ -16,6 +16,8 @@ import {
 	reorderCollectionItem,
 	toggleItemOpenState,
 	createCollection,
+	createFolder,
+	createEndpoint,
 } from '@/store/slices/collectionSlice';
 import { CollectionHeader } from '@/renderer/components/views/apiClient/collection-list/CollectionHeader';
 import { DndProvider } from 'react-dnd';
@@ -455,20 +457,35 @@ export function CollectionList() {
 		type: 'folder' | 'endpoint',
 		parentUuid: string,
 	) => {
-		// TODO: Implement createItem in newCollectionSlice
-		console.log('TODO: Create item', {
-			name,
-			type,
-			parentUuid,
-			...(type === 'endpoint' && {
-				method: 'GET',
-				url: '',
-			}),
-		});
+		try {
+			if (type === 'folder') {
+				await dispatch(
+					createFolder({
+						name,
+						parentUuid,
+					}),
+				).unwrap();
+				console.log('Folder created successfully');
+			} else if (type === 'endpoint') {
+				await dispatch(
+					createEndpoint({
+						name,
+						parentUuid,
+						method: 'GET',
+						baseUrl: 'http://localhost:8000',
+						path: '/',
+					}),
+				).unwrap();
+				console.log('Endpoint created successfully');
+			}
 
-		// TODO: Update openIds if needed
-		// TODO: Refresh collections after creation
-		return false;
+			// Refresh collections after creation
+			await dispatch(getCollections()).unwrap();
+			return true;
+		} catch (error) {
+			console.error('Failed to create item:', error);
+			return false;
+		}
 	};
 
 	// Header at the top
