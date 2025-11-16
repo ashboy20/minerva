@@ -53,10 +53,18 @@ export class BackendClient {
 	 */
 	async processResponse(response: Response) {
 		if (!response.ok) {
-			// For errors, throw an exception that will be caught by the IPC handler
-			throw new Error(
-				`HTTP ${response.status}: ${response.statusText}`,
-			);
+			// Try to extract error detail from response body
+			let errorMessage: string;
+			try {
+				const errorData = await response.json();
+				errorMessage =
+					errorData.detail ||
+					`HTTP ${response.status}: ${response.statusText}`;
+			} catch (jsonError) {
+				// If parsing fails, use status text
+				errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+			}
+			throw new Error(errorMessage);
 		}
 
 		// Return the API response directly (our BaseResponse format)

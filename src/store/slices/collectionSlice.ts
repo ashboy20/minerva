@@ -6,6 +6,8 @@ import {
 import {
 	ReorderItemRequest,
 	ToggleOpenStateRequest,
+	CreateCollectionRequest,
+	DeleteCollectionRequest,
 } from '@/types/backend/collections/collection';
 
 export interface Endpoint {
@@ -49,6 +51,10 @@ interface CollectionState {
 	reorderError: string | null;
 	toggling: boolean;
 	toggleError: string | null;
+	creating: boolean;
+	createError: string | null;
+	deleting: boolean;
+	deleteError: string | null;
 }
 
 const initialState: CollectionState = {
@@ -59,6 +65,10 @@ const initialState: CollectionState = {
 	reorderError: null,
 	toggling: false,
 	toggleError: null,
+	creating: false,
+	createError: null,
+	deleting: false,
+	deleteError: null,
 };
 
 export const getCollections = createAsyncThunk(
@@ -143,6 +153,64 @@ export const toggleItemOpenState = createAsyncThunk(
 	},
 );
 
+export const createCollection = createAsyncThunk(
+	'collection/createCollection',
+	async (
+		request: {
+			name: string;
+		},
+		{ rejectWithValue },
+	) => {
+		const requestData: CreateCollectionRequest = {
+			name: request.name,
+		};
+
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_COLLECTIONS_CREATE,
+			requestData,
+		);
+
+		if (result && result.success) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error('Create collection API failed:', result);
+		return rejectWithValue(
+			result?.data?.error || 'Failed to create collection',
+		);
+	},
+);
+
+export const deleteCollection = createAsyncThunk(
+	'collection/deleteCollection',
+	async (
+		request: {
+			uuid: string;
+		},
+		{ rejectWithValue },
+	) => {
+		const requestData: DeleteCollectionRequest = {
+			uuid: request.uuid,
+		};
+
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_COLLECTIONS_DELETE,
+			requestData,
+		);
+
+		if (result && result.success) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error('Delete collection API failed:', result);
+		return rejectWithValue(
+			result?.data?.error || 'Failed to delete collection',
+		);
+	},
+);
+
 export const collectionSlice = createSlice({
 	name: 'collection',
 	initialState,
@@ -195,6 +263,38 @@ export const collectionSlice = createSlice({
 				(state, action) => {
 					state.toggling = false;
 					state.toggleError = action.payload as string;
+				},
+			)
+			// Create collection
+			.addCase(createCollection.pending, (state) => {
+				state.creating = true;
+				state.createError = null;
+			})
+			.addCase(createCollection.fulfilled, (state) => {
+				state.creating = false;
+				// Optionally refetch collections after creation
+			})
+			.addCase(
+				createCollection.rejected,
+				(state, action) => {
+					state.creating = false;
+					state.createError = action.payload as string;
+				},
+			)
+			// Delete collection
+			.addCase(deleteCollection.pending, (state) => {
+				state.deleting = true;
+				state.deleteError = null;
+			})
+			.addCase(deleteCollection.fulfilled, (state) => {
+				state.deleting = false;
+				// Optionally refetch collections after deletion
+			})
+			.addCase(
+				deleteCollection.rejected,
+				(state, action) => {
+					state.deleting = false;
+					state.deleteError = action.payload as string;
 				},
 			);
 	},

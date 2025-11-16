@@ -18,13 +18,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
 import { useAppDispatch } from '@/store/hooks';
-// TODO: Import from collectionSlice when implemented
-// import {
-// 	getCollections,
-// 	updateItem,
-// 	deleteItem,
-// 	getEndpoint,
-// } from '@/store/slices/collectionSlice';
+import {
+	getCollections,
+	deleteCollection,
+} from '@/store/slices/collectionSlice';
 import {
 	ContextMenu,
 	ContextMenuContent,
@@ -245,13 +242,23 @@ export const TreeItem = React.forwardRef<
 
 		const handleConfirmDelete = async () => {
 			try {
-				// TODO: Implement deleteItem in collectionSlice
-				console.log('TODO: Delete item', {
-					uuid: node.id as string,
-				});
-				// await dispatch(
-				// 	deleteItem(node.id as string),
-				// ).unwrap();
+				// Only collections can be deleted via this route
+				if (node.data.type === 'collection') {
+					await dispatch(
+						deleteCollection({ uuid: node.id as string }),
+					).unwrap();
+
+					// Refresh collections list
+					await dispatch(getCollections()).unwrap();
+
+					console.log('Collection deleted successfully');
+				} else {
+					// TODO: Implement delete for folders and endpoints
+					console.log('TODO: Delete item', {
+						uuid: node.id as string,
+						type: node.data.type,
+					});
+				}
 			} catch (error) {
 				console.error('Error deleting item:', error);
 			}

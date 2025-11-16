@@ -764,3 +764,186 @@ class CollectionsService:
                     return True
 
         return False
+
+    def create_collection(self, name: str) -> Dict[str, Any]:
+        """Create a new collection with a directory and meta.yaml file
+
+        Args:
+            name: Display name for the collection
+
+        Returns:
+            Dictionary with creation result including UUID, name, and slug
+
+        Raises:
+            ValueError: If name is empty or collection already exists
+            Exception: If operation fails
+        """
+        import uuid
+        import re
+
+        # Validate name
+        if not name or not name.strip():
+            raise ValueError("Collection name cannot be empty")
+
+        # Generate UUID for the collection
+        collection_uuid = str(uuid.uuid4())
+
+        # Generate slug from name (lowercase, replace spaces/special chars with hyphens)
+        slug = re.sub(r"[^a-z0-9]+", "-", name.lower().strip())
+        slug = re.sub(r"-+", "-", slug)  # Replace multiple hyphens with single
+        slug = slug.strip("-")  # Remove leading/trailing hyphens
+
+        if not slug:
+            raise ValueError(
+                "Collection name must contain at least one alphanumeric character"
+            )
+
+        # Check if collection with this slug already exists
+        collection_dir = self.collections_dir / slug
+        if collection_dir.exists():
+            raise ValueError(f"Collection name '{slug}' already exists")
+
+        # Read global meta
+        if not self.meta_file.exists():
+            # Initialize empty meta if file doesn't exist
+            global_meta = {"collections": []}
+        else:
+            global_meta = self._read_global_meta()
+            if not global_meta:
+                raise Exception(
+                    f"Failed to parse global meta file: {self.meta_file.resolve()}"
+                )
+
+        # Calculate sequence number (append to end)
+        collections = global_meta.get("collections", [])
+        seq = len(collections)
+
+        # Create collection directory
+        collection_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create collection meta.yaml
+        collection_meta = {
+            "name": name,
+        }
+        collection_meta_file = collection_dir / "meta.yaml"
+        if not self._write_yaml_file(collection_meta_file, collection_meta):
+            raise Exception(
+                f"Failed to write collection meta file: {collection_meta_file}"
+            )
+
+        # Add collection to global meta
+        new_collection = {
+            "uuid": collection_uuid,
+            "name": slug,
+            "seq": seq,
+            "is_opened": False,
+            "items": [],
+        }
+        collections.append(new_collection)
+        global_meta["collections"] = collections
+
+        # Write updated global meta
+        if not self._write_yaml_file(self.meta_file, global_meta):
+            # Rollback: remove created directory
+            import shutil
+
+            if collection_dir.exists():
+                shutil.rmtree(collection_dir)
+            raise Exception("Failed to write global meta file")
+
+        return {
+            "message": "Collection created successfully",
+            "uuid": collection_uuid,
+            "name": name,
+            "slug": slug,
+        }
+
+    def delete_collection(self, uuid: str) -> Dict[str, Any]:
+        """Delete a collection by UUID
+
+        Args:
+            uuid: UUID of the collection to delete
+
+        Returns:
+            Dictionary with deletion result including UUID and slug
+
+        Raises:
+            ValueError: If collection not found
+            Exception: If operation fails
+        """
+        # Read global meta
+        if not self.meta_file.exists():
+            raise FileNotFoundError(
+                f"Global meta file not found: {self.meta_file.resolve()}"
+            )
+
+        global_meta = self._read_global_meta()
+        if not global_meta:
+            raise Exception(
+                f"Failed to parse global meta file: {self.meta_file.resolve()}"
+            )
+
+        # Find the collection
+        collections = global_meta.get("collections", [])
+        collection_to_delete = None
+        collection_index = None
+
+        for idx, collection in enumerate(collections):
+            if collection.get("uuid") == uuid:
+                collection_to_delete = collection
+                collection_index = idx
+                break
+
+        if not collection_to_delete:
+            raise ValueError(f"Collection with UUID '{uuid}' not found")
+
+        # Get collection slug (directory name)
+        slug = collection_to_delete.get("name")
+        if not slug:
+            raise ValueError(f"Collection slug missing in meta: {collection_to_delete}")
+
+        # Build collection directory path
+        collection_dir = self.collections_dir / slug
+
+        # Remove from global meta
+        collections.pop(collection_index)
+
+        # Reindex remaining collections
+        self._reindex_items(collections)
+
+        # Write updated global meta
+        if not self._write_yaml_file(self.meta_file, global_meta):
+            raise Exception("Failed to write global meta file")
+
+        # Delete the collection directory using Path methods
+        if collection_dir.exists():
+            try:
+                self._delete_directory(collection_dir)
+            except Exception as e:
+                # If directory deletion fails, the meta is already updated
+                # Log the error but don't fail the operation
+                print(
+                    f"Warning: Failed to delete collection directory {collection_dir}: {e}"
+                )
+
+        return {
+            "message": "Collection deleted successfully",
+            "uuid": uuid,
+            "slug": slug,
+        }
+
+    def _delete_directory(self, path: Path):
+        """Recursively delete a directory using Path methods
+
+        Args:
+            path: Path to the directory to delete
+        """
+        if not path.exists():
+            return
+
+        if path.is_file():
+            path.unlink()
+        elif path.is_dir():
+            for child in path.iterdir():
+                self._delete_directory(child)
+            path.rmdir()

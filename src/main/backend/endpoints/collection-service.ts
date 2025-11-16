@@ -14,6 +14,10 @@ import {
 	GetCollectionsListResponse,
 	ToggleOpenStateRequest,
 	ToggleOpenStateResponse,
+	CreateCollectionRequest,
+	CreateCollectionResponse,
+	DeleteCollectionRequest,
+	DeleteCollectionResponse,
 } from '../../../types/backend/collections/collection';
 
 /**
@@ -34,6 +38,42 @@ export function getCollectionServiceApis(
 				return client.processResponse(
 					response,
 				) as Promise<GetCollectionsListResponse>;
+			},
+		},
+		{
+			ipcChannel: ipcChannels.BACKEND_COLLECTIONS_CREATE,
+			handler: async (
+				_event,
+				request: CreateCollectionRequest,
+			): Promise<CreateCollectionResponse> => {
+				const response = await client.request(
+					'/api/collections/',
+					{
+						method: 'POST',
+						body: JSON.stringify(request),
+					},
+				);
+				return client.processResponse(
+					response,
+				) as Promise<CreateCollectionResponse>;
+			},
+		},
+		{
+			ipcChannel: ipcChannels.BACKEND_COLLECTIONS_DELETE,
+			handler: async (
+				_event,
+				request: DeleteCollectionRequest,
+			): Promise<DeleteCollectionResponse> => {
+				const response = await client.request(
+					'/api/collections/',
+					{
+						method: 'DELETE',
+						body: JSON.stringify(request),
+					},
+				);
+				return client.processResponse(
+					response,
+				) as Promise<DeleteCollectionResponse>;
 			},
 		},
 		{

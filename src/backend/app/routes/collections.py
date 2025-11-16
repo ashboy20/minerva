@@ -6,6 +6,10 @@ from app.models.collections import (
     ReorderItemResponse,
     ToggleOpenStateRequest,
     ToggleOpenStateResponse,
+    CreateCollectionRequest,
+    CreateCollectionResponse,
+    DeleteCollectionRequest,
+    DeleteCollectionResponse,
 )
 from app.services.collections import CollectionsService
 
@@ -31,6 +35,57 @@ def get_collections_list():
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to load collections: {str(e)}"
+        )
+
+
+@router.post("/", response_model=CreateCollectionResponse)
+def create_collection(request: CreateCollectionRequest):
+    """
+    Create a new collection with a directory and meta.yaml file.
+
+    Args:
+        request: CreateCollectionRequest with name for the collection
+
+    Returns:
+        CreateCollectionResponse with operation result
+    """
+    try:
+        result = collections_service.create_collection(name=request.name)
+        return CreateCollectionResponse(
+            success=True, data=CreateCollectionResponse.CreateCollectionData(**result)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create collection: {str(e)}"
+        )
+
+
+@router.delete("/", response_model=DeleteCollectionResponse)
+def delete_collection(request: DeleteCollectionRequest):
+    """
+    Delete a collection by UUID.
+    Removes the collection from global meta.yaml and deletes its directory.
+
+    Args:
+        request: DeleteCollectionRequest with UUID of the collection
+
+    Returns:
+        DeleteCollectionResponse with operation result
+    """
+    try:
+        result = collections_service.delete_collection(uuid=request.uuid)
+        return DeleteCollectionResponse(
+            success=True, data=DeleteCollectionResponse.DeleteCollectionData(**result)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete collection: {str(e)}"
         )
 
 
