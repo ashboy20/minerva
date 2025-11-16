@@ -1,17 +1,17 @@
-uuid: 603c588c-19b7-48b6-8afd-2d5984f2040a
+uuid: 08ed16ea-c2c4-4aae-bf96-999030616f42
 type: collection
-name: First Collection
-description: First Collection Description
+name: Call Endpoint
+description: API endpoint calling and testing
 pre: null
 post: null
 variables:
   - row_id: 1
     keyValue: baseUrl
-    value: https://jsonplaceholder.typicode.com
+    value: http://localhost:8000
     enabled: true
   - row_id: 2
-    keyValue: userId
-    value: 1
+    keyValue: apiVersion
+    value: v1
     enabled: true
 request:
   headers:
@@ -23,6 +23,4 @@ request:
       keyValue: Accept
       value: application/json
       enabled: true
-  auth:
-    type: bearer
-    value: 1234567890
+  auth: null

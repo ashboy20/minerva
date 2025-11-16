@@ -1,0 +1,42 @@
+uuid: c3d4e5f6-a7b8-4901-c234-5678901cdefg
+type: endpoint
+name: Execute Batch Calls
+description: Execute multiple API endpoint calls in batch
+method: POST
+base_url: http://localhost:8000
+path: /api/batch-calls
+
+cases:
+  - id: 1
+    name: Execute batch of endpoints
+    is_default: true
+    pre: null
+    post: null
+    request:
+      path_params: []
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body:
+        endpoints:
+          - url: 'https://api.example.com/endpoint1'
+            method: 'GET'
+          - url: 'https://api.example.com/endpoint2'
+            method: 'POST'
+            body:
+              data: 'test'
+      auth: null
+    expected_response:
+      status_code: 200
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body:
+        status: success
+        data:
+          results: []
