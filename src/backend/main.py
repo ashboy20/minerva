@@ -1,7 +1,6 @@
 import argparse
 import os
 from fastapi import FastAPI
-from app.routes.endpoint_management import router as endpoint_management_router
 from app.routes.call_endpoint import router as call_endpoint_router
 from app.routes.collections import router as collections_router
 from app.db.connection import create_db_and_tables, DATABASE_PATH, add_seed_data
@@ -22,11 +21,6 @@ def create_app() -> FastAPI:
         return {"message": "Welcome to Minerva BE"}
 
     # Include routers
-    app.include_router(
-        endpoint_management_router,
-        prefix="/api/endpoint-management",
-        tags=["endpoint-management"],
-    )
     app.include_router(
         call_endpoint_router,
         prefix="/api/call-endpoint",
