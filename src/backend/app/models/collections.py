@@ -94,3 +94,46 @@ class ToggleOpenStateResponse(BaseResponse):
     data: Optional[ToggleOpenStateData] = Field(
         default=None, description="Toggle operation result"
     )
+
+
+class CreateCollectionRequest(BaseModel):
+    """Request model for creating a new collection"""
+
+    name: str = Field(description="Display name for the collection")
+
+
+class CreateCollectionResponse(BaseResponse):
+    """Response model for collection creation"""
+
+    class CreateCollectionData(BaseModel):
+        """Data model for collection creation result"""
+
+        message: str = Field(description="Operation result message")
+        uuid: str = Field(description="UUID of the created collection")
+        name: str = Field(description="Display name of the created collection")
+        slug: str = Field(description="Slug (directory name) of the created collection")
+
+    data: Optional[CreateCollectionData] = Field(
+        default=None, description="Collection creation result"
+    )
+
+
+class DeleteCollectionRequest(BaseModel):
+    """Request model for deleting a collection"""
+
+    uuid: str = Field(description="UUID of the collection to delete")
+
+
+class DeleteCollectionResponse(BaseResponse):
+    """Response model for collection deletion"""
+
+    class DeleteCollectionData(BaseModel):
+        """Data model for collection deletion result"""
+
+        message: str = Field(description="Operation result message")
+        uuid: str = Field(description="UUID of the deleted collection")
+        slug: str = Field(description="Slug of the deleted collection")
+
+    data: Optional[DeleteCollectionData] = Field(
+        default=None, description="Collection deletion result"
+    )

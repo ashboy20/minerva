@@ -2,22 +2,22 @@ collections:
 - uuid: 603c588c-19b7-48b6-8afd-2d5984f2040a
   name: first-collection
   seq: 0
-  is_opened: true
+  is_opened: false
   items:
-  - type: endpoint
-    uuid: e6191f37-2f93-48eb-854a-3a1e481e071f
-    name: get-user-posts
-    seq: 0
   - type: folder
     uuid: f2a01eea-4390-4f0e-8804-17cd0a9b9d5d
     name: first-folder
-    seq: 1
+    seq: 0
     is_opened: true
     items:
     - type: endpoint
+      uuid: e6191f37-2f93-48eb-854a-3a1e481e071f
+      name: get-user-posts
+      seq: 0
+    - type: endpoint
       uuid: 00c62093-eba6-4c2b-823b-d3ecc33a12e1
       name: create-user-post
-      seq: 0
+      seq: 1
 - uuid: 08ed16ea-c2c4-4aae-bf96-999030616f42
   name: second-collection
   seq: 1

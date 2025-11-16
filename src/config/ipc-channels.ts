@@ -28,6 +28,10 @@ const OPEN_CHILD_WINDOW = 'open-child-window';
 
 // Backend API channels
 const BACKEND_COLLECTIONS_GET = 'backend:collections:get';
+const BACKEND_COLLECTIONS_CREATE =
+	'backend:collections:create';
+const BACKEND_COLLECTIONS_DELETE =
+	'backend:collections:delete';
 const BACKEND_COLLECTIONS_REORDER =
 	'backend:collections:reorder';
 const BACKEND_COLLECTIONS_TOGGLE_OPEN =
@@ -60,6 +64,8 @@ export const ipcChannels = {
 
 	// Backend API channels
 	BACKEND_COLLECTIONS_GET,
+	BACKEND_COLLECTIONS_CREATE,
+	BACKEND_COLLECTIONS_DELETE,
 	BACKEND_COLLECTIONS_REORDER,
 	BACKEND_COLLECTIONS_TOGGLE_OPEN,
 

@@ -2,6 +2,7 @@ import React, {
 	useEffect,
 	useMemo,
 	useRef,
+	useState,
 } from 'react';
 import {
 	Card,
@@ -14,6 +15,7 @@ import {
 	getCollections,
 	reorderCollectionItem,
 	toggleItemOpenState,
+	createCollection,
 } from '@/store/slices/collectionSlice';
 import { CollectionHeader } from '@/renderer/components/views/apiClient/collection-list/CollectionHeader';
 import { DndProvider } from 'react-dnd';
@@ -29,6 +31,17 @@ import {
 	useAppSelector,
 } from '@/store/hooks';
 import { TreeItem } from '@/renderer/components/views/apiClient/collection-list/TreeItem';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/renderer/components/ui/dialog';
+import { Input } from '@/renderer/components/ui/input';
+import { Button } from '@/renderer/components/ui/button';
+import { Label } from '@/renderer/components/ui/label';
 
 export interface MinervaNodeModel extends NodeModel<any> {
 	data: {
@@ -135,9 +148,22 @@ const parseTreeData = (
 export function CollectionList() {
 	const dispatch = useAppDispatch();
 
-	const { collections, loading, error } = useAppSelector(
-		(state) => state.collection,
-	);
+	const {
+		collections,
+		loading,
+		error,
+		creating,
+		createError,
+	} = useAppSelector((state) => state.collection);
+
+	// Dialog state
+	const [isCreateDialogOpen, setIsCreateDialogOpen] =
+		useState(false);
+	const [newCollectionName, setNewCollectionName] =
+		useState('');
+	const [validationError, setValidationError] = useState<
+		string | null
+	>(null);
 
 	// Compute tree data and initial open IDs from collections using useMemo
 	const { treeData, openIds: initialOpenIds } = useMemo(
@@ -196,10 +222,65 @@ export function CollectionList() {
 	}, [dispatch]);
 
 	const handleCreateCollection = () => {
-		// TODO: Implement createBlankCollection in newCollectionSlice
-		console.log('TODO: Create blank collection');
-		// dispatch(createBlankCollection());
-		// dispatch(getCollections());
+		setIsCreateDialogOpen(true);
+		setNewCollectionName('');
+		setValidationError(null);
+	};
+
+	const handleCreateDialogClose = () => {
+		setIsCreateDialogOpen(false);
+		setNewCollectionName('');
+		setValidationError(null);
+	};
+
+	const handleCreateSubmit = async () => {
+		// Validate input
+		if (!newCollectionName.trim()) {
+			setValidationError('Collection name cannot be empty');
+			return;
+		}
+
+		// Check if name contains at least one alphanumeric character
+		const hasAlphanumeric = /[a-z0-9]/i.test(
+			newCollectionName,
+		);
+		if (!hasAlphanumeric) {
+			setValidationError(
+				'Collection name must contain at least one alphanumeric character',
+			);
+			return;
+		}
+
+		try {
+			// Create the collection
+			await dispatch(
+				createCollection({ name: newCollectionName }),
+			).unwrap();
+
+			// Refresh collections list
+			await dispatch(getCollections()).unwrap();
+
+			// Close dialog on success
+			handleCreateDialogClose();
+
+			console.log('Collection created successfully');
+		} catch (error) {
+			console.error('Failed to create collection:', error);
+			// Extract the actual error message from the error object
+			const errorMessage =
+				typeof error === 'string'
+					? error
+					: (error as any)?.message || String(error);
+			setValidationError(errorMessage);
+		}
+	};
+
+	const handleKeyDown = (
+		e: React.KeyboardEvent<HTMLInputElement>,
+	) => {
+		if (e.key === 'Enter') {
+			handleCreateSubmit();
+		}
 	};
 
 	const handleCanDrop = (
@@ -493,6 +574,67 @@ export function CollectionList() {
 				{header}
 				{content}
 			</Card>
+
+			{/* Create Collection Dialog */}
+			<Dialog
+				open={isCreateDialogOpen}
+				onOpenChange={setIsCreateDialogOpen}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Create New Collection</DialogTitle>
+						<DialogDescription>
+							Enter a name for your new collection. You can
+							organize your API requests in it.
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="grid gap-4 py-4">
+						<div className="grid gap-2">
+							<Label htmlFor="collection-name">
+								Collection Name
+							</Label>
+							<Input
+								id="collection-name"
+								placeholder="My API Collection"
+								value={newCollectionName}
+								onChange={(e) => {
+									setNewCollectionName(e.target.value);
+									setValidationError(null);
+								}}
+								onKeyDown={handleKeyDown}
+								disabled={creating}
+								autoFocus
+							/>
+							{validationError && (
+								<p className="text-sm text-red-500">
+									{validationError}
+								</p>
+							)}
+						</div>
+					</div>
+
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={handleCreateDialogClose}
+							disabled={creating}
+						>
+							Cancel
+						</Button>
+						<Button
+							onClick={handleCreateSubmit}
+							disabled={
+								creating || !newCollectionName.trim()
+							}
+						>
+							{creating
+								? 'Creating...'
+								: 'Create Collection'}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

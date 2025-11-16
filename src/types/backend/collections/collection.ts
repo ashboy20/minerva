@@ -97,3 +97,52 @@ export interface ToggleOpenStateResponse {
 	success: boolean;
 	data?: ToggleOpenStateData;
 }
+
+/**
+ * Request body for POST /api/collections/
+ */
+export interface CreateCollectionRequest {
+	name: string;
+}
+
+/**
+ * Data model for collection creation result
+ */
+export interface CreateCollectionData {
+	message: string;
+	uuid: string;
+	name: string;
+	slug: string;
+}
+
+/**
+ * Response from POST /api/collections/
+ */
+export interface CreateCollectionResponse {
+	success: boolean;
+	data?: CreateCollectionData;
+}
+
+/**
+ * Request body for DELETE /api/collections/
+ */
+export interface DeleteCollectionRequest {
+	uuid: string;
+}
+
+/**
+ * Data model for collection deletion result
+ */
+export interface DeleteCollectionData {
+	message: string;
+	uuid: string;
+	slug: string;
+}
+
+/**
+ * Response from DELETE /api/collections/
+ */
+export interface DeleteCollectionResponse {
+	success: boolean;
+	data?: DeleteCollectionData;
+}
