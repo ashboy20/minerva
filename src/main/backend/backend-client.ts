@@ -8,6 +8,7 @@ import log from 'electron-log';
 import { getBackendService } from './backend-service';
 import { getEndpointManagementApis } from './endpoints/endpoint-management';
 import { getCallEndpointApis } from './endpoints/call-endpoint';
+import { getCollectionServiceApis } from './endpoints/collection-service';
 
 export interface EndpointConfig {
 	ipcChannel: string;
@@ -63,8 +64,6 @@ export class BackendClient {
 		const apiResponse = await response.json();
 		return apiResponse;
 	}
-
-	
 }
 
 // Singleton instance
@@ -89,7 +88,8 @@ export const registerBackendHandlers = () => {
 	const endpoints = [
 		...getEndpointManagementApis(backendClient),
 		...getCallEndpointApis(backendClient),
-	]
+		...getCollectionServiceApis(backendClient),
+	];
 
 
 	for (const endpointConfig of endpoints) {

@@ -12,15 +12,6 @@ export function getEndpointManagementApis(
 ): EndpointConfig[] {
 	return [
 		{
-			ipcChannel: ipcChannels.BACKEND_COLLECTIONS_GET,
-			handler: async (_event) => {
-				const response = await client.request(
-					'/api/collections/',
-				);
-				return client.processResponse(response);
-			},
-		},
-		{
 			ipcChannel:
 				ipcChannels.BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
 			handler: async (_event, _search?: string) => {
