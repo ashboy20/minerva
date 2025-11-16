@@ -20,6 +20,7 @@ export interface SettingsType {
 
 	theme: ThemeType;
 	apiClientLayout: ApiClientLayoutType;
+	apiClientCollectionRootDir: string;
 
 	// vibrancy: 'none' | 'sidebar' | 'full';
 	// hardwareAcceleration: boolean;
@@ -47,6 +48,7 @@ export const DEFAULT_SETTINGS: SettingsType = {
 
 	theme: 'system',
 	apiClientLayout: 'horizontal',
+	apiClientCollectionRootDir: 'app/db/data/collections',
 };
 
 // see src/main/keyboard-shortcuts.ts
@@ -58,3 +60,4 @@ export const DEFAULT_KEYBINDS: CustomAcceleratorsType = {
 	reset: `${accelerator}+R`,
 	// reset: '', // empty string or undefined disables a shortcut
 };
+
