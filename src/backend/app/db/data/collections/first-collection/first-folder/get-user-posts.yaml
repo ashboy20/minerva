@@ -1,0 +1,257 @@
+uuid: e6191f37-2f93-48eb-854a-3a1e481e071f
+type: endpoint
+name: Get User Posts
+description: Fetch posts for a specific user with filtering options
+method: GET
+base_url: https://jsonplaceholder.typicode.com
+path: /users/:userId/posts
+
+cases:
+  - id: 1
+    name: Get all posts for user 1
+    is_default: true
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: userId
+          value: '1'
+          enabled: true
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth:
+        type: bearer
+        value: '1234567890'
+    expected_response:
+      status_code: 200
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json; charset=utf-8
+          enabled: true
+      body:
+        - userId: 1
+          id: 1
+          title: sunt aut facere repellat provident
+          body: quia et suscipit...
+
+  - id: 2
+    name: Get filtered posts by title
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: userId
+          value: '2'
+          enabled: true
+      query_params:
+        - row_id: 1
+          keyValue: _limit
+          value: '5'
+          enabled: true
+        - row_id: 2
+          keyValue: title_like
+          value: qui
+          enabled: true
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth:
+        type: bearer
+        value: '1234567890'
+    expected_response:
+      status_code: 200
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json; charset=utf-8
+          enabled: true
+      body: []
+
+  - id: 3
+    name: Get posts with pagination
+    description: Retrieve paginated posts from user 3
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: userId
+          value: '3'
+          enabled: true
+      query_params:
+        - row_id: 1
+          keyValue: _page
+          value: '1'
+          enabled: true
+        - row_id: 2
+          keyValue: _limit
+          value: '3'
+          enabled: true
+        - row_id: 3
+          keyValue: _sort
+          value: id
+          enabled: true
+        - row_id: 4
+          keyValue: _order
+          value: desc
+          enabled: false
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+        - row_id: 2
+          keyValue: Accept
+          value: application/json
+          enabled: true
+      body: null
+      auth: null
+    expected_response:
+      status_code: 200
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json; charset=utf-8
+          enabled: true
+        - row_id: 2
+          keyValue: X-Total-Count
+          value: '10'
+          enabled: true
+      body: []
+
+  - id: 4
+    name: Get posts for non-existent user (404)
+    description: Test error handling when user doesn't exist
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: userId
+          value: '99999'
+          enabled: true
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth: null
+    expected_response:
+      status_code: 404
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json; charset=utf-8
+          enabled: true
+      body: []
+
+  - id: 5
+    name: Unauthorized request (401)
+    description: Test error when accessing protected endpoint without auth
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: userId
+          value: '1'
+          enabled: true
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth: null
+    expected_response:
+      status_code: 401
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json; charset=utf-8
+          enabled: true
+      body:
+        error: 'Unauthorized'
+        message: 'Authentication required'
+
+  - id: 6
+    name: Invalid path parameter format (400)
+    description: Test error handling with malformed path parameter
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: userId
+          value: 'invalid-id'
+          enabled: true
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth: null
+    expected_response:
+      status_code: 400
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json; charset=utf-8
+          enabled: true
+      body:
+        error: 'Bad Request'
+        message: 'Invalid user ID format'
+
+  - id: 7
+    name: Invalid query parameter value (400)
+    description: Test error with invalid query parameter value
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: userId
+          value: '1'
+          enabled: true
+      query_params:
+        - row_id: 1
+          keyValue: _limit
+          value: '-5'
+          enabled: true
+        - row_id: 2
+          keyValue: _page
+          value: 'abc'
+          enabled: true
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth: null
+    expected_response:
+      status_code: 400
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json; charset=utf-8
+          enabled: true
+      body:
+        error: 'Bad Request'
+        message: 'Invalid query parameter values'

@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict, Any
 from pydantic import BaseModel, Field
 from .base import BaseResponse
 
@@ -23,6 +23,7 @@ class FolderItem(CollectionItemBase):
 
     type: Literal["folder"] = "folder"
     items: List["CollectionTreeItem"] = Field(default=[], description="Items in folder")
+    is_opened: bool = Field(description="Folder is opened")
 
 
 class CollectionItem(CollectionItemBase):
@@ -32,6 +33,7 @@ class CollectionItem(CollectionItemBase):
     items: List["CollectionTreeItem"] = Field(
         default=[], description="Items in collection"
     )
+    is_opened: bool = Field(description="Collection is opened")
 
 
 # Union type for tree items (folder or endpoint)
@@ -42,10 +44,31 @@ FolderItem.model_rebuild()
 CollectionItem.model_rebuild()
 
 
-# endpoint models
+# API request/response models
 class GetCollectionsListResponse(BaseResponse):
-    """Response model for GET /collections/list"""
+    """Response model for GET /collections/"""
 
     data: List[CollectionItem] = Field(
         description="List of collections with minimal data"
+    )
+
+
+class ReorderItemRequest(BaseModel):
+    """Request model for reordering an item"""
+
+    item_uuid: str = Field(description="UUID of the item to move")
+    destination_folder_uuid: Optional[str] = Field(
+        default=None,
+        description="UUID of destination folder/collection (None for root)",
+    )
+    destination_seq: int = Field(
+        description="Target sequence number in the destination"
+    )
+
+
+class ReorderItemResponse(BaseResponse):
+    """Response model for item reorder"""
+
+    data: Optional[Dict[str, Any]] = Field(
+        default=None, description="Reorder operation result"
     )
