@@ -32,14 +32,14 @@ def create_app() -> FastAPI:
         tags=["collections"],
     )
 
-    # Initialize database
-    if not DATABASE_PATH.exists():
-        print("Initializing database...")
-        create_db_and_tables()
-        add_seed_data()
-        print("Database initialized.")
-    else:
-        print("Database already exists. Skipping initialization.")
+    # # Initialize database
+    # if not DATABASE_PATH.exists():
+    #     print("Initializing database...")
+    #     create_db_and_tables()
+    #     add_seed_data()
+    #     print("Database initialized.")
+    # else:
+    #     print("Database already exists. Skipping initialization.")
 
     return app
 

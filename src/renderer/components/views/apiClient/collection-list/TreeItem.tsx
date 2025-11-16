@@ -18,12 +18,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { MethodText } from '@/renderer/components/common-ui/MethodText';
 import { useAppDispatch } from '@/store/hooks';
-import {
-	getCollections,
-	updateItem,
-	deleteItem,
-	getEndpoint,
-} from '@/store/slices/collectionSliceBackup';
+// TODO: Import from collectionSlice when implemented
+// import {
+// 	getCollections,
+// 	updateItem,
+// 	deleteItem,
+// 	getEndpoint,
+// } from '@/store/slices/collectionSlice';
 import {
 	ContextMenu,
 	ContextMenuContent,
@@ -201,16 +202,21 @@ export const TreeItem = React.forwardRef<
 		const handleSaveRename = async (newName: string) => {
 			if (newName.trim() === '') return;
 			try {
-				await dispatch(
-					updateItem({
-						uuid: node.id as string,
-						fields: {
-							name: newName,
-						},
-					}),
-				).unwrap();
+				// TODO: Implement updateItem in collectionSlice
+				console.log('TODO: Update item name', {
+					uuid: node.id as string,
+					fields: { name: newName },
+				});
+				// await dispatch(
+				// 	updateItem({
+				// 		uuid: node.id as string,
+				// 		fields: {
+				// 			name: newName,
+				// 		},
+				// 	}),
+				// ).unwrap();
 				setIsEditing(false);
-				dispatch(getCollections());
+				// dispatch(getCollections());
 			} catch {
 				// Handle error silently
 				setIsEditing(false);
@@ -239,9 +245,13 @@ export const TreeItem = React.forwardRef<
 
 		const handleConfirmDelete = async () => {
 			try {
-				await dispatch(
-					deleteItem(node.id as string),
-				).unwrap();
+				// TODO: Implement deleteItem in collectionSlice
+				console.log('TODO: Delete item', {
+					uuid: node.id as string,
+				});
+				// await dispatch(
+				// 	deleteItem(node.id as string),
+				// ).unwrap();
 			} catch (error) {
 				console.error('Error deleting item:', error);
 			}
@@ -259,13 +269,17 @@ export const TreeItem = React.forwardRef<
 		const handleItemClick = async () => {
 			if (isEndpoint()) {
 				try {
-					const endpoint = await dispatch(
-						getEndpoint(node.id as string),
-					).unwrap();
+					// TODO: Implement getEndpoint in collectionSlice
+					console.log('TODO: Get endpoint', {
+						uuid: node.id as string,
+					});
+					// const endpoint = await dispatch(
+					// 	getEndpoint(node.id as string),
+					// ).unwrap();
 
-					if (endpoint) {
-						dispatch(addTab(endpoint));
-					}
+					// if (endpoint) {
+					// 	dispatch(addTab(endpoint));
+					// }
 				} catch (error) {
 					console.error('Error loading endpoint:', error);
 				}

@@ -16,7 +16,7 @@ import {
 } from '@/renderer/components/ui/card';
 import { JsonEditorComponent } from '@/renderer/components/views/apiClient/components/JsonEditorComponent';
 import { TableForm } from '@/renderer/components/views/apiClient/request-section/InputForm';
-import { Row } from '@/types/backend/endpoint-management/endpoint';
+import { Row } from '@/types/backend/common';
 import UrlBar from '@/renderer/components/views/apiClient/request-section/UrlBar';
 import { AuthSection } from '@/renderer/components/views/apiClient/request-section/AuthSection';
 import {
@@ -56,11 +56,8 @@ export function RequestSection() {
 	const [activeTab, setActiveTab] = useState('headers');
 
 	// Get all necessary state from Redux
-	const {
-		pathParams,
-		queryParams,
-		lastUpdateSource,
-	} = useAppSelector((state) => state.url);
+	const { pathParams, queryParams, lastUpdateSource } =
+		useAppSelector((state) => state.url);
 	const {
 		headers,
 		auth,
@@ -305,23 +302,29 @@ export function RequestSection() {
 		};
 	}, []);
 
-	const parsePathParams = useCallback((pathParams: Row[]) => {
-		return pathParams.map((param, index) => ({
-			row_id: index + 1,
-			keyValue: param.keyValue,
-			value: param.value,
-			enabled: true
-		}));
-	}, []);
+	const parsePathParams = useCallback(
+		(pathParams: Row[]) => {
+			return pathParams.map((param, index) => ({
+				row_id: index + 1,
+				keyValue: param.keyValue,
+				value: param.value,
+				enabled: true,
+			}));
+		},
+		[],
+	);
 
-	const parseQueryParams = useCallback((queryParams: Row[]) => {
-		return queryParams.map((param, index) => ({
-			row_id: index + 1,
-			keyValue: param.keyValue,
-			value: param.value,
-			enabled: true
-		}));
-	}, []);
+	const parseQueryParams = useCallback(
+		(queryParams: Row[]) => {
+			return queryParams.map((param, index) => ({
+				row_id: index + 1,
+				keyValue: param.keyValue,
+				value: param.value,
+				enabled: true,
+			}));
+		},
+		[],
+	);
 
 	return (
 		<div className="h-full overflow-y-auto p-4">

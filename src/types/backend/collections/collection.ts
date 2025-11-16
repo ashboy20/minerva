@@ -72,3 +72,28 @@ export interface ReorderItemResponse {
 		parent_changed: boolean;
 	};
 }
+
+/**
+ * Request body for PATCH /api/collections/toggle-open
+ */
+export interface ToggleOpenStateRequest {
+	uuid: string;
+	is_opened: boolean;
+}
+
+/**
+ * Data model for toggle open state result
+ */
+export interface ToggleOpenStateData {
+	message: string;
+	uuid: string;
+	is_opened: boolean;
+}
+
+/**
+ * Response from PATCH /api/collections/toggle-open
+ */
+export interface ToggleOpenStateResponse {
+	success: boolean;
+	data?: ToggleOpenStateData;
+}

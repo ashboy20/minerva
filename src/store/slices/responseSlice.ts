@@ -4,7 +4,7 @@ import {
 	PayloadAction,
 } from '@reduxjs/toolkit';
 import ApiCallService from '@/renderer/services/apiCallService';
-import { Row } from '@/types/backend/endpoint-management/endpoint';
+import { Row } from '@/types/backend/common';
 
 interface ApiResponse {
 	status: number;

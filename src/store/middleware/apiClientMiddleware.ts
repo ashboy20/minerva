@@ -3,7 +3,8 @@ import {
 	updateTabName,
 	updateTabRenamingState,
 } from '@/store/slices/tabsSlice';
-import { updateItem } from '@/store/slices/collectionSliceBackup';
+// TODO: Import from collectionSlice when implemented
+// import { updateItem } from '@/store/slices/collectionSlice';
 import { RootState } from '@/store';
 
 interface UpdateItemAction extends AnyAction {

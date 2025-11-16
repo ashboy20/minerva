@@ -6,7 +6,6 @@
 import { ipcMain } from 'electron';
 import log from 'electron-log';
 import { getBackendService } from './backend-service';
-import { getEndpointManagementApis } from './endpoints/endpoint-management';
 import { getCallEndpointApis } from './endpoints/call-endpoint';
 import { getCollectionServiceApis } from './endpoints/collection-service';
 
@@ -86,11 +85,9 @@ export const registerBackendHandlers = () => {
 	);
 	const backendClient = getBackendClient();
 	const endpoints = [
-		...getEndpointManagementApis(backendClient),
 		...getCallEndpointApis(backendClient),
 		...getCollectionServiceApis(backendClient),
 	];
-
 
 	for (const endpointConfig of endpoints) {
 		ipcMain.handle(

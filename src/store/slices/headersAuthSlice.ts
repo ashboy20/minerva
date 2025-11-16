@@ -2,7 +2,7 @@ import {
 	createSlice,
 	PayloadAction,
 } from '@reduxjs/toolkit';
-import { Row } from '@/types/backend/endpoint-management/endpoint';
+import { Row } from '@/types/backend/common';
 
 interface AuthData {
 	authType: string;
