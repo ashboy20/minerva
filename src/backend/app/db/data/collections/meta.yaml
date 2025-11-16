@@ -23,23 +23,3 @@ collections:
   seq: 1
   is_opened: true
   items: []
-- uuid: 13f79686-54bd-43f6-9e05-e4b4e82c7ce1
-  name: test-collection
-  seq: 2
-  is_opened: false
-  items: []
-- uuid: 7ce21bb7-b1e5-4a2d-b6b5-31b1278f760f
-  name: user-auth-permissions
-  seq: 3
-  is_opened: false
-  items: []
-- uuid: 9ec61fdd-676c-4bd8-ad42-dabf1b8aa992
-  name: my-new-api-collection
-  seq: 4
-  is_opened: true
-  items: []
-- uuid: 8d16ac22-3ceb-4206-b00c-469f1386b52b
-  name: api-collection
-  seq: 5
-  is_opened: false
-  items: []
