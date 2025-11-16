@@ -2,7 +2,7 @@ import {
 	createSlice,
 	PayloadAction,
 } from '@reduxjs/toolkit';
-import { Row } from '@/types/backend/endpoint-management/endpoint';
+import { Row } from '@/types/backend/common';
 
 interface UrlState {
 	baseUrl: string;
@@ -206,7 +206,7 @@ export const urlSlice = createSlice({
 			}
 
 			state.fullUrl = newUrl;
-			
+
 			// Extract base URL and path
 			const { baseUrl, path } = extractBaseAndPath(
 				newUrl,

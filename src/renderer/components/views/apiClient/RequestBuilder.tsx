@@ -24,7 +24,7 @@ export function RequestBuilder() {
 		collections,
 		loading: collectionsLoading,
 		error: collectionsError,
-	} = useAppSelector((state) => state.collections);
+	} = useAppSelector((state) => state.collection);
 
 	return (
 		<ResizablePanelGroup

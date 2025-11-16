@@ -30,20 +30,8 @@ const OPEN_CHILD_WINDOW = 'open-child-window';
 const BACKEND_COLLECTIONS_GET = 'backend:collections:get';
 const BACKEND_COLLECTIONS_REORDER =
 	'backend:collections:reorder';
-const BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET =
-	'backend:endpoint-management:collections:get';
-const BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE =
-	'backend:endpoint-management:collection:create';
-const BACKEND_ENDPOINT_MANAGEMENT_REORDER =
-	'backend:endpoint-management:collection:reorder';
-const BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE =
-	'backend:endpoint-management:item:update';
-const BACKEND_ENDPOINT_MANAGEMENT_ITEM_CREATE =
-	'backend:endpoint-management:item:create';
-const BACKEND_ENDPOINT_MANAGEMENT_ITEM_DELETE =
-	'backend:endpoint-management:item:delete';
-const BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET =
-	'backend:endpoint-management:endpoint:get';
+const BACKEND_COLLECTIONS_TOGGLE_OPEN =
+	'backend:collections:toggle-open';
 const BACKEND_API_CALL_ENDPOINT =
 	'backend:api-call:endpoint';
 
@@ -73,13 +61,7 @@ export const ipcChannels = {
 	// Backend API channels
 	BACKEND_COLLECTIONS_GET,
 	BACKEND_COLLECTIONS_REORDER,
-	BACKEND_ENDPOINT_MANAGEMENT_COLLECTIONS_GET,
-	BACKEND_ENDPOINT_MANAGEMENT_COLLECTION_CREATE,
-	BACKEND_ENDPOINT_MANAGEMENT_REORDER,
-	BACKEND_ENDPOINT_MANAGEMENT_ITEM_UPDATE,
-	BACKEND_ENDPOINT_MANAGEMENT_ITEM_CREATE,
-	BACKEND_ENDPOINT_MANAGEMENT_ITEM_DELETE,
-	BACKEND_ENDPOINT_MANAGEMENT_ENDPOINT_GET,
+	BACKEND_COLLECTIONS_TOGGLE_OPEN,
 
 	BACKEND_API_CALL_ENDPOINT,
 } as const;

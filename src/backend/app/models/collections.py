@@ -72,3 +72,25 @@ class ReorderItemResponse(BaseResponse):
     data: Optional[Dict[str, Any]] = Field(
         default=None, description="Reorder operation result"
     )
+
+
+class ToggleOpenStateRequest(BaseModel):
+    """Request model for toggling open state"""
+
+    uuid: str = Field(description="UUID of the item (collection or folder)")
+    is_opened: bool = Field(description="New open state")
+
+
+class ToggleOpenStateResponse(BaseResponse):
+    """Response model for toggle open state"""
+
+    class ToggleOpenStateData(BaseModel):
+        """Data model for toggle open state result"""
+
+        message: str = Field(description="Operation result message")
+        uuid: str = Field(description="UUID of the item that was toggled")
+        is_opened: bool = Field(description="New open state after toggle")
+
+    data: Optional[ToggleOpenStateData] = Field(
+        default=None, description="Toggle operation result"
+    )

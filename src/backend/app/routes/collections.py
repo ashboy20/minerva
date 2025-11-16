@@ -4,6 +4,8 @@ from app.models.collections import (
     GetCollectionsListResponse,
     ReorderItemRequest,
     ReorderItemResponse,
+    ToggleOpenStateRequest,
+    ToggleOpenStateResponse,
 )
 from app.services.collections import CollectionsService
 
@@ -60,3 +62,33 @@ def reorder_collection_item(request: ReorderItemRequest):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Reorder failed: {str(e)}")
+
+
+@router.patch("/toggle-open", response_model=ToggleOpenStateResponse)
+def toggle_open_state(request: ToggleOpenStateRequest):
+    """
+    Toggle the open state of a collection or folder.
+    Updates the is_opened field in the global meta.yaml file.
+
+    Args:
+        request: ToggleOpenStateRequest with:
+            - uuid: UUID of collection or folder
+            - is_opened: New open state (True = opened, False = closed)
+
+    Returns:
+        ToggleOpenStateResponse with operation result
+    """
+    try:
+        result = collections_service.toggle_open_state(
+            uuid=request.uuid,
+            is_opened=request.is_opened,
+        )
+        return ToggleOpenStateResponse(success=True, data=result)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Toggle open state failed: {str(e)}"
+        )

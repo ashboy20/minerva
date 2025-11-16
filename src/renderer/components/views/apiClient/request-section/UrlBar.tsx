@@ -15,7 +15,8 @@ import {
 	useAppDispatch,
 	useAppSelector,
 } from '@/store/hooks';
-import { updateItem } from '@/store/slices/collectionSliceBackup';
+// TODO: Import from collectionSlice when implemented
+// import { updateItem } from '@/store/slices/collectionSlice';
 import { updateFromUrl } from '@/store/slices/urlSlice';
 import {
 	updateEndpoint,
@@ -131,16 +132,25 @@ function UrlBar() {
 		if (!activeTab?.endpoint) return;
 
 		try {
-			await dispatch(
-				updateItem({
-					uuid: activeTab.endpoint.uuid,
-					fields: {
-						method: activeTab.endpoint.method,
-						url: currentUrl,
-						name: activeTab.endpoint.name,
-					},
-				}),
-			).unwrap();
+			// TODO: Implement updateItem in collectionSlice
+			console.log('TODO: Update item from save', {
+				uuid: activeTab.endpoint.uuid,
+				fields: {
+					method: activeTab.endpoint.method,
+					url: currentUrl,
+					name: activeTab.endpoint.name,
+				},
+			});
+			// await dispatch(
+			// 	updateItem({
+			// 		uuid: activeTab.endpoint.uuid,
+			// 		fields: {
+			// 			method: activeTab.endpoint.method,
+			// 			url: currentUrl,
+			// 			name: activeTab.endpoint.name,
+			// 		},
+			// 	}),
+			// ).unwrap();
 
 			// Update the original state to match current state
 			dispatch(

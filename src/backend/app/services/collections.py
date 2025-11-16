@@ -690,3 +690,77 @@ class CollectionsService:
                     return result
 
         return None
+
+    def toggle_open_state(self, uuid: str, is_opened: bool) -> Dict[str, Any]:
+        """Toggle the open state of a collection or folder
+
+        Args:
+            uuid: UUID of the collection or folder
+            is_opened: New open state (True = opened, False = closed)
+
+        Returns:
+            Dictionary with operation result
+
+        Raises:
+            FileNotFoundError: If global meta file not found
+            ValueError: If item with UUID not found
+            Exception: If operation fails
+        """
+        # Read global meta
+        global_meta = self._read_global_meta()
+        if not global_meta:
+            raise FileNotFoundError(f"Global meta file not found: {self.meta_file}")
+
+        # Find and update the item
+        updated = self._update_is_opened_recursive(
+            global_meta.get("collections", []), uuid, is_opened
+        )
+
+        if not updated:
+            raise ValueError(f"Item with UUID '{uuid}' not found")
+
+        # Write updated meta back to file
+        if not self._write_yaml_file(self.meta_file, global_meta):
+            raise Exception(f"Failed to write global meta file: {self.meta_file}")
+
+        return {
+            "message": "Open state updated successfully",
+            "uuid": uuid,
+            "is_opened": is_opened,
+        }
+
+    def _update_is_opened_recursive(
+        self, items: List[Dict[str, Any]], target_uuid: str, is_opened: bool
+    ) -> bool:
+        """Recursively find and update is_opened field
+
+        Args:
+            items: List of items (collections/folders/endpoints)
+            target_uuid: UUID to find and update
+            is_opened: New open state
+
+        Returns:
+            True if item was found and updated, False otherwise
+        """
+        for item in items:
+            # Check if this is the target item
+            if item.get("uuid") == target_uuid:
+                # Get item type - collections at root don't have 'type' field
+                item_type = item.get("type")
+
+                # Endpoints don't have is_opened field
+                if item_type == "endpoint":
+                    return False
+
+                # Collections (no type at root) and folders have is_opened
+                item["is_opened"] = is_opened
+                return True
+
+            # If it has items, search recursively
+            if "items" in item and isinstance(item["items"], list):
+                if self._update_is_opened_recursive(
+                    item["items"], target_uuid, is_opened
+                ):
+                    return True
+
+        return False
