@@ -1,0 +1,40 @@
+uuid: b2c3d4e5-f6a7-4890-b123-4567890bcdef
+type: endpoint
+name: Get Endpoint Status
+description: Check the status of an endpoint
+method: GET
+base_url: http://localhost:8000
+path: /api/endpoint-status/:endpointId
+
+cases:
+  - id: 1
+    name: Get status by endpoint ID
+    is_default: true
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: endpointId
+          value: 'endpoint-123'
+          enabled: true
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth: null
+    expected_response:
+      status_code: 200
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body:
+        status: success
+        data:
+          endpoint_id: 'endpoint-123'
+          status: 'active'

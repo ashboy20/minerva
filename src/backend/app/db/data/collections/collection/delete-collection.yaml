@@ -1,0 +1,39 @@
+uuid: f2a01eea-4390-4f0e-8804-17cd0a9b9d5d
+type: endpoint
+name: Delete Collection
+description: Delete an existing collection
+method: DELETE
+base_url: http://localhost:8000
+path: /api/collections/:uuid
+
+cases:
+  - id: 1
+    name: Delete collection by UUID
+    is_default: true
+    pre: null
+    post: null
+    request:
+      path_params:
+        - row_id: 1
+          keyValue: uuid
+          value: '603c588c-19b7-48b6-8afd-2d5984f2040a'
+          enabled: true
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth: null
+    expected_response:
+      status_code: 200
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body:
+        status: success
+        data:
+          message: Collection deleted successfully

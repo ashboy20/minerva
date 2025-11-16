@@ -1,0 +1,32 @@
+uuid: e6191f37-2f93-48eb-854a-3a1e481e071f
+type: endpoint
+name: Get Collections
+description: Retrieve all collections
+method: GET
+base_url: http://localhost:8000
+path: /api/collections
+
+cases:
+  - id: 1
+    name: Get all collections
+    is_default: true
+    pre: null
+    post: null
+    request:
+      path_params: []
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: null
+      auth: null
+    expected_response:
+      status_code: 200
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body: []

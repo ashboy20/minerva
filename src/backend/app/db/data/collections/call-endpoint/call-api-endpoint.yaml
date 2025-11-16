@@ -1,0 +1,36 @@
+uuid: a1b2c3d4-e5f6-4789-a012-3456789abcde
+type: endpoint
+name: Call API Endpoint
+description: Execute an API endpoint call
+method: POST
+base_url: http://localhost:8000
+path: /api/call-endpoint
+
+cases:
+  - id: 1
+    name: Call endpoint with GET method
+    is_default: true
+    pre: null
+    post: null
+    request:
+      path_params: []
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body:
+        url: 'https://api.example.com/data'
+        method: 'GET'
+      auth: null
+    expected_response:
+      status_code: 200
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body:
+        status: success
+        data: {}

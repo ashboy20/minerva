@@ -1,0 +1,36 @@
+uuid: 00c62093-eba6-4c2b-823b-d3ecc33a12e1
+type: endpoint
+name: Create Collection
+description: Create a new collection
+method: POST
+base_url: http://localhost:8000
+path: /api/collections
+
+cases:
+  - id: 1
+    name: Create basic collection
+    is_default: true
+    pre: null
+    post: null
+    request:
+      path_params: []
+      query_params: []
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body:
+        name: 'New Collection'
+      auth: null
+    expected_response:
+      status_code: 201
+      headers:
+        - row_id: 1
+          keyValue: Content-Type
+          value: application/json
+          enabled: true
+      body:
+        status: success
+        data:
+          message: Collection created successfully
