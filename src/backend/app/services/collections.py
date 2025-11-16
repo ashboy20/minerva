@@ -1,3 +1,5 @@
+import uuid
+import re
 import yaml
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -15,6 +17,31 @@ class CollectionsService:
         """
         self.collections_dir = Path(collections_dir)
         self.meta_file = self.collections_dir / "meta.yaml"
+
+    def _generate_slug(self, name: str) -> str:
+        """Generate a slug from a display name
+
+        Args:
+            name: Display name to convert to slug
+
+        Returns:
+            Slug (lowercase, hyphens instead of spaces/special chars)
+
+        Raises:
+            ValueError: If name is empty or contains no alphanumeric characters
+        """
+        if not name or not name.strip():
+            raise ValueError("Name cannot be empty")
+
+        # Generate slug from name (lowercase, replace spaces/special chars with hyphens)
+        slug = re.sub(r"[^a-z0-9]+", "-", name.lower().strip())
+        slug = re.sub(r"-+", "-", slug)  # Replace multiple hyphens with single
+        slug = slug.strip("-")  # Remove leading/trailing hyphens
+
+        if not slug:
+            raise ValueError("Name must contain at least one alphanumeric character")
+
+        return slug
 
     def _read_yaml_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
         """Read and parse a YAML file
@@ -778,25 +805,9 @@ class CollectionsService:
             ValueError: If name is empty or collection already exists
             Exception: If operation fails
         """
-        import uuid
-        import re
-
-        # Validate name
-        if not name or not name.strip():
-            raise ValueError("Collection name cannot be empty")
-
-        # Generate UUID for the collection
+        # Generate UUID and slug for the collection
         collection_uuid = str(uuid.uuid4())
-
-        # Generate slug from name (lowercase, replace spaces/special chars with hyphens)
-        slug = re.sub(r"[^a-z0-9]+", "-", name.lower().strip())
-        slug = re.sub(r"-+", "-", slug)  # Replace multiple hyphens with single
-        slug = slug.strip("-")  # Remove leading/trailing hyphens
-
-        if not slug:
-            raise ValueError(
-                "Collection name must contain at least one alphanumeric character"
-            )
+        slug = self._generate_slug(name)
 
         # Check if collection with this slug already exists
         collection_dir = self.collections_dir / slug
@@ -845,10 +856,8 @@ class CollectionsService:
         # Write updated global meta
         if not self._write_yaml_file(self.meta_file, global_meta):
             # Rollback: remove created directory
-            import shutil
-
             if collection_dir.exists():
-                shutil.rmtree(collection_dir)
+                self._delete_directory(collection_dir)
             raise Exception("Failed to write global meta file")
 
         return {
@@ -947,3 +956,360 @@ class CollectionsService:
             for child in path.iterdir():
                 self._delete_directory(child)
             path.rmdir()
+
+    def create_folder(self, name: str, parent_uuid: str) -> Dict[str, Any]:
+        """Create a new folder within a collection or folder
+
+        Args:
+            name: Display name for the folder
+            parent_uuid: UUID of the parent collection or folder
+
+        Returns:
+            Dictionary with creation result including UUID, name, and slug
+
+        Raises:
+            ValueError: If name is empty, parent not found, or folder already exists
+            Exception: If operation fails
+        """
+        # Generate UUID and slug for the folder
+        folder_uuid = str(uuid.uuid4())
+        slug = self._generate_slug(name)
+
+        # Read global meta
+        if not self.meta_file.exists():
+            raise FileNotFoundError(
+                f"Global meta file not found: {self.meta_file.resolve()}"
+            )
+
+        global_meta = self._read_global_meta()
+        if not global_meta:
+            raise Exception(
+                f"Failed to parse global meta file: {self.meta_file.resolve()}"
+            )
+
+        # Find the parent (collection or folder)
+        parent_item = self._find_item_by_uuid(global_meta, parent_uuid)
+        if not parent_item:
+            raise ValueError(f"Parent with UUID '{parent_uuid}' not found")
+
+        # Build parent path
+        parent_path = self._build_path_from_uuid(global_meta, parent_uuid)
+
+        # Check if folder with this slug already exists
+        folder_dir = parent_path / slug
+        if folder_dir.exists():
+            raise ValueError(f"Folder name '{slug}' already exists in this location")
+
+        # Create folder directory
+        folder_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create folder meta.yaml
+        folder_meta = {
+            "name": name,
+        }
+        folder_meta_file = folder_dir / "meta.yaml"
+        if not self._write_yaml_file(folder_meta_file, folder_meta):
+            raise Exception(f"Failed to write folder meta file: {folder_meta_file}")
+
+        # Add folder to parent's items list
+        parent_items = parent_item.get("items", [])
+        seq = len(parent_items)
+
+        new_folder = {
+            "type": "folder",
+            "uuid": folder_uuid,
+            "name": slug,
+            "seq": seq,
+            "is_opened": False,
+            "items": [],
+        }
+        parent_items.append(new_folder)
+        parent_item["items"] = parent_items
+
+        # Write updated global meta
+        if not self._write_yaml_file(self.meta_file, global_meta):
+            # Rollback: remove created directory
+            if folder_dir.exists():
+                self._delete_directory(folder_dir)
+            raise Exception("Failed to write global meta file")
+
+        return {
+            "message": "Folder created successfully",
+            "uuid": folder_uuid,
+            "name": name,
+            "slug": slug,
+        }
+
+    def delete_folder(self, uuid: str) -> Dict[str, Any]:
+        """Delete a folder by UUID
+
+        Args:
+            uuid: UUID of the folder to delete
+
+        Returns:
+            Dictionary with deletion result including UUID and slug
+
+        Raises:
+            ValueError: If folder not found or item is not a folder
+            Exception: If operation fails
+        """
+        # Read global meta
+        if not self.meta_file.exists():
+            raise FileNotFoundError(
+                f"Global meta file not found: {self.meta_file.resolve()}"
+            )
+
+        global_meta = self._read_global_meta()
+        if not global_meta:
+            raise Exception(
+                f"Failed to parse global meta file: {self.meta_file.resolve()}"
+            )
+
+        # Find and remove the folder
+        folder_data, parent_uuid, old_index = self._find_and_remove_item(
+            global_meta, uuid
+        )
+        if not folder_data:
+            raise ValueError(f"Folder with UUID '{uuid}' not found")
+
+        # Verify it's a folder
+        if folder_data.get("type") != "folder":
+            raise ValueError(f"Item with UUID '{uuid}' is not a folder")
+
+        # Get folder slug (directory name)
+        slug = folder_data.get("name")
+        if not slug:
+            raise ValueError(f"Folder slug missing in meta: {folder_data}")
+
+        # Build folder directory path
+        parent_path = self._build_path_from_uuid(global_meta, parent_uuid)
+        folder_dir = parent_path / slug
+
+        # Reindex remaining items in parent
+        if parent_uuid is None:
+            parent_items = global_meta.get("collections", [])
+        else:
+            parent = self._find_item_by_uuid(global_meta, parent_uuid)
+            if parent:
+                parent_items = parent.get("items", [])
+            else:
+                parent_items = []
+
+        if parent_items:
+            self._reindex_items(parent_items)
+
+        # Write updated global meta
+        if not self._write_yaml_file(self.meta_file, global_meta):
+            raise Exception("Failed to write global meta file")
+
+        # Delete the folder directory
+        if folder_dir.exists():
+            try:
+                self._delete_directory(folder_dir)
+            except Exception as e:
+                print(f"Warning: Failed to delete folder directory {folder_dir}: {e}")
+
+        return {
+            "message": "Folder deleted successfully",
+            "uuid": uuid,
+            "slug": slug,
+        }
+
+    def create_endpoint(
+        self, name: str, parent_uuid: str, method: str, base_url: str, path: str
+    ) -> Dict[str, Any]:
+        """Create a new endpoint within a collection or folder
+
+        Args:
+            name: Display name for the endpoint
+            parent_uuid: UUID of the parent collection or folder
+            method: HTTP method (GET, POST, etc.)
+            base_url: Base URL for the endpoint
+            path: Request path
+
+        Returns:
+            Dictionary with creation result including UUID, name, and slug
+
+        Raises:
+            ValueError: If name is empty, parent not found, or endpoint already exists
+            Exception: If operation fails
+        """
+        # Generate UUID and slug for the endpoint
+        endpoint_uuid = str(uuid.uuid4())
+        slug = self._generate_slug(name)
+
+        # Read global meta
+        if not self.meta_file.exists():
+            raise FileNotFoundError(
+                f"Global meta file not found: {self.meta_file.resolve()}"
+            )
+
+        global_meta = self._read_global_meta()
+        if not global_meta:
+            raise Exception(
+                f"Failed to parse global meta file: {self.meta_file.resolve()}"
+            )
+
+        # Find the parent (collection or folder)
+        parent_item = self._find_item_by_uuid(global_meta, parent_uuid)
+        if not parent_item:
+            raise ValueError(f"Parent with UUID '{parent_uuid}' not found")
+
+        # Build parent path
+        parent_path = self._build_path_from_uuid(global_meta, parent_uuid)
+
+        # Check if endpoint with this slug already exists
+        endpoint_file = parent_path / f"{slug}.yaml"
+        if endpoint_file.exists():
+            raise ValueError(f"Endpoint name '{slug}' already exists in this location")
+
+        # Create endpoint YAML file with default structure
+        endpoint_data = {
+            "uuid": endpoint_uuid,
+            "type": "endpoint",
+            "name": name,
+            "description": "",
+            "method": method.upper(),
+            "base_url": base_url,
+            "path": path,
+            "cases": [
+                {
+                    "id": 1,
+                    "name": "Default case",
+                    "is_default": True,
+                    "pre": None,
+                    "post": None,
+                    "request": {
+                        "path_params": [],
+                        "query_params": [],
+                        "headers": [
+                            {
+                                "row_id": 1,
+                                "keyValue": "Content-Type",
+                                "value": "application/json",
+                                "enabled": True,
+                            }
+                        ],
+                        "body": None,
+                        "auth": None,
+                    },
+                    "expected_response": {
+                        "status_code": 200,
+                        "headers": [
+                            {
+                                "row_id": 1,
+                                "keyValue": "Content-Type",
+                                "value": "application/json",
+                                "enabled": True,
+                            }
+                        ],
+                        "body": [],
+                    },
+                }
+            ],
+        }
+
+        if not self._write_yaml_file(endpoint_file, endpoint_data):
+            raise Exception(f"Failed to write endpoint file: {endpoint_file}")
+
+        # Add endpoint to parent's items list
+        parent_items = parent_item.get("items", [])
+        seq = len(parent_items)
+
+        new_endpoint = {
+            "type": "endpoint",
+            "uuid": endpoint_uuid,
+            "name": slug,
+            "seq": seq,
+        }
+        parent_items.append(new_endpoint)
+        parent_item["items"] = parent_items
+
+        # Write updated global meta
+        if not self._write_yaml_file(self.meta_file, global_meta):
+            # Rollback: remove created file
+            if endpoint_file.exists():
+                endpoint_file.unlink()
+            raise Exception("Failed to write global meta file")
+
+        return {
+            "message": "Endpoint created successfully",
+            "uuid": endpoint_uuid,
+            "name": name,
+            "slug": slug,
+        }
+
+    def delete_endpoint(self, uuid: str) -> Dict[str, Any]:
+        """Delete an endpoint by UUID
+
+        Args:
+            uuid: UUID of the endpoint to delete
+
+        Returns:
+            Dictionary with deletion result including UUID and slug
+
+        Raises:
+            ValueError: If endpoint not found or item is not an endpoint
+            Exception: If operation fails
+        """
+        # Read global meta
+        if not self.meta_file.exists():
+            raise FileNotFoundError(
+                f"Global meta file not found: {self.meta_file.resolve()}"
+            )
+
+        global_meta = self._read_global_meta()
+        if not global_meta:
+            raise Exception(
+                f"Failed to parse global meta file: {self.meta_file.resolve()}"
+            )
+
+        # Find and remove the endpoint
+        endpoint_data, parent_uuid, old_index = self._find_and_remove_item(
+            global_meta, uuid
+        )
+        if not endpoint_data:
+            raise ValueError(f"Endpoint with UUID '{uuid}' not found")
+
+        # Verify it's an endpoint
+        if endpoint_data.get("type") != "endpoint":
+            raise ValueError(f"Item with UUID '{uuid}' is not an endpoint")
+
+        # Get endpoint slug (file name without .yaml)
+        slug = endpoint_data.get("name")
+        if not slug:
+            raise ValueError(f"Endpoint slug missing in meta: {endpoint_data}")
+
+        # Build endpoint file path
+        parent_path = self._build_path_from_uuid(global_meta, parent_uuid)
+        endpoint_file = parent_path / f"{slug}.yaml"
+
+        # Reindex remaining items in parent
+        if parent_uuid is None:
+            parent_items = global_meta.get("collections", [])
+        else:
+            parent = self._find_item_by_uuid(global_meta, parent_uuid)
+            if parent:
+                parent_items = parent.get("items", [])
+            else:
+                parent_items = []
+
+        if parent_items:
+            self._reindex_items(parent_items)
+
+        # Write updated global meta
+        if not self._write_yaml_file(self.meta_file, global_meta):
+            raise Exception("Failed to write global meta file")
+
+        # Delete the endpoint file
+        if endpoint_file.exists():
+            try:
+                endpoint_file.unlink()
+            except Exception as e:
+                print(f"Warning: Failed to delete endpoint file {endpoint_file}: {e}")
+
+        return {
+            "message": "Endpoint deleted successfully",
+            "uuid": uuid,
+            "slug": slug,
+        }

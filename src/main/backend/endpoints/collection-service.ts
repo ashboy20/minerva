@@ -18,6 +18,14 @@ import {
 	CreateCollectionResponse,
 	DeleteCollectionRequest,
 	DeleteCollectionResponse,
+	CreateFolderRequest,
+	CreateFolderResponse,
+	DeleteFolderRequest,
+	DeleteFolderResponse,
+	CreateEndpointRequest,
+	CreateEndpointResponse,
+	DeleteEndpointRequest,
+	DeleteEndpointResponse,
 } from '../../../types/backend/collections/collection';
 
 /**
@@ -111,6 +119,78 @@ export function getCollectionServiceApis(
 				return client.processResponse(
 					response,
 				) as Promise<ToggleOpenStateResponse>;
+			},
+		},
+		{
+			ipcChannel: ipcChannels.BACKEND_FOLDER_CREATE,
+			handler: async (
+				_event,
+				request: CreateFolderRequest,
+			): Promise<CreateFolderResponse> => {
+				const response = await client.request(
+					'/api/collections/folder',
+					{
+						method: 'POST',
+						body: JSON.stringify(request),
+					},
+				);
+				return client.processResponse(
+					response,
+				) as Promise<CreateFolderResponse>;
+			},
+		},
+		{
+			ipcChannel: ipcChannels.BACKEND_FOLDER_DELETE,
+			handler: async (
+				_event,
+				request: DeleteFolderRequest,
+			): Promise<DeleteFolderResponse> => {
+				const response = await client.request(
+					'/api/collections/folder',
+					{
+						method: 'DELETE',
+						body: JSON.stringify(request),
+					},
+				);
+				return client.processResponse(
+					response,
+				) as Promise<DeleteFolderResponse>;
+			},
+		},
+		{
+			ipcChannel: ipcChannels.BACKEND_ENDPOINT_CREATE,
+			handler: async (
+				_event,
+				request: CreateEndpointRequest,
+			): Promise<CreateEndpointResponse> => {
+				const response = await client.request(
+					'/api/collections/endpoint',
+					{
+						method: 'POST',
+						body: JSON.stringify(request),
+					},
+				);
+				return client.processResponse(
+					response,
+				) as Promise<CreateEndpointResponse>;
+			},
+		},
+		{
+			ipcChannel: ipcChannels.BACKEND_ENDPOINT_DELETE,
+			handler: async (
+				_event,
+				request: DeleteEndpointRequest,
+			): Promise<DeleteEndpointResponse> => {
+				const response = await client.request(
+					'/api/collections/endpoint',
+					{
+						method: 'DELETE',
+						body: JSON.stringify(request),
+					},
+				);
+				return client.processResponse(
+					response,
+				) as Promise<DeleteEndpointResponse>;
 			},
 		},
 	];

@@ -137,3 +137,94 @@ class DeleteCollectionResponse(BaseResponse):
     data: Optional[DeleteCollectionData] = Field(
         default=None, description="Collection deletion result"
     )
+
+
+class CreateFolderRequest(BaseModel):
+    """Request model for creating a new folder"""
+
+    name: str = Field(description="Display name for the folder")
+    parent_uuid: str = Field(description="UUID of the parent collection or folder")
+
+
+class CreateFolderResponse(BaseResponse):
+    """Response model for folder creation"""
+
+    class CreateFolderData(BaseModel):
+        """Data model for folder creation result"""
+
+        message: str = Field(description="Operation result message")
+        uuid: str = Field(description="UUID of the created folder")
+        name: str = Field(description="Display name of the created folder")
+        slug: str = Field(description="Slug (directory name) of the created folder")
+
+    data: Optional[CreateFolderData] = Field(
+        default=None, description="Folder creation result"
+    )
+
+
+class DeleteFolderRequest(BaseModel):
+    """Request model for deleting a folder"""
+
+    uuid: str = Field(description="UUID of the folder to delete")
+
+
+class DeleteFolderResponse(BaseResponse):
+    """Response model for folder deletion"""
+
+    class DeleteFolderData(BaseModel):
+        """Data model for folder deletion result"""
+
+        message: str = Field(description="Operation result message")
+        uuid: str = Field(description="UUID of the deleted folder")
+        slug: str = Field(description="Slug of the deleted folder")
+
+    data: Optional[DeleteFolderData] = Field(
+        default=None, description="Folder deletion result"
+    )
+
+
+class CreateEndpointRequest(BaseModel):
+    """Request model for creating a new endpoint"""
+
+    name: str = Field(description="Display name for the endpoint")
+    parent_uuid: str = Field(description="UUID of the parent collection or folder")
+    method: str = Field(default="GET", description="HTTP method (GET, POST, PUT, etc.)")
+    base_url: str = Field(default="http://localhost:8000", description="Base URL")
+    path: str = Field(default="/", description="Request path")
+
+
+class CreateEndpointResponse(BaseResponse):
+    """Response model for endpoint creation"""
+
+    class CreateEndpointData(BaseModel):
+        """Data model for endpoint creation result"""
+
+        message: str = Field(description="Operation result message")
+        uuid: str = Field(description="UUID of the created endpoint")
+        name: str = Field(description="Display name of the created endpoint")
+        slug: str = Field(description="Slug (file name) of the created endpoint")
+
+    data: Optional[CreateEndpointData] = Field(
+        default=None, description="Endpoint creation result"
+    )
+
+
+class DeleteEndpointRequest(BaseModel):
+    """Request model for deleting an endpoint"""
+
+    uuid: str = Field(description="UUID of the endpoint to delete")
+
+
+class DeleteEndpointResponse(BaseResponse):
+    """Response model for endpoint deletion"""
+
+    class DeleteEndpointData(BaseModel):
+        """Data model for endpoint deletion result"""
+
+        message: str = Field(description="Operation result message")
+        uuid: str = Field(description="UUID of the deleted endpoint")
+        slug: str = Field(description="Slug of the deleted endpoint")
+
+    data: Optional[DeleteEndpointData] = Field(
+        default=None, description="Endpoint deletion result"
+    )

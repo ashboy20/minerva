@@ -8,6 +8,10 @@ import {
 	ToggleOpenStateRequest,
 	CreateCollectionRequest,
 	DeleteCollectionRequest,
+	CreateFolderRequest,
+	DeleteFolderRequest,
+	CreateEndpointRequest,
+	DeleteEndpointRequest,
 } from '@/types/backend/collections/collection';
 
 export interface Endpoint {
@@ -211,6 +215,132 @@ export const deleteCollection = createAsyncThunk(
 	},
 );
 
+export const createFolder = createAsyncThunk(
+	'collection/createFolder',
+	async (
+		request: {
+			name: string;
+			parentUuid: string;
+		},
+		{ rejectWithValue },
+	) => {
+		const requestData: CreateFolderRequest = {
+			name: request.name,
+			parent_uuid: request.parentUuid,
+		};
+
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_FOLDER_CREATE,
+			requestData,
+		);
+
+		if (result && result.success) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error('Create folder API failed:', result);
+		return rejectWithValue(
+			result?.data?.error || 'Failed to create folder',
+		);
+	},
+);
+
+export const deleteFolder = createAsyncThunk(
+	'collection/deleteFolder',
+	async (
+		request: {
+			uuid: string;
+		},
+		{ rejectWithValue },
+	) => {
+		const requestData: DeleteFolderRequest = {
+			uuid: request.uuid,
+		};
+
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_FOLDER_DELETE,
+			requestData,
+		);
+
+		if (result && result.success) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error('Delete folder API failed:', result);
+		return rejectWithValue(
+			result?.data?.error || 'Failed to delete folder',
+		);
+	},
+);
+
+export const createEndpoint = createAsyncThunk(
+	'collection/createEndpoint',
+	async (
+		request: {
+			name: string;
+			parentUuid: string;
+			method?: string;
+			baseUrl?: string;
+			path?: string;
+		},
+		{ rejectWithValue },
+	) => {
+		const requestData: CreateEndpointRequest = {
+			name: request.name,
+			parent_uuid: request.parentUuid,
+			method: request.method,
+			base_url: request.baseUrl,
+			path: request.path,
+		};
+
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_CREATE,
+			requestData,
+		);
+
+		if (result && result.success) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error('Create endpoint API failed:', result);
+		return rejectWithValue(
+			result?.data?.error || 'Failed to create endpoint',
+		);
+	},
+);
+
+export const deleteEndpoint = createAsyncThunk(
+	'collection/deleteEndpoint',
+	async (
+		request: {
+			uuid: string;
+		},
+		{ rejectWithValue },
+	) => {
+		const requestData: DeleteEndpointRequest = {
+			uuid: request.uuid,
+		};
+
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_DELETE,
+			requestData,
+		);
+
+		if (result && result.success) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error('Delete endpoint API failed:', result);
+		return rejectWithValue(
+			result?.data?.error || 'Failed to delete endpoint',
+		);
+	},
+);
+
 export const collectionSlice = createSlice({
 	name: 'collection',
 	initialState,
@@ -296,7 +426,55 @@ export const collectionSlice = createSlice({
 					state.deleting = false;
 					state.deleteError = action.payload as string;
 				},
-			);
+			)
+			// Create folder
+			.addCase(createFolder.pending, (state) => {
+				state.creating = true;
+				state.createError = null;
+			})
+			.addCase(createFolder.fulfilled, (state) => {
+				state.creating = false;
+			})
+			.addCase(createFolder.rejected, (state, action) => {
+				state.creating = false;
+				state.createError = action.payload as string;
+			})
+			// Delete folder
+			.addCase(deleteFolder.pending, (state) => {
+				state.deleting = true;
+				state.deleteError = null;
+			})
+			.addCase(deleteFolder.fulfilled, (state) => {
+				state.deleting = false;
+			})
+			.addCase(deleteFolder.rejected, (state, action) => {
+				state.deleting = false;
+				state.deleteError = action.payload as string;
+			})
+			// Create endpoint
+			.addCase(createEndpoint.pending, (state) => {
+				state.creating = true;
+				state.createError = null;
+			})
+			.addCase(createEndpoint.fulfilled, (state) => {
+				state.creating = false;
+			})
+			.addCase(createEndpoint.rejected, (state, action) => {
+				state.creating = false;
+				state.createError = action.payload as string;
+			})
+			// Delete endpoint
+			.addCase(deleteEndpoint.pending, (state) => {
+				state.deleting = true;
+				state.deleteError = null;
+			})
+			.addCase(deleteEndpoint.fulfilled, (state) => {
+				state.deleting = false;
+			})
+			.addCase(deleteEndpoint.rejected, (state, action) => {
+				state.deleting = false;
+				state.deleteError = action.payload as string;
+			});
 	},
 });
 

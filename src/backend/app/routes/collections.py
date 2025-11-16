@@ -10,6 +10,14 @@ from app.models.collections import (
     CreateCollectionResponse,
     DeleteCollectionRequest,
     DeleteCollectionResponse,
+    CreateFolderRequest,
+    CreateFolderResponse,
+    DeleteFolderRequest,
+    DeleteFolderResponse,
+    CreateEndpointRequest,
+    CreateEndpointResponse,
+    DeleteEndpointRequest,
+    DeleteEndpointResponse,
 )
 from app.services.collections import CollectionsService
 
@@ -146,4 +154,125 @@ def toggle_open_state(request: ToggleOpenStateRequest):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Toggle open state failed: {str(e)}"
+        )
+
+
+@router.post("/folder", response_model=CreateFolderResponse)
+def create_folder(request: CreateFolderRequest):
+    """
+    Create a new folder within a collection or folder.
+
+    Args:
+        request: CreateFolderRequest with:
+            - name: Display name for the folder
+            - parent_uuid: UUID of the parent collection or folder
+
+    Returns:
+        CreateFolderResponse with operation result
+    """
+    try:
+        result = collections_service.create_folder(
+            name=request.name, parent_uuid=request.parent_uuid
+        )
+        return CreateFolderResponse(
+            success=True, data=CreateFolderResponse.CreateFolderData(**result)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create folder: {str(e)}"
+        )
+
+
+@router.delete("/folder", response_model=DeleteFolderResponse)
+def delete_folder(request: DeleteFolderRequest):
+    """
+    Delete a folder by UUID.
+    Removes the folder from global meta.yaml and deletes its directory.
+
+    Args:
+        request: DeleteFolderRequest with UUID of the folder
+
+    Returns:
+        DeleteFolderResponse with operation result
+    """
+    try:
+        result = collections_service.delete_folder(uuid=request.uuid)
+        return DeleteFolderResponse(
+            success=True, data=DeleteFolderResponse.DeleteFolderData(**result)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete folder: {str(e)}"
+        )
+
+
+@router.post("/endpoint", response_model=CreateEndpointResponse)
+def create_endpoint(request: CreateEndpointRequest):
+    """
+    Create a new endpoint within a collection or folder.
+
+    Args:
+        request: CreateEndpointRequest with:
+            - name: Display name for the endpoint
+            - parent_uuid: UUID of the parent collection or folder
+            - method: HTTP method (default: GET)
+            - base_url: Base URL (default: http://localhost:8000)
+            - path: Request path (default: /)
+
+    Returns:
+        CreateEndpointResponse with operation result
+    """
+    try:
+        result = collections_service.create_endpoint(
+            name=request.name,
+            parent_uuid=request.parent_uuid,
+            method=request.method,
+            base_url=request.base_url,
+            path=request.path,
+        )
+        return CreateEndpointResponse(
+            success=True, data=CreateEndpointResponse.CreateEndpointData(**result)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create endpoint: {str(e)}"
+        )
+
+
+@router.delete("/endpoint", response_model=DeleteEndpointResponse)
+def delete_endpoint(request: DeleteEndpointRequest):
+    """
+    Delete an endpoint by UUID.
+    Removes the endpoint from global meta.yaml and deletes its file.
+
+    Args:
+        request: DeleteEndpointRequest with UUID of the endpoint
+
+    Returns:
+        DeleteEndpointResponse with operation result
+    """
+    try:
+        result = collections_service.delete_endpoint(uuid=request.uuid)
+        return DeleteEndpointResponse(
+            success=True, data=DeleteEndpointResponse.DeleteEndpointData(**result)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete endpoint: {str(e)}"
         )

@@ -21,6 +21,8 @@ import { useAppDispatch } from '@/store/hooks';
 import {
 	getCollections,
 	deleteCollection,
+	deleteFolder,
+	deleteEndpoint,
 } from '@/store/slices/collectionSlice';
 import {
 	ContextMenu,
@@ -242,7 +244,6 @@ export const TreeItem = React.forwardRef<
 
 		const handleConfirmDelete = async () => {
 			try {
-				// Only collections can be deleted via this route
 				if (node.data.type === 'collection') {
 					await dispatch(
 						deleteCollection({ uuid: node.id as string }),
@@ -252,12 +253,24 @@ export const TreeItem = React.forwardRef<
 					await dispatch(getCollections()).unwrap();
 
 					console.log('Collection deleted successfully');
-				} else {
-					// TODO: Implement delete for folders and endpoints
-					console.log('TODO: Delete item', {
-						uuid: node.id as string,
-						type: node.data.type,
-					});
+				} else if (node.data.type === 'folder') {
+					await dispatch(
+						deleteFolder({ uuid: node.id as string }),
+					).unwrap();
+
+					// Refresh collections list
+					await dispatch(getCollections()).unwrap();
+
+					console.log('Folder deleted successfully');
+				} else if (node.data.type === 'endpoint') {
+					await dispatch(
+						deleteEndpoint({ uuid: node.id as string }),
+					).unwrap();
+
+					// Refresh collections list
+					await dispatch(getCollections()).unwrap();
+
+					console.log('Endpoint deleted successfully');
 				}
 			} catch (error) {
 				console.error('Error deleting item:', error);
