@@ -1,4 +1,8 @@
-import React, { useEffect, useMemo } from 'react';
+import React, {
+	useEffect,
+	useMemo,
+	useRef,
+} from 'react';
 import {
 	Card,
 	CardContent,
@@ -8,6 +12,8 @@ import {
 	Endpoint,
 	Folder,
 	getCollections,
+	reorderCollectionItem,
+	toggleItemOpenState,
 } from '@/store/slices/collectionSlice';
 import { CollectionHeader } from '@/renderer/components/views/apiClient/collection-list/CollectionHeader';
 import { DndProvider } from 'react-dnd';
@@ -36,7 +42,8 @@ export interface MinervaNodeModel extends NodeModel<any> {
 const parseTreeData = (
 	items: (Collection | Folder | Endpoint)[],
 	parentId: string | number = 0,
-): MinervaNodeModel[] => {
+	openIds: string[] = [],
+): { treeData: MinervaNodeModel[]; openIds: string[] } => {
 	const treeData: MinervaNodeModel[] = [];
 
 	items.forEach((item) => {
@@ -55,14 +62,19 @@ const parseTreeData = (
 			};
 			treeData.push(collectionNode);
 
+			// Add to openIds if is_opened is true
+			if (collection.is_opened) {
+				openIds.push(collection.uuid);
+			}
+
 			// Process collection items recursively
 			if (collection.items && collection.items.length > 0) {
-				treeData.push(
-					...parseTreeData(
-						collection.items,
-						collection.uuid,
-					),
+				const result = parseTreeData(
+					collection.items,
+					collection.uuid,
+					openIds,
 				);
+				treeData.push(...result.treeData);
 			}
 		}
 		// Handle folders (from local files)
@@ -80,11 +92,19 @@ const parseTreeData = (
 			};
 			treeData.push(folderNode);
 
+			// Add to openIds if is_opened is true
+			if (folder.is_opened) {
+				openIds.push(folder.uuid);
+			}
+
 			// Process folder items recursively
 			if (folder.items && folder.items.length > 0) {
-				treeData.push(
-					...parseTreeData(folder.items, folder.uuid),
+				const result = parseTreeData(
+					folder.items,
+					folder.uuid,
+					openIds,
 				);
+				treeData.push(...result.treeData);
 			}
 		}
 		// Handle endpoints (from local files)
@@ -109,18 +129,18 @@ const parseTreeData = (
 		}
 	});
 
-	return treeData;
+	return { treeData, openIds };
 };
 
 export function CollectionList() {
 	const dispatch = useAppDispatch();
 
 	const { collections, loading, error } = useAppSelector(
-		(state) => state.newCollections,
+		(state) => state.collection,
 	);
 
-	// Compute tree data from collections using useMemo
-	const treeData = useMemo(
+	// Compute tree data and initial open IDs from collections using useMemo
+	const { treeData, openIds: initialOpenIds } = useMemo(
 		() => parseTreeData(collections),
 		[collections],
 	);
@@ -129,6 +149,30 @@ export function CollectionList() {
 	const [openIds, setOpenIdsLocal] = React.useState<
 		string[]
 	>([]);
+
+	// Track previous openIds for debounced sync
+	const previousOpenIdsRef = useRef<string[]>([]);
+
+	// Debounced function to sync open states to backend
+	const debouncedSyncOpenState =
+		useRef<NodeJS.Timeout | null>(null);
+
+	// Cleanup debounce on unmount
+	useEffect(() => {
+		return () => {
+			if (debouncedSyncOpenState.current) {
+				clearTimeout(debouncedSyncOpenState.current);
+			}
+		};
+	}, []);
+
+	// Initialize openIds from parsed data when collections load
+	React.useEffect(() => {
+		if (initialOpenIds.length > 0) {
+			setOpenIdsLocal(initialOpenIds);
+			previousOpenIdsRef.current = initialOpenIds;
+		}
+	}, [initialOpenIds]);
 
 	// Fetch collections on mount
 	useEffect(() => {
@@ -216,30 +260,113 @@ export function CollectionList() {
 		}
 	};
 
-	const handleDrop = (
+	const handleDrop = async (
 		newTree: NodeModel<any>[],
 		options: DropOptions<any>,
 	) => {
-		// TODO: Implement reorder in newCollectionSlice
-		console.log('TODO: Reorder items', {
-			draggedUuid: options.dragSource?.id,
-			oldParentUuid: options.dragSource?.parent,
-			newParentUuid: options.dropTarget?.id,
-			relativeIndex: options.relativeIndex,
+		if (!options.dragSource || !options.dropTargetId) {
+			console.error(
+				'Invalid drop operation: missing drag source or drop target',
+			);
+			return;
+		}
+
+		const draggedUuid = options.dragSource.id as string;
+		const destinationParentUuid =
+			options.dropTargetId === 0
+				? null
+				: (options.dropTargetId as string);
+		const destinationSeq = options.destinationIndex ?? 0;
+
+		console.log('Reorder operation:', {
+			itemUuid: draggedUuid,
+			destinationFolderUuid: destinationParentUuid,
+			destinationSeq,
 		});
 
-		// TODO: Refresh collections after reorder
-		// dispatch(getCollections());
+		try {
+			// Call the reorder thunk
+			await dispatch(
+				reorderCollectionItem({
+					itemUuid: draggedUuid,
+					destinationFolderUuid: destinationParentUuid,
+					destinationSeq,
+				}),
+			).unwrap();
+
+			// Refresh collections after successful reorder
+			await dispatch(getCollections()).unwrap();
+
+			console.log('Reorder completed successfully');
+		} catch (error) {
+			console.error('Failed to reorder item:', error);
+		}
 	};
 
 	const handleChangeOpen = (
 		newOpenIds: NodeModel['id'][],
 	) => {
 		const stringIds = newOpenIds.map((id) => String(id));
+		const previousIds = previousOpenIdsRef.current;
+
+		// 1. Update UI immediately (optimistic update)
 		setOpenIdsLocal(stringIds);
 
-		// TODO: Persist openIds to storage
-		console.log('TODO: Save openIds to storage', stringIds);
+		// 2. Calculate what changed
+		const addedIds = stringIds.filter(
+			(id) => !previousIds.includes(id),
+		);
+		const removedIds = previousIds.filter(
+			(id) => !stringIds.includes(id),
+		);
+
+		// Update ref
+		previousOpenIdsRef.current = stringIds;
+
+		// 3. Cancel previous pending sync
+		if (debouncedSyncOpenState.current) {
+			clearTimeout(debouncedSyncOpenState.current);
+		}
+
+		// 4. Debounced backend sync (500ms after last change)
+		if (addedIds.length > 0 || removedIds.length > 0) {
+			debouncedSyncOpenState.current = setTimeout(
+				async () => {
+					try {
+						// Sync all changes to backend
+						await Promise.all([
+							...addedIds.map((uuid) =>
+								dispatch(
+									toggleItemOpenState({
+										uuid,
+										isOpened: true,
+									}),
+								).unwrap(),
+							),
+							...removedIds.map((uuid) =>
+								dispatch(
+									toggleItemOpenState({
+										uuid,
+										isOpened: false,
+									}),
+								).unwrap(),
+							),
+						]);
+
+						console.log(
+							'Open states synced to backend successfully',
+						);
+					} catch (error) {
+						console.error(
+							'Failed to sync open states:',
+							error,
+						);
+						// Optionally: revert UI on error or show notification
+					}
+				},
+				500,
+			);
+		}
 	};
 
 	const handleCreateItem = async (

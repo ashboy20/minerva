@@ -19,7 +19,8 @@ import {
 	ContextMenuTrigger,
 } from '@/renderer/components/ui/context-menu';
 import { Input } from '@/renderer/components/ui/input';
-import { updateItem } from '@/store/slices/collectionSliceBackup';
+// TODO: Import from collectionSlice when implemented
+// import { updateItem } from '@/store/slices/collectionSlice';
 
 interface TabBarProps {
 	className?: string;
@@ -67,13 +68,18 @@ export function TabBar({ className }: TabBarProps) {
 		newName: string,
 	) => {
 		try {
+			// TODO: Implement updateItem in collectionSlice
+			console.log('TODO: Update item name from tab', {
+				uuid,
+				fields: { name: newName },
+			});
 			// Update backend first
-			await dispatch(
-				updateItem({
-					uuid,
-					fields: { name: newName },
-				}),
-			).unwrap();
+			// await dispatch(
+			// 	updateItem({
+			// 		uuid,
+			// 		fields: { name: newName },
+			// 	}),
+			// ).unwrap();
 		} catch (error) {
 			console.error('Failed to update item name:', error);
 		}

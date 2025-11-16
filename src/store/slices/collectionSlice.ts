@@ -3,7 +3,10 @@ import {
 	createAsyncThunk,
 	createSlice,
 } from '@reduxjs/toolkit';
-import { ReorderItemRequest } from '@/types/backend/collections/collection';
+import {
+	ReorderItemRequest,
+	ToggleOpenStateRequest,
+} from '@/types/backend/collections/collection';
 
 export interface Endpoint {
 	uuid: string;
@@ -22,6 +25,7 @@ export interface Folder {
 	type: 'folder';
 	seq: number;
 	items?: (Folder | Endpoint)[];
+	is_opened: boolean;
 	created_at: string;
 	updated_at: string;
 }
@@ -32,6 +36,7 @@ export interface Collection {
 	type: 'collection';
 	seq: number;
 	items?: (Folder | Endpoint)[];
+	is_opened: boolean;
 	created_at: string;
 	updated_at: string;
 }
@@ -42,6 +47,8 @@ interface CollectionState {
 	error: string | null;
 	reordering: boolean;
 	reorderError: string | null;
+	toggling: boolean;
+	toggleError: string | null;
 }
 
 const initialState: CollectionState = {
@@ -50,10 +57,12 @@ const initialState: CollectionState = {
 	error: null,
 	reordering: false,
 	reorderError: null,
+	toggling: false,
+	toggleError: null,
 };
 
 export const getCollections = createAsyncThunk(
-	'newCollection/getCollections',
+	'collection/getCollections',
 	async (_, { rejectWithValue }) => {
 		const result = await window.electron.ipcRenderer.invoke(
 			ipcChannels.BACKEND_COLLECTIONS_GET,
@@ -70,7 +79,7 @@ export const getCollections = createAsyncThunk(
 );
 
 export const reorderCollectionItem = createAsyncThunk(
-	'newCollection/reorderItem',
+	'collection/reorderItem',
 	async (
 		request: {
 			itemUuid: string;
@@ -81,7 +90,8 @@ export const reorderCollectionItem = createAsyncThunk(
 	) => {
 		const requestData: ReorderItemRequest = {
 			item_uuid: request.itemUuid,
-			destination_folder_uuid: request.destinationFolderUuid,
+			destination_folder_uuid:
+				request.destinationFolderUuid,
 			destination_seq: request.destinationSeq,
 		};
 
@@ -102,8 +112,39 @@ export const reorderCollectionItem = createAsyncThunk(
 	},
 );
 
-export const newCollectionSlice = createSlice({
-	name: 'newCollection',
+export const toggleItemOpenState = createAsyncThunk(
+	'collection/toggleOpenState',
+	async (
+		request: {
+			uuid: string;
+			isOpened: boolean;
+		},
+		{ rejectWithValue },
+	) => {
+		const requestData: ToggleOpenStateRequest = {
+			uuid: request.uuid,
+			is_opened: request.isOpened,
+		};
+
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_COLLECTIONS_TOGGLE_OPEN,
+			requestData,
+		);
+
+		if (result && result.success) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error('Toggle open state API failed:', result);
+		return rejectWithValue(
+			result?.error || 'Failed to toggle open state',
+		);
+	},
+);
+
+export const collectionSlice = createSlice({
+	name: 'collection',
 	initialState,
 	reducers: {},
 	extraReducers: (builder) => {
@@ -139,8 +180,24 @@ export const newCollectionSlice = createSlice({
 					state.reordering = false;
 					state.reorderError = action.payload as string;
 				},
+			)
+			// Toggle open state
+			.addCase(toggleItemOpenState.pending, (state) => {
+				state.toggling = true;
+				state.toggleError = null;
+			})
+			.addCase(toggleItemOpenState.fulfilled, (state) => {
+				state.toggling = false;
+				// State will be updated by subsequent getCollections call
+			})
+			.addCase(
+				toggleItemOpenState.rejected,
+				(state, action) => {
+					state.toggling = false;
+					state.toggleError = action.payload as string;
+				},
 			);
 	},
 });
 
-export default newCollectionSlice.reducer;
+export default collectionSlice.reducer;

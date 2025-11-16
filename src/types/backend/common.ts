@@ -1,3 +1,7 @@
+/**
+ * Common types shared across backend API responses
+ */
+
 export type Row = {
 	row_id: number;
 	keyValue: string;
@@ -30,12 +34,12 @@ export type Case = {
 	id: number;
 	uuid: string;
 	name: string;
-	description: string;y
+	description: string;
 	request: Request;
 	response: Response;
 };
 
-export type Endpoint = {
+export type EndpointDetail = {
 	id: number;
 	uuid: string;
 	name: string;

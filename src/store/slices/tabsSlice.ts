@@ -2,13 +2,14 @@ import {
 	createSlice,
 	PayloadAction,
 } from '@reduxjs/toolkit';
-import { Endpoint } from '@/types/backend/endpoint-management/endpoint';
+import { EndpointDetail } from '@/types/backend/common';
 import { getUUID } from '@/utils/getUUID';
-import { updateItem } from '@/store/slices/collectionSliceBackup';
+// TODO: Import from collectionSlice when implemented
+// import { updateItem } from '@/store/slices/collectionSlice';
 
 interface Tab {
-	endpoint: Endpoint;
-	originalEndpoint: Endpoint; // Store original state for comparison
+	endpoint: EndpointDetail;
+	originalEndpoint: EndpointDetail; // Store original state for comparison
 	activeCaseId: string;
 	notSaved: boolean;
 	new: boolean;
@@ -26,14 +27,16 @@ const initialState: TabsState = {
 };
 
 // Helper function to deep clone an endpoint
-const cloneEndpoint = (endpoint: Endpoint): Endpoint => {
+const cloneEndpoint = (
+	endpoint: EndpointDetail,
+): EndpointDetail => {
 	return JSON.parse(JSON.stringify(endpoint));
 };
 
 // Helper function to check if endpoint has changed
 const hasEndpointChanged = (
-	current: Endpoint,
-	original: Endpoint,
+	current: EndpointDetail,
+	original: EndpointDetail,
 ): boolean => {
 	// Compare relevant fields
 	return (
@@ -51,7 +54,7 @@ export const tabsSlice = createSlice({
 	reducers: {
 		addTab: (
 			state,
-			action: PayloadAction<Endpoint | undefined>,
+			action: PayloadAction<EndpointDetail | undefined>,
 		) => {
 			const endpoint = action.payload;
 			if (endpoint && endpoint.uuid) {
@@ -95,7 +98,7 @@ export const tabsSlice = createSlice({
 					},
 				};
 
-				const newEndpoint: Endpoint = {
+				const newEndpoint: EndpointDetail = {
 					id: 0,
 					uuid: getUUID(),
 					name: 'New Request',
@@ -227,7 +230,7 @@ export const tabsSlice = createSlice({
 			state,
 			action: PayloadAction<{
 				endpointId: string;
-				fields: Partial<Endpoint>;
+				fields: Partial<EndpointDetail>;
 			}>,
 		) => {
 			const { endpointId, fields } = action.payload;

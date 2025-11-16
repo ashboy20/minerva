@@ -8,7 +8,13 @@ import {
 	BackendClient,
 	EndpointConfig,
 } from '../backend-client';
-import { ReorderItemRequest } from '../../../types/backend/collections/collection';
+import {
+	ReorderItemRequest,
+	ReorderItemResponse,
+	GetCollectionsListResponse,
+	ToggleOpenStateRequest,
+	ToggleOpenStateResponse,
+} from '../../../types/backend/collections/collection';
 
 /**
  * Get collection service endpoint configurations for IPC handlers
@@ -19,11 +25,15 @@ export function getCollectionServiceApis(
 	return [
 		{
 			ipcChannel: ipcChannels.BACKEND_COLLECTIONS_GET,
-			handler: async (_event) => {
+			handler: async (
+				_event,
+			): Promise<GetCollectionsListResponse> => {
 				const response = await client.request(
 					'/api/collections/',
 				);
-				return client.processResponse(response);
+				return client.processResponse(
+					response,
+				) as Promise<GetCollectionsListResponse>;
 			},
 		},
 		{
@@ -31,7 +41,7 @@ export function getCollectionServiceApis(
 			handler: async (
 				_event,
 				request: ReorderItemRequest,
-			) => {
+			): Promise<ReorderItemResponse> => {
 				const response = await client.request(
 					'/api/collections/reorder',
 					{
@@ -39,7 +49,28 @@ export function getCollectionServiceApis(
 						body: JSON.stringify(request),
 					},
 				);
-				return client.processResponse(response);
+				return client.processResponse(
+					response,
+				) as Promise<ReorderItemResponse>;
+			},
+		},
+		{
+			ipcChannel:
+				ipcChannels.BACKEND_COLLECTIONS_TOGGLE_OPEN,
+			handler: async (
+				_event,
+				request: ToggleOpenStateRequest,
+			): Promise<ToggleOpenStateResponse> => {
+				const response = await client.request(
+					'/api/collections/toggle-open',
+					{
+						method: 'PATCH',
+						body: JSON.stringify(request),
+					},
+				);
+				return client.processResponse(
+					response,
+				) as Promise<ToggleOpenStateResponse>;
 			},
 		},
 	];
