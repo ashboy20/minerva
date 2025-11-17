@@ -78,16 +78,6 @@ const buildUrlFromParams = (
 	const [pathWithoutQuery] = path.split('?');
 	let fullUrl = baseUrl + pathWithoutQuery;
 
-	// Replace path parameters with values (for preview, keep placeholders for template)
-	pathParams.forEach((param) => {
-		if (param.enabled && param.keyValue && param.value) {
-			fullUrl = fullUrl.replace(
-				`:${param.keyValue}`,
-				param.value,
-			);
-		}
-	});
-
 	// Add query parameters - ALWAYS rebuild from scratch to avoid duplication
 	const enabledQueryParams = queryParams.filter(
 		(p) => p.enabled && p.keyValue && p.value,
@@ -110,6 +100,29 @@ const buildUrlFromParams = (
 		console.error('Error decoding URL:', fullUrl);
 	}
 	return fullUrl;
+};
+
+/**
+ * Build URL with path parameter values substituted (for actual API calls)
+ * This is used when sending the request to replace placeholders with actual values
+ */
+export const buildUrlWithPathParamValues = (
+	url: string,
+	pathParams: Row[],
+): string => {
+	let finalUrl = url;
+
+	// Replace path parameters with their values
+	pathParams.forEach((param) => {
+		if (param.enabled && param.keyValue && param.value) {
+			finalUrl = finalUrl.replace(
+				`:${param.keyValue}`,
+				param.value,
+			);
+		}
+	});
+
+	return finalUrl;
 };
 
 const extractBaseAndPath = (

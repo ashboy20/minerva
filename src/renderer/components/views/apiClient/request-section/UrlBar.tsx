@@ -17,7 +17,10 @@ import {
 } from '@/store/hooks';
 // TODO: Import from collectionSlice when implemented
 // import { updateItem } from '@/store/slices/collectionSlice';
-import { updateFromUrl } from '@/store/slices/urlSlice';
+import {
+	updateFromUrl,
+	buildUrlWithPathParamValues,
+} from '@/store/slices/urlSlice';
 import {
 	updateEndpoint,
 	updateCase,
@@ -102,6 +105,12 @@ function UrlBar() {
 	const handleSendRequest = async () => {
 		if (!activeTab?.endpoint || !activeCase) return;
 
+		// Build final URL with path parameter substitution
+		const finalUrl = buildUrlWithPathParamValues(
+			currentUrl,
+			pathParams,
+		);
+
 		// Prepare request body for non-GET requests
 		let requestBody: string | object | undefined;
 		if (
@@ -117,7 +126,7 @@ function UrlBar() {
 		dispatch(
 			sendRequest({
 				method: activeTab.endpoint.method,
-				url: currentUrl,
+				url: finalUrl,
 				headers,
 				queryParams,
 				body: requestBody,
