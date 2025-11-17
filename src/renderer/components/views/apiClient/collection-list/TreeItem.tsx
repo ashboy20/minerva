@@ -23,6 +23,7 @@ import {
 	deleteCollection,
 	deleteFolder,
 	deleteEndpoint,
+	getEndpointDetail,
 } from '@/store/slices/collectionSlice';
 import {
 	ContextMenu,
@@ -289,17 +290,19 @@ export const TreeItem = React.forwardRef<
 		const handleItemClick = async () => {
 			if (isEndpoint()) {
 				try {
-					// TODO: Implement getEndpoint in collectionSlice
-					console.log('TODO: Get endpoint', {
-						uuid: node.id as string,
-					});
-					// const endpoint = await dispatch(
-					// 	getEndpoint(node.id as string),
-					// ).unwrap();
+					// Fetch endpoint details using thunk
+					const endpointData = await dispatch(
+						getEndpointDetail({ uuid: node.id as string }),
+					).unwrap();
 
-					// if (endpoint) {
-					// 	dispatch(addTab(endpoint));
-					// }
+					console.log(
+						'Endpoint details fetched:',
+						endpointData,
+					);
+
+					// Open a new tab with the endpoint details
+					dispatch(addTab(endpointData));
+					console.log('Endpoint opened in new tab');
 				} catch (error) {
 					console.error('Error loading endpoint:', error);
 				}

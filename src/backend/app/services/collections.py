@@ -528,6 +528,61 @@ class CollectionsService:
                     return result
         return None
 
+    def _find_parent_uuid(
+        self, meta_data: Dict[str, Any], target_uuid: str
+    ) -> Optional[str]:
+        """Find the parent UUID of an item
+
+        Args:
+            meta_data: Global meta data
+            target_uuid: UUID of the item to find parent for
+
+        Returns:
+            Parent UUID or None if item is at root level or not found
+        """
+        # Check if item is a collection (root level)
+        collections = meta_data.get("collections", [])
+        for collection in collections:
+            if collection.get("uuid") == target_uuid:
+                return None  # Collections have no parent
+
+        # Search in collection items
+        for collection in collections:
+            result = self._find_parent_in_items(
+                collection.get("items", []), target_uuid, collection.get("uuid")
+            )
+            if result is not False:  # Use False to distinguish from None (root parent)
+                return result
+
+        return None  # Not found
+
+    def _find_parent_in_items(
+        self, items: List[Dict[str, Any]], target_uuid: str, parent_uuid: str
+    ) -> Optional[str] | bool:
+        """Recursively find parent UUID in items
+
+        Args:
+            items: List of items to search
+            target_uuid: UUID to find
+            parent_uuid: Current parent UUID
+
+        Returns:
+            Parent UUID, None (if found at this level), or False (if not found)
+        """
+        for item in items:
+            if item.get("uuid") == target_uuid:
+                return parent_uuid
+
+            # If it's a folder, search its items
+            if item.get("type") == "folder" and "items" in item:
+                result = self._find_parent_in_items(
+                    item["items"], target_uuid, item.get("uuid")
+                )
+                if result is not False:
+                    return result
+
+        return False  # Not found in this branch
+
     def _find_and_remove_item(
         self, meta_data: Dict[str, Any], uuid: str
     ) -> tuple[Optional[Dict[str, Any]], Optional[str], Optional[int]]:
@@ -1313,3 +1368,79 @@ class CollectionsService:
             "uuid": uuid,
             "slug": slug,
         }
+
+    def get_endpoint_detail(self, uuid: str) -> Dict[str, Any]:
+        """Get full endpoint details by UUID
+
+        Args:
+            uuid: UUID of the endpoint
+
+        Returns:
+            Dictionary with full endpoint details including all cases and test configurations
+
+        Raises:
+            ValueError: If endpoint not found or item is not an endpoint
+            FileNotFoundError: If endpoint file not found
+        """
+        # Read global meta
+        if not self.meta_file.exists():
+            raise FileNotFoundError(
+                f"Global meta file not found: {self.meta_file.resolve()}"
+            )
+
+        global_meta = self._read_global_meta()
+        if not global_meta:
+            raise Exception(
+                f"Failed to parse global meta file: {self.meta_file.resolve()}"
+            )
+
+        # Find the endpoint in meta
+        endpoint_meta = self._find_item_by_uuid(global_meta, uuid)
+        if not endpoint_meta:
+            raise ValueError(f"Endpoint with UUID '{uuid}' not found")
+
+        # Verify it's an endpoint
+        if endpoint_meta.get("type") != "endpoint":
+            raise ValueError(f"Item with UUID '{uuid}' is not an endpoint")
+
+        # Get endpoint slug (file name)
+        slug = endpoint_meta.get("name")
+        if not slug:
+            raise ValueError(f"Endpoint slug missing in meta")
+
+        # Find parent to build the correct path
+        parent_uuid = self._find_parent_uuid(global_meta, uuid)
+        parent_path = self._build_path_from_uuid(global_meta, parent_uuid)
+        endpoint_file = parent_path / f"{slug}.yaml"
+
+        # Read endpoint file
+        if not endpoint_file.exists():
+            raise FileNotFoundError(f"Endpoint file not found: {endpoint_file}")
+
+        endpoint_data = self._read_yaml_file(endpoint_file)
+        if not endpoint_data:
+            raise Exception(f"Failed to parse endpoint file: {endpoint_file}")
+
+        # Ensure the endpoint data has the UUID from metadata
+        if "uuid" not in endpoint_data:
+            endpoint_data["uuid"] = uuid
+
+        # Construct URL from base_url and path if url is not present
+        if "url" not in endpoint_data or not endpoint_data["url"]:
+            base_url = endpoint_data.get("base_url", "")
+            path = endpoint_data.get("path", "")
+            endpoint_data["url"] = (
+                f"{base_url}{path}" if base_url and path else base_url or path or ""
+            )
+
+        # Ensure cases have UUIDs
+        if "cases" in endpoint_data:
+            for i, case in enumerate(endpoint_data["cases"]):
+                if "uuid" not in case:
+                    # Generate a UUID for the case if missing
+                    import uuid as uuid_lib
+
+                    case["uuid"] = str(uuid_lib.uuid4())
+
+        # Return endpoint details in the expected format
+        return endpoint_data

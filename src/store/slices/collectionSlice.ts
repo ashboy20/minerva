@@ -59,6 +59,8 @@ interface CollectionState {
 	createError: string | null;
 	deleting: boolean;
 	deleteError: string | null;
+	fetchingEndpoint: boolean;
+	fetchEndpointError: string | null;
 }
 
 const initialState: CollectionState = {
@@ -73,6 +75,8 @@ const initialState: CollectionState = {
 	createError: null,
 	deleting: false,
 	deleteError: null,
+	fetchingEndpoint: false,
+	fetchEndpointError: null,
 };
 
 export const getCollections = createAsyncThunk(
@@ -341,6 +345,34 @@ export const deleteEndpoint = createAsyncThunk(
 	},
 );
 
+export const getEndpointDetail = createAsyncThunk(
+	'collection/getEndpointDetail',
+	async (
+		request: {
+			uuid: string;
+		},
+		{ rejectWithValue },
+	) => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_GET_DETAIL,
+			request.uuid,
+		);
+
+		if (result && result.success && result.data) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error(
+			'Get endpoint detail API failed:',
+			result,
+		);
+		return rejectWithValue(
+			result?.error || 'Failed to get endpoint details',
+		);
+	},
+);
+
 export const collectionSlice = createSlice({
 	name: 'collection',
 	initialState,
@@ -474,7 +506,24 @@ export const collectionSlice = createSlice({
 			.addCase(deleteEndpoint.rejected, (state, action) => {
 				state.deleting = false;
 				state.deleteError = action.payload as string;
-			});
+			})
+			// Get endpoint detail
+			.addCase(getEndpointDetail.pending, (state) => {
+				state.fetchingEndpoint = true;
+				state.fetchEndpointError = null;
+			})
+			.addCase(getEndpointDetail.fulfilled, (state) => {
+				state.fetchingEndpoint = false;
+				// The endpoint data is returned to the caller
+			})
+			.addCase(
+				getEndpointDetail.rejected,
+				(state, action) => {
+					state.fetchingEndpoint = false;
+					state.fetchEndpointError =
+						action.payload as string;
+				},
+			);
 	},
 });
 

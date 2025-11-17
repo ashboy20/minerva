@@ -76,9 +76,19 @@ export function RequestSection() {
 		(c) => c.uuid === currentTab?.activeCaseId,
 	);
 
+	// Track the last initialized endpoint to prevent re-initialization
+	const lastInitializedRef = useRef<string | null>(null);
+
 	// Initialize URL and headers/auth state when endpoint/case changes
 	useEffect(() => {
-		if (activeEndpoint) {
+		if (activeEndpoint && activeCase) {
+			// Only initialize if we haven't already initialized this endpoint+case combination
+			const initKey = `${activeEndpoint.uuid}-${activeCase.uuid}`;
+			if (lastInitializedRef.current === initKey) {
+				return;
+			}
+			lastInitializedRef.current = initKey;
+
 			const url = activeEndpoint.url || '';
 			const initialPathParams =
 				activeCase?.request?.path_params || [];

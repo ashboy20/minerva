@@ -228,3 +228,86 @@ class DeleteEndpointResponse(BaseResponse):
     data: Optional[DeleteEndpointData] = Field(
         default=None, description="Endpoint deletion result"
     )
+
+
+# Full endpoint details models
+class EndpointRow(BaseModel):
+    """Key-value row for headers, params, etc."""
+
+    row_id: int
+    keyValue: str
+    value: str
+    enabled: bool
+    disabled: Optional[bool] = None
+
+
+class EndpointAuth(BaseModel):
+    """Authentication configuration"""
+
+    auth_type: str
+    token: str
+
+
+class EndpointRequest(BaseModel):
+    """Request configuration"""
+
+    base_url: Optional[str] = None
+    full_url: Optional[str] = None
+    path: Optional[str] = None
+    headers: List[EndpointRow] = []
+    query_params: List[EndpointRow] = []
+    path_params: List[EndpointRow] = []
+    body: Optional[Dict[str, Any]] = None
+    auth: Optional[EndpointAuth] = None
+
+
+class EndpointResponse(BaseModel):
+    """Response configuration"""
+
+    status_code: Optional[int] = 200
+    headers: List[EndpointRow] = []
+    body: Optional[Dict[str, Any]] = None
+
+
+class EndpointTestAssertion(BaseModel):
+    """Test assertion"""
+
+    id: str
+    type: str
+    operator: str
+    target: Optional[str] = None
+    expected_value: Optional[Any] = None
+    expected_value_2: Optional[Any] = None
+    enabled: bool = True
+
+
+class EndpointCase(BaseModel):
+    """Endpoint test case"""
+
+    id: Optional[int] = 1
+    uuid: Optional[str] = None
+    name: str
+    description: Optional[str] = ""
+    request: EndpointRequest
+    response: Optional[EndpointResponse] = None
+    test_assertions: Optional[List[EndpointTestAssertion]] = None
+    test_script: Optional[str] = None
+
+
+class EndpointDetail(BaseModel):
+    """Full endpoint details"""
+
+    id: Optional[int] = 0
+    uuid: str
+    name: str
+    summary: Optional[str] = ""
+    description: Optional[str] = ""
+    method: str
+    url: Optional[str] = ""
+    cases: List[EndpointCase]
+
+
+class GetEndpointDetailResponse(BaseResponse):
+    """Response model for GET /collections/endpoint/{uuid}"""
+
+    data: EndpointDetail

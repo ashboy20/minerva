@@ -38,9 +38,8 @@ function UrlBar() {
 	const { headers, auth } = useAppSelector(
 		(state) => state.headersAuth,
 	);
-	const { pathParams, queryParams } = useAppSelector(
-		(state) => state.url,
-	);
+	const { pathParams, queryParams, fullUrl } =
+		useAppSelector((state) => state.url);
 
 	// Get active tab and case
 	const activeTab = tabs.find(
@@ -51,11 +50,10 @@ function UrlBar() {
 		(c) => c.uuid === activeTab.activeCaseId,
 	);
 
-	// Get URL from active case's request
+	// Get URL from urlSlice (single source of truth for current URL)
+	// This ensures the URL updates when query params or path params change
 	const currentUrl =
-		activeCase?.request?.full_url ||
-		activeTab?.endpoint.url ||
-		'';
+		fullUrl || activeTab?.endpoint.url || '';
 
 	const handleMethodChange = (method: string) => {
 		if (!activeTab || !activeTabId) return;

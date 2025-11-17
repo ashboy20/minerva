@@ -18,6 +18,7 @@ from app.models.collections import (
     CreateEndpointResponse,
     DeleteEndpointRequest,
     DeleteEndpointResponse,
+    GetEndpointDetailResponse,
 )
 from app.services.collections import CollectionsService
 
@@ -275,4 +276,29 @@ def delete_endpoint(request: DeleteEndpointRequest):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to delete endpoint: {str(e)}"
+        )
+
+
+@router.get("/endpoint/{uuid}", response_model=GetEndpointDetailResponse)
+def get_endpoint_detail(uuid: str):
+    """
+    Get full endpoint details by UUID.
+    Returns complete endpoint configuration including all test cases and assertions.
+
+    Args:
+        uuid: UUID of the endpoint
+
+    Returns:
+        GetEndpointDetailResponse with full endpoint details
+    """
+    try:
+        endpoint_data = collections_service.get_endpoint_detail(uuid=uuid)
+        return GetEndpointDetailResponse(success=True, data=endpoint_data)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get endpoint details: {str(e)}"
         )

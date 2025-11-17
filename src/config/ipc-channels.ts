@@ -42,6 +42,8 @@ const BACKEND_ENDPOINT_CREATE = 'backend:endpoint:create';
 const BACKEND_ENDPOINT_DELETE = 'backend:endpoint:delete';
 const BACKEND_API_CALL_ENDPOINT =
 	'backend:api-call:endpoint';
+const BACKEND_ENDPOINT_GET_DETAIL =
+	'backend:endpoint:get-detail';
 
 export const ipcChannels = {
 	// main -> renderer
@@ -78,4 +80,5 @@ export const ipcChannels = {
 	BACKEND_ENDPOINT_DELETE,
 
 	BACKEND_API_CALL_ENDPOINT,
+	BACKEND_ENDPOINT_GET_DETAIL,
 } as const;

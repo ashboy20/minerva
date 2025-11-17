@@ -8,6 +8,7 @@ import log from 'electron-log';
 import { getBackendService } from './backend-service';
 import { getCallEndpointApis } from './endpoints/call-endpoint';
 import { getCollectionServiceApis } from './endpoints/collection-service';
+import { getEndpointDetailApis } from './endpoints/endpoint-detail';
 
 export interface EndpointConfig {
 	ipcChannel: string;
@@ -95,6 +96,7 @@ export const registerBackendHandlers = () => {
 	const endpoints = [
 		...getCallEndpointApis(backendClient),
 		...getCollectionServiceApis(backendClient),
+		...getEndpointDetailApis(backendClient),
 	];
 
 	for (const endpointConfig of endpoints) {

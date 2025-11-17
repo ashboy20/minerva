@@ -45,6 +45,8 @@ export function TableForm({
 	];
 
 	const [tableRows, setTableRows] = useState(initRows());
+	const [shouldNotifyParent, setShouldNotifyParent] =
+		useState(false);
 
 	// ✅ Sync internal state when rows prop changes
 	useEffect(() => {
@@ -62,7 +64,18 @@ export function TableForm({
 				: []),
 		];
 		setTableRows(newTableRows);
-	}, [rows]);
+	}, [rows, isPathParamTable]);
+
+	// Notify parent when tableRows change (but not during render)
+	useEffect(() => {
+		if (shouldNotifyParent) {
+			const validRows = tableRows.filter(
+				(row) => row.keyValue || row.value,
+			);
+			onChange(validRows);
+			setShouldNotifyParent(false);
+		}
+	}, [shouldNotifyParent, tableRows, onChange]);
 
 	const onRowChange = (
 		row_id: number,
@@ -110,14 +123,11 @@ export function TableForm({
 				];
 			}
 
-			// Notify parent of changes (exclude the empty last row)
-			const validRows = updatedRows.filter(
-				(row) => row.keyValue || row.value,
-			);
-			onChange(validRows);
-
 			return updatedRows;
 		});
+
+		// Trigger parent notification after state update
+		setShouldNotifyParent(true);
 	};
 
 	const onRowDelete = (id: number) => {
@@ -125,13 +135,11 @@ export function TableForm({
 			const filtered = prevRows.filter(
 				(row) => row.row_id !== id,
 			);
-			// Notify parent of changes (exclude the empty last row)
-			const validRows = filtered.filter(
-				(row) => row.keyValue || row.value,
-			);
-			onChange(validRows);
 			return filtered;
 		});
+
+		// Trigger parent notification after state update
+		setShouldNotifyParent(true);
 	};
 
 	return (
