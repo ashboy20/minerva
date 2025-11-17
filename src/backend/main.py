@@ -58,7 +58,10 @@ if __name__ == "__main__":
         help="Reload the server on code changes",
     )
     parser.add_argument(
-        "--collection-root-dir", type=str, default="app/db/data/collections", help="Root directory for collections"
+        "--collection-root-dir",
+        type=str,
+        default="app/db/data/collections",
+        help="Root directory for collections",
     )
     args = parser.parse_args()
     os.environ["COLLECTION_ROOT_DIR"] = args.collection_root_dir

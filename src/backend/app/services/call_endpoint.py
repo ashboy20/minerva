@@ -1,7 +1,7 @@
 import time
 import json
-import requests
-from requests.auth import HTTPBasicAuth
+import asyncio
+import httpx
 from typing import Union, Dict, Any
 
 from app.models.call_endpoint import ApiRequest, ApiResponse
@@ -20,7 +20,7 @@ class CallEndpointService:
             request_kwargs = {
                 "method": request.method.upper(),
                 "url": request.url,
-                "timeout": 30,  # 30 second timeout
+                "timeout": 30.0,  # 30 second timeout
             }
 
             # Add headers if provided
@@ -32,6 +32,7 @@ class CallEndpointService:
                 request_kwargs["params"] = request.query_params
 
             # Add authentication if provided
+            auth = None
             if (
                 request.auth
                 and request.auth.auth_type == "Bearer"
@@ -49,7 +50,8 @@ class CallEndpointService:
             ):
                 # For basic auth, token should be "username:password"
                 username, password = request.auth.token.split(":", 1)
-                request_kwargs["auth"] = HTTPBasicAuth(username, password)
+                auth = httpx.BasicAuth(username, password)
+                request_kwargs["auth"] = auth
 
             # Add body for non-GET requests
             if request.body and request.method.upper() not in ["GET", "HEAD"]:
@@ -57,7 +59,7 @@ class CallEndpointService:
                     # Try to parse as JSON first, fallback to raw string
                     try:
                         json.loads(request.body)
-                        request_kwargs["data"] = request.body
+                        request_kwargs["content"] = request.body
                         if "headers" not in request_kwargs:
                             request_kwargs["headers"] = {}
                         if "content-type" not in {
@@ -67,12 +69,13 @@ class CallEndpointService:
                                 "Content-Type"
                             ] = "application/json"
                     except json.JSONDecodeError:
-                        request_kwargs["data"] = request.body
+                        request_kwargs["content"] = request.body
                 else:
                     request_kwargs["json"] = request.body
 
-            # Make the actual request
-            response = requests.request(**request_kwargs)
+            # Make the actual request using async httpx client
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.request(**request_kwargs)
 
             # Calculate response time
             end_time = time.time()
@@ -87,7 +90,7 @@ class CallEndpointService:
             # Try to parse response body as JSON, fallback to text
             try:
                 body = response.json()
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, ValueError):
                 body = response.text
 
             return ApiResponse(
@@ -101,7 +104,7 @@ class CallEndpointService:
                 ),
             )
 
-        except requests.exceptions.RequestException as e:
+        except httpx.HTTPError as e:
             # Handle request errors
             end_time = time.time()
             response_time = (end_time - start_time) * 1000
