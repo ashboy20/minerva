@@ -3,7 +3,7 @@ type: endpoint
 name: Get Endpoint Status
 description: Check the status of an endpoint
 method: GET
-base_url: http://localhost:8000
+base_url: http://localhost:30000
 path: /api/endpoint-status/:endpointId
 
 cases:

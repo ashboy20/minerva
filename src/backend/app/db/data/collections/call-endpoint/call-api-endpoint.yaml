@@ -3,7 +3,7 @@ type: endpoint
 name: Call API Endpoint
 description: Execute an API endpoint call
 method: POST
-base_url: http://localhost:8000
+base_url: http://localhost:30000
 path: /api/call-endpoint
 
 cases:

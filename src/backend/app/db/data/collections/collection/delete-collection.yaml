@@ -3,7 +3,7 @@ type: endpoint
 name: Delete Collection
 description: Delete an existing collection
 method: DELETE
-base_url: http://localhost:8000
+base_url: http://localhost:30000
 path: /api/collections/:uuid
 
 cases:

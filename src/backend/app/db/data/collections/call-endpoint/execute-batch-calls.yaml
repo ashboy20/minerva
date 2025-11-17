@@ -3,7 +3,7 @@ type: endpoint
 name: Execute Batch Calls
 description: Execute multiple API endpoint calls in batch
 method: POST
-base_url: http://localhost:8000
+base_url: http://localhost:30000
 path: /api/batch-calls
 
 cases:

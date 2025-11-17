@@ -3,7 +3,7 @@ type: endpoint
 name: Create Collection
 description: Create a new collection
 method: POST
-base_url: http://localhost:8000
+base_url: http://localhost:30000
 path: /api/collections
 
 cases:

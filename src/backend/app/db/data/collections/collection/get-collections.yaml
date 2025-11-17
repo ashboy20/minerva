@@ -3,7 +3,7 @@ type: endpoint
 name: Get Collections
 description: Retrieve all collections
 method: GET
-base_url: http://localhost:8000
+base_url: http://localhost:30000
 path: /api/collections
 
 cases:
