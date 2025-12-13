@@ -249,3 +249,32 @@ export interface DeleteEndpointResponse {
 	success: boolean;
 	data?: DeleteEndpointData;
 }
+
+/**
+ * Request body for PUT /api/collections/endpoint/{uuid}
+ */
+export interface UpdateEndpointRequest {
+	name?: string;
+	description?: string;
+	method?: string;
+	url?: string;
+	base_url?: string;
+	path?: string;
+	cases?: any[]; // TODO: Add proper Case type
+}
+
+/**
+ * Data model for endpoint update result
+ */
+export interface UpdateEndpointData {
+	message: string;
+	uuid: string;
+}
+
+/**
+ * Response from PUT /api/collections/endpoint/{uuid}
+ */
+export interface UpdateEndpointResponse {
+	success: boolean;
+	data?: UpdateEndpointData;
+}

@@ -7,18 +7,45 @@ import { getUUID } from '@/utils/getUUID';
 // TODO: Import from collectionSlice when implemented
 // import { updateItem } from '@/store/slices/collectionSlice';
 
-interface Tab {
-	endpoint: EndpointDetail;
-	originalEndpoint: EndpointDetail; // Store original state for comparison
-	activeCaseId: string;
+// Base interface for all tab types
+interface BaseTab {
+	id: string; // Unique identifier for the tab (could be endpoint.uuid, folder.uuid, etc.)
+	type: 'endpoint' | 'folder' | 'collection'; // Discriminator
 	notSaved: boolean;
 	new: boolean;
 	isRenaming?: boolean;
 }
 
+// Endpoint tab (current implementation)
+interface EndpointTab extends BaseTab {
+	type: 'endpoint';
+	endpoint: EndpointDetail;
+	originalEndpoint: EndpointDetail; // Store original state for comparison
+	activeCaseId: string;
+}
+
+// Future: Folder tab
+interface FolderTab extends BaseTab {
+	type: 'folder';
+	// Add folder-specific properties here
+	// folder: FolderDetail;
+	// originalFolder: FolderDetail;
+}
+
+// Future: Collection tab
+interface CollectionTab extends BaseTab {
+	type: 'collection';
+	// Add collection-specific properties here
+	// collection: CollectionDetail;
+	// originalCollection: CollectionDetail;
+}
+
+// Discriminated union of all tab types
+type Tab = EndpointTab | FolderTab | CollectionTab;
+
 interface TabsState {
 	tabs: Tab[];
-	activeTabId: string | null; // This will store endpoint.uuid
+	activeTabId: string | null; // This will store the tab's id (endpoint.uuid, folder.uuid, etc.)
 }
 
 const initialState: TabsState = {
@@ -60,11 +87,15 @@ export const tabsSlice = createSlice({
 			if (endpoint && endpoint.uuid) {
 				// Check if tab for this endpoint already exists
 				const existingTab = state.tabs.find(
-					(tab) => tab.endpoint.uuid === endpoint.uuid,
+					(tab) =>
+						tab.type === 'endpoint' &&
+						tab.endpoint.uuid === endpoint.uuid,
 				);
 
 				if (!existingTab) {
-					const newTab: Tab = {
+					const newTab: EndpointTab = {
+						id: endpoint.uuid,
+						type: 'endpoint',
 						endpoint,
 						originalEndpoint: cloneEndpoint(endpoint), // Store original state
 						activeCaseId: endpoint.cases[0]?.uuid || '',
@@ -75,7 +106,7 @@ export const tabsSlice = createSlice({
 					state.tabs.push(newTab);
 					state.activeTabId = endpoint.uuid;
 				} else {
-					state.activeTabId = existingTab.endpoint.uuid;
+					state.activeTabId = existingTab.id;
 				}
 			} else {
 				// Create a new empty endpoint
@@ -109,7 +140,9 @@ export const tabsSlice = createSlice({
 					cases: [newCase],
 				};
 
-				const newTab: Tab = {
+				const newTab: EndpointTab = {
+					id: newEndpoint.uuid,
+					type: 'endpoint',
 					endpoint: newEndpoint,
 					originalEndpoint: cloneEndpoint(newEndpoint), // Store original state
 					activeCaseId: newCase.uuid,
@@ -125,23 +158,19 @@ export const tabsSlice = createSlice({
 
 		setActiveTab: (
 			state,
-			action: PayloadAction<string>, // endpoint UUID
+			action: PayloadAction<string>, // tab id (endpoint UUID, folder UUID, etc.)
 		) => {
-			const endpointId = action.payload;
-			if (
-				state.tabs.find(
-					(tab) => tab.endpoint.uuid === endpointId,
-				)
-			) {
-				state.activeTabId = endpointId;
+			const tabId = action.payload;
+			if (state.tabs.find((tab) => tab.id === tabId)) {
+				state.activeTabId = tabId;
 			}
 		},
 
 		closeTab: (state, action: PayloadAction<string>) => {
-			// endpoint UUID
-			const endpointId = action.payload;
+			// tab id (endpoint UUID, folder UUID, etc.)
+			const tabId = action.payload;
 			const tabIndex = state.tabs.findIndex(
-				(tab) => tab.endpoint.uuid === endpointId,
+				(tab) => tab.id === tabId,
 			);
 
 			if (tabIndex === -1) return;
@@ -150,12 +179,11 @@ export const tabsSlice = createSlice({
 			state.tabs.splice(tabIndex, 1);
 
 			// If we closed the active tab, set a new active tab
-			if (state.activeTabId === endpointId) {
+			if (state.activeTabId === tabId) {
 				if (state.tabs.length > 0) {
 					// Set the previous tab as active, or first tab if it was the first tab
 					const newActiveIndex = Math.max(0, tabIndex - 1);
-					state.activeTabId =
-						state.tabs[newActiveIndex].endpoint.uuid;
+					state.activeTabId = state.tabs[newActiveIndex].id;
 				} else {
 					state.activeTabId = null;
 				}
@@ -165,13 +193,13 @@ export const tabsSlice = createSlice({
 		updateTabSavedState: (
 			state,
 			action: PayloadAction<{
-				endpointId: string;
+				tabId: string;
 				notSaved: boolean;
 			}>,
 		) => {
-			const { endpointId, notSaved } = action.payload;
+			const { tabId, notSaved } = action.payload;
 			const tab = state.tabs.find(
-				(tab) => tab.endpoint.uuid === endpointId,
+				(tab) => tab.id === tabId,
 			);
 			if (tab) {
 				tab.notSaved = notSaved;
@@ -181,13 +209,13 @@ export const tabsSlice = createSlice({
 		updateTabRenamingState: (
 			state,
 			action: PayloadAction<{
-				endpointId: string;
+				tabId: string;
 				isRenaming: boolean;
 			}>,
 		) => {
-			const { endpointId, isRenaming } = action.payload;
+			const { tabId, isRenaming } = action.payload;
 			const tab = state.tabs.find(
-				(tab) => tab.endpoint.uuid === endpointId,
+				(tab) => tab.id === tabId,
 			);
 			if (tab) {
 				tab.isRenaming = isRenaming;
@@ -203,9 +231,11 @@ export const tabsSlice = createSlice({
 		) => {
 			const { endpointId, name } = action.payload;
 			const tab = state.tabs.find(
-				(tab) => tab.endpoint.uuid === endpointId,
+				(tab) =>
+					tab.type === 'endpoint' &&
+					tab.endpoint.uuid === endpointId,
 			);
-			if (tab) {
+			if (tab && tab.type === 'endpoint') {
 				tab.endpoint.name = name;
 			}
 		},
@@ -219,7 +249,9 @@ export const tabsSlice = createSlice({
 		) => {
 			const { endpointId, notSaved } = action.payload;
 			const tab = state.tabs.find(
-				(tab) => tab.endpoint.uuid === endpointId,
+				(tab) =>
+					tab.type === 'endpoint' &&
+					tab.endpoint.uuid === endpointId,
 			);
 			if (tab) {
 				tab.notSaved = notSaved;
@@ -236,9 +268,11 @@ export const tabsSlice = createSlice({
 			const { endpointId, fields } = action.payload;
 
 			const tab = state.tabs.find(
-				(tab) => tab.endpoint.uuid === endpointId,
+				(tab) =>
+					tab.type === 'endpoint' &&
+					tab.endpoint.uuid === endpointId,
 			);
-			if (tab) {
+			if (tab && tab.type === 'endpoint') {
 				// Update only the specified fields
 				tab.endpoint = {
 					...tab.endpoint,
@@ -262,16 +296,16 @@ export const tabsSlice = createSlice({
 			action: PayloadAction<{
 				endpointId: string;
 				caseId: string;
-				fields: Partial<
-					(typeof initialState.tabs)[0]['endpoint']['cases'][0]
-				>;
+				fields: Partial<EndpointDetail['cases'][0]>;
 			}>,
 		) => {
 			const { endpointId, caseId, fields } = action.payload;
 			const tab = state.tabs.find(
-				(tab) => tab.endpoint.uuid === endpointId,
+				(tab) =>
+					tab.type === 'endpoint' &&
+					tab.endpoint.uuid === endpointId,
 			);
-			if (tab) {
+			if (tab && tab.type === 'endpoint') {
 				const caseIndex = tab.endpoint.cases.findIndex(
 					(c) => c.uuid === caseId,
 				);
@@ -299,9 +333,11 @@ export const tabsSlice = createSlice({
 		) => {
 			const { endpointId } = action.payload;
 			const tab = state.tabs.find(
-				(tab) => tab.endpoint.uuid === endpointId,
+				(tab) =>
+					tab.type === 'endpoint' &&
+					tab.endpoint.uuid === endpointId,
 			);
-			if (tab) {
+			if (tab && tab.type === 'endpoint') {
 				// Update the original state to match current state after saving
 				tab.originalEndpoint = cloneEndpoint(tab.endpoint);
 				tab.notSaved = false;

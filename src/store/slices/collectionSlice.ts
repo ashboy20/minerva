@@ -12,6 +12,7 @@ import {
 	DeleteFolderRequest,
 	CreateEndpointRequest,
 	DeleteEndpointRequest,
+	UpdateEndpointRequest,
 } from '@/types/backend/collections/collection';
 
 export interface Endpoint {
@@ -59,6 +60,8 @@ interface CollectionState {
 	createError: string | null;
 	deleting: boolean;
 	deleteError: string | null;
+	updating: boolean;
+	updateError: string | null;
 	fetchingEndpoint: boolean;
 	fetchEndpointError: string | null;
 }
@@ -75,6 +78,8 @@ const initialState: CollectionState = {
 	createError: null,
 	deleting: false,
 	deleteError: null,
+	updating: false,
+	updateError: null,
 	fetchingEndpoint: false,
 	fetchEndpointError: null,
 };
@@ -345,6 +350,33 @@ export const deleteEndpoint = createAsyncThunk(
 	},
 );
 
+export const updateEndpoint = createAsyncThunk(
+	'collection/updateEndpoint',
+	async (
+		request: {
+			uuid: string;
+			updates: UpdateEndpointRequest;
+		},
+		{ rejectWithValue },
+	) => {
+		const result = await window.electron.ipcRenderer.invoke(
+			ipcChannels.BACKEND_ENDPOINT_UPDATE,
+			request.uuid,
+			request.updates,
+		);
+
+		if (result && result.success) {
+			return result.data;
+		}
+
+		// eslint-disable-next-line no-console
+		console.error('Update endpoint API failed:', result);
+		return rejectWithValue(
+			result?.data?.error || 'Failed to update endpoint',
+		);
+	},
+);
+
 export const getEndpointDetail = createAsyncThunk(
 	'collection/getEndpointDetail',
 	async (
@@ -506,6 +538,18 @@ export const collectionSlice = createSlice({
 			.addCase(deleteEndpoint.rejected, (state, action) => {
 				state.deleting = false;
 				state.deleteError = action.payload as string;
+			})
+			// Update endpoint
+			.addCase(updateEndpoint.pending, (state) => {
+				state.updating = true;
+				state.updateError = null;
+			})
+			.addCase(updateEndpoint.fulfilled, (state) => {
+				state.updating = false;
+			})
+			.addCase(updateEndpoint.rejected, (state, action) => {
+				state.updating = false;
+				state.updateError = action.payload as string;
 			})
 			// Get endpoint detail
 			.addCase(getEndpointDetail.pending, (state) => {

@@ -40,7 +40,9 @@ export const syncEndpointNameMiddleware: Middleware =
 				if (fields && fields.name) {
 					// Get the tab before dispatching new actions
 					const tab = afterState.tabs.tabs.find(
-						(tab) => tab.endpoint.uuid === uuid,
+						(tab) =>
+							tab.type === 'endpoint' &&
+							tab.endpoint.uuid === uuid,
 					);
 					if (tab) {
 						store.dispatch(
@@ -51,7 +53,7 @@ export const syncEndpointNameMiddleware: Middleware =
 						);
 						store.dispatch(
 							updateTabRenamingState({
-								endpointId: uuid,
+								tabId: tab.id,
 								isRenaming: false,
 							}),
 						);

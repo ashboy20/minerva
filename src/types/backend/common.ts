@@ -37,6 +37,8 @@ export type Case = {
 	description: string;
 	request: Request;
 	response: Response;
+	test_assertions?: any[]; // Test assertions from GUI
+	test_script?: string; // Python test script
 };
 
 export type EndpointDetail = {

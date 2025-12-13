@@ -19,6 +19,8 @@ from app.models.collections import (
     DeleteEndpointRequest,
     DeleteEndpointResponse,
     GetEndpointDetailResponse,
+    UpdateEndpointRequest,
+    UpdateEndpointResponse,
 )
 from app.services.collections import CollectionsService
 
@@ -301,4 +303,34 @@ def get_endpoint_detail(uuid: str):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to get endpoint details: {str(e)}"
+        )
+
+
+@router.put("/endpoint/{uuid}", response_model=UpdateEndpointResponse)
+def update_endpoint(uuid: str, request: UpdateEndpointRequest):
+    """
+    Update an endpoint's details.
+    Updates the endpoint YAML file with new data.
+
+    Args:
+        uuid: UUID of the endpoint
+        request: UpdateEndpointRequest with fields to update
+
+    Returns:
+        UpdateEndpointResponse with operation result
+    """
+    try:
+        # Convert request to dict and filter out None values
+        updates = request.model_dump(exclude_none=True)
+        result = collections_service.update_endpoint(uuid=uuid, updates=updates)
+        return UpdateEndpointResponse(
+            success=True, data=UpdateEndpointResponse.UpdateEndpointData(**result)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update endpoint: {str(e)}"
         )

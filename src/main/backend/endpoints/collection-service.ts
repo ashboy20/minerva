@@ -24,6 +24,8 @@ import {
 	DeleteFolderResponse,
 	CreateEndpointRequest,
 	CreateEndpointResponse,
+	UpdateEndpointRequest,
+	UpdateEndpointResponse,
 	DeleteEndpointRequest,
 	DeleteEndpointResponse,
 } from '../../../types/backend/collections/collection';
@@ -173,6 +175,25 @@ export function getCollectionServiceApis(
 				return client.processResponse(
 					response,
 				) as Promise<CreateEndpointResponse>;
+			},
+		},
+		{
+			ipcChannel: ipcChannels.BACKEND_ENDPOINT_UPDATE,
+			handler: async (
+				_event,
+				uuid: string,
+				request: UpdateEndpointRequest,
+			): Promise<UpdateEndpointResponse> => {
+				const response = await client.request(
+					`/api/collections/endpoint/${uuid}`,
+					{
+						method: 'PUT',
+						body: JSON.stringify(request),
+					},
+				);
+				return client.processResponse(
+					response,
+				) as Promise<UpdateEndpointResponse>;
 			},
 		},
 		{

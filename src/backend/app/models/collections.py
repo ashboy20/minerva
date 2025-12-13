@@ -311,3 +311,29 @@ class GetEndpointDetailResponse(BaseResponse):
     """Response model for GET /collections/endpoint/{uuid}"""
 
     data: EndpointDetail
+
+
+class UpdateEndpointRequest(BaseModel):
+    """Request model for updating an endpoint"""
+
+    name: Optional[str] = None
+    description: Optional[str] = None
+    method: Optional[str] = None
+    url: Optional[str] = None
+    base_url: Optional[str] = None
+    path: Optional[str] = None
+    cases: Optional[List[EndpointCase]] = None
+
+
+class UpdateEndpointResponse(BaseResponse):
+    """Response model for endpoint update"""
+
+    class UpdateEndpointData(BaseModel):
+        """Data model for update result"""
+
+        message: str = Field(description="Operation result message")
+        uuid: str = Field(description="UUID of the updated endpoint")
+
+    data: Optional[UpdateEndpointData] = Field(
+        default=None, description="Update operation result"
+    )

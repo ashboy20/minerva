@@ -35,7 +35,10 @@ import {
 	updateAuth,
 	clearUpdateSource as clearHeadersAuthUpdateSource,
 } from '@/store/slices/headersAuthSlice';
-import { updateNotSaveState } from '@/store/slices/tabsSlice';
+import {
+	updateNotSaveState,
+	updateOriginalState,
+} from '@/store/slices/tabsSlice';
 
 const stringifyBody = (body: any) => {
 	if (typeof body === 'string') {
@@ -69,11 +72,16 @@ export function RequestSection() {
 		(state) => state.tabs,
 	);
 	const currentTab = tabs.find(
-		(tab) => tab.endpoint.uuid === activeTabId,
+		(tab) => tab.id === activeTabId,
 	);
-	const activeEndpoint = currentTab?.endpoint;
+
+	// Type guard to ensure we're working with an EndpointTab
+	const isEndpointTab =
+		currentTab?.type === 'endpoint' ? currentTab : null;
+
+	const activeEndpoint = isEndpointTab?.endpoint;
 	const activeCase = activeEndpoint?.cases.find(
-		(c) => c.uuid === currentTab?.activeCaseId,
+		(c) => c.uuid === isEndpointTab?.activeCaseId,
 	);
 
 	// Track the last initialized endpoint to prevent re-initialization
@@ -192,6 +200,7 @@ export function RequestSection() {
 	// Debounce query params updates
 	const queryParamsTimeoutRef =
 		useRef<NodeJS.Timeout | null>(null);
+
 	const handleQueryParamsChange = useCallback(
 		(newQueryParams: Row[]) => {
 			if (queryParamsTimeoutRef.current) {

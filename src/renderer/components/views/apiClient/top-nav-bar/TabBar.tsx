@@ -86,10 +86,10 @@ export function TabBar({ className }: TabBarProps) {
 	};
 
 	useEffect(() => {
-		setNewEndpointLabel(
-			tabs.find((tab) => tab.endpoint.uuid === activeTabId)
-				?.endpoint.name || '',
-		);
+		const activeTab = tabs.find((tab) => tab.id === activeTabId);
+		if (activeTab?.type === 'endpoint') {
+			setNewEndpointLabel(activeTab.endpoint.name || '');
+		}
 	}, [tabs, activeTabId]);
 
 	// Focus input when renaming starts
@@ -114,92 +114,98 @@ export function TabBar({ className }: TabBarProps) {
 			)}
 		>
 			<div className="scrollbar-none flex items-center overflow-x-auto">
-				{tabs.map((tab) => (
-					<ContextMenu key={tab.endpoint.uuid}>
-						<ContextMenuTrigger asChild>
-							<div
-								onClick={() =>
-									handleTabClick(tab.endpoint.uuid)
-								}
-								className={cn(
-									'group relative flex cursor-pointer items-center gap-2 border-r border-border px-3 py-2',
-									'w-48 min-w-48 max-w-48', // Fixed width of 192px
-									'transition-colors duration-150 hover:bg-muted/50',
-									activeTabId === tab.endpoint.uuid
-										? 'border-b-2 border-b-primary bg-background'
-										: 'bg-muted/30',
-								)}
-							>
-								{/* Unsaved indicator */}
-								{tab.notSaved && (
-									<div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-								)}
-
-								{/* Method badge */}
-								{tab.endpoint.method && (
-									<div className="text-xs">
-										<MethodText
-											method={tab.endpoint.method}
-										/>
-									</div>
-								)}
-
-								{/* Tab label */}
-								{tab.isRenaming ? (
-									<Input
-										ref={inputRef}
-										value={newEndpointLabel}
-										onChange={(e) =>
-											setNewEndpointLabel(e.target.value)
+				{tabs
+					.filter((tab) => tab.type === 'endpoint')
+					.map((tab) => {
+						if (tab.type !== 'endpoint') return null; // Type guard for TypeScript
+						return (
+							<ContextMenu key={tab.endpoint.uuid}>
+								<ContextMenuTrigger asChild>
+									<div
+										onClick={() =>
+											handleTabClick(tab.endpoint.uuid)
 										}
-										onKeyDown={(e) => {
-											if (e.key === 'Enter') {
-												handleTabRename(
-													tab.endpoint.uuid,
-													newEndpointLabel,
-												);
-											}
-										}}
-										onBlur={() => {
-											handleTabRename(
-												tab.endpoint.uuid,
-												newEndpointLabel,
-											);
-										}}
-									/>
-								) : (
-									<span className="min-w-0 flex-1 truncate text-sm">
-										{tab.endpoint.name || 'New Request'}
-									</span>
-								)}
+										className={cn(
+											'group relative flex cursor-pointer items-center gap-2 border-r border-border px-3 py-2',
+											'w-48 min-w-48 max-w-48', // Fixed width of 192px
+											'transition-colors duration-150 hover:bg-muted/50',
+											activeTabId === tab.endpoint.uuid
+												? 'border-b-2 border-b-primary bg-background'
+												: 'bg-muted/30',
+										)}
+									>
+										{/* Unsaved indicator */}
+										{tab.notSaved && (
+											<div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+										)}
 
-								{/* Close button */}
-								<button
-									onClick={(e) =>
-										handleCloseTab(tab.endpoint.uuid, e)
-									}
-									className="rounded p-0.5 opacity-0 transition-all duration-150 hover:bg-muted group-hover:opacity-100"
-								>
-									<X
-										size={14}
-										className="text-muted-foreground hover:text-foreground"
-									/>
-								</button>
-							</div>
-						</ContextMenuTrigger>
-						<ContextMenuContent className="min-w-32">
-							<ContextMenuItem
-								className="flex cursor-pointer items-center gap-2"
-								onClick={() =>
-									handleStartRenameTab(tab.endpoint.uuid)
-								}
-							>
-								<Edit3 size={14} />
-								Rename
-							</ContextMenuItem>
+										{/* Method badge */}
+										{tab.endpoint.method && (
+											<div className="text-xs">
+												<MethodText
+													method={tab.endpoint.method}
+												/>
+											</div>
+										)}
+
+										{/* Tab label */}
+										{tab.isRenaming ? (
+											<Input
+												ref={inputRef}
+												value={newEndpointLabel}
+												onChange={(e) =>
+													setNewEndpointLabel(e.target.value)
+												}
+												onKeyDown={(e) => {
+													if (e.key === 'Enter') {
+														handleTabRename(
+															tab.endpoint.uuid,
+															newEndpointLabel,
+														);
+													}
+												}}
+												onBlur={() => {
+													handleTabRename(
+														tab.endpoint.uuid,
+														newEndpointLabel,
+													);
+												}}
+											/>
+										) : (
+											<span className="min-w-0 flex-1 truncate text-sm">
+												{tab.endpoint.name || 'New Request'}
+											</span>
+										)}
+
+										{/* Close button */}
+										<button
+											onClick={(e) =>
+												handleCloseTab(tab.endpoint.uuid, e)
+											}
+											className="rounded p-0.5 opacity-0 transition-all duration-150 hover:bg-muted group-hover:opacity-100"
+										>
+											<X
+												size={14}
+												className="text-muted-foreground hover:text-foreground"
+											/>
+										</button>
+									</div>
+								</ContextMenuTrigger>
+								<ContextMenuContent className="min-w-32">
+									<ContextMenuItem
+										className="flex cursor-pointer items-center gap-2"
+										onClick={() =>
+											handleStartRenameTab(tab.endpoint.uuid)
+										}
+									>
+										<Edit3 size={14} />
+										Rename
+									</ContextMenuItem>
 						</ContextMenuContent>
 					</ContextMenu>
-				))}
+				);
+						},
+					)}
 			</div>
 
 			{/* Add new tab button */}

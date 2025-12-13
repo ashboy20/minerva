@@ -77,6 +77,8 @@ class CollectionsService:
                     default_flow_style=False,
                     allow_unicode=True,
                     sort_keys=False,
+                    indent=2,  # Use 2-space indentation
+                    width=120,  # Prevent line wrapping too early
                 )
             return True
         except Exception as e:
@@ -1444,3 +1446,73 @@ class CollectionsService:
 
         # Return endpoint details in the expected format
         return endpoint_data
+
+    def update_endpoint(self, uuid: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Update an endpoint's YAML file with new data
+
+        Args:
+            uuid: Endpoint UUID
+            updates: Dictionary of fields to update (only non-None values are updated)
+
+        Returns:
+            Dictionary with update result
+
+        Raises:
+            ValueError: If endpoint not found or item is not an endpoint
+            FileNotFoundError: If endpoint file not found
+            Exception: If operation fails
+        """
+        # Read global meta to find endpoint
+        if not self.meta_file.exists():
+            raise FileNotFoundError(
+                f"Global meta file not found: {self.meta_file.resolve()}"
+            )
+
+        global_meta = self._read_global_meta()
+        if not global_meta:
+            raise Exception(
+                f"Failed to parse global meta file: {self.meta_file.resolve()}"
+            )
+
+        # Find the endpoint in meta
+        endpoint_meta = self._find_item_by_uuid(global_meta, uuid)
+        if not endpoint_meta:
+            raise ValueError(f"Endpoint with UUID '{uuid}' not found")
+
+        # Verify it's an endpoint
+        if endpoint_meta.get("type") != "endpoint":
+            raise ValueError(f"Item with UUID '{uuid}' is not an endpoint")
+
+        # Get endpoint slug and parent path
+        slug = endpoint_meta.get("name")
+        if not slug:
+            raise ValueError(f"Endpoint slug missing in meta")
+
+        parent_uuid = self._find_parent_uuid(global_meta, uuid)
+        parent_path = self._build_path_from_uuid(global_meta, parent_uuid)
+        endpoint_file = parent_path / f"{slug}.yaml"
+
+        # Read current endpoint data
+        if not endpoint_file.exists():
+            raise FileNotFoundError(f"Endpoint file not found: {endpoint_file}")
+
+        endpoint_data = self._read_yaml_file(endpoint_file)
+        if not endpoint_data:
+            raise Exception(f"Failed to parse endpoint file: {endpoint_file}")
+
+        # Update fields (only update non-None values)
+        for key, value in updates.items():
+            if value is not None:
+                endpoint_data[key] = value
+
+        # Ensure UUID is preserved
+        endpoint_data["uuid"] = uuid
+
+        # Write back to file
+        if not self._write_yaml_file(endpoint_file, endpoint_data):
+            raise Exception(f"Failed to write endpoint file: {endpoint_file}")
+
+        return {
+            "message": "Endpoint updated successfully",
+            "uuid": uuid,
+        }

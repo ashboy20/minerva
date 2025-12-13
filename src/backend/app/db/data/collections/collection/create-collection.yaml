@@ -5,32 +5,23 @@ description: Create a new collection
 method: POST
 base_url: http://localhost:30000
 path: /api/collections
-
 cases:
-  - id: 1
-    name: Create basic collection
-    is_default: true
-    pre: null
-    post: null
-    request:
-      path_params: []
-      query_params: []
-      headers:
-        - row_id: 1
-          keyValue: Content-Type
-          value: application/json
-          enabled: true
-      body:
-        name: 'New Collection'
-      auth: null
-    expected_response:
-      status_code: 201
-      headers:
-        - row_id: 1
-          keyValue: Content-Type
-          value: application/json
-          enabled: true
-      body:
-        status: success
-        data:
-          message: Collection created successfully
+- id: 1
+  uuid: c9cb7eea-2088-4c83-8955-9e10caed5bc9
+  name: Create basic collection
+  description: ''
+  request:
+    headers:
+    - row_id: 1
+      keyValue: Content-Type
+      value: application/json
+      enabled: true
+    query_params: []
+    path_params:
+    - row_id: 1
+      keyValue: id
+      value: ''
+      enabled: true
+    body:
+      name: New Collection
+url: http://localhost:30000/api/collections
